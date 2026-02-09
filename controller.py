@@ -6,8 +6,7 @@ python controller.py \
   --limit 10
 
 hf download meta-llama/Llama-3.1-8B-Instruct \
-  --local-dir /scratch/$USER/hf_models/Llama-3.1-8B-Instruct \
-  --local-dir-use-symlinks False
+  --local-dir /scratch/$USER/hf_models/Llama-3.1-8B-Instruct
 """
 
 import json
