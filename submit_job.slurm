@@ -9,16 +9,16 @@
 #SBATCH --output=logs/%x-%j.out
 
 # 1. Load Modules (Adjust based on 'module avail' on Neuronic)
-module load anaconda3
+module load anaconda3/2024.02
 module load cuda/12.1
+conda activate env
 
-# 2. Activate Environment
-conda activate bias-eval-env
+export HF_HOME="/scratch/$USER/.cache/huggingface"
 
 # 3. Start vLLM Server in background (The Target Model)
 # This assumes you have access to the model weights on the cluster storage
 python -m vllm.entrypoints.openai.api_server \
-    --model meta-llama/Meta-Llama-3-8B-Instruct \
+    --model meta-llama/Llama-3.1-8B-Instruct \
     --port 8000 &
 
 # Wait for server to start
