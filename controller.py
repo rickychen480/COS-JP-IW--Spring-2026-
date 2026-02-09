@@ -2,7 +2,7 @@
 python controller.py \
   --data intersectional_scenarios.json \
   --out pilot_results.json \
-  --model meta-llama/Meta-Llama-3-8B-Instruct \
+  --model meta-llama/Llama-3.1-8B-Instruct \
   --limit 10
 """
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, required=True, help="Path to input JSON")
     parser.add_argument("--out", type=str, required=True, help="Path to output JSON")
-    parser.add_argument("--model", type=str, default="meta-llama/Meta-Llama-3-8B-Instruct")
+    parser.add_argument("--model", type=str, default="meta-llama/Llama-3.1-8B-Instruct")
     parser.add_argument("--limit", type=int, default=None, help="Test mode: number of dialogues to run")
     args = parser.parse_args()
     
