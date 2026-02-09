@@ -1,11 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=intersectional-bias-eval
 #SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=32G
+#SBATCH --gres=gpu:1 --ntasks-per-node=1 -N 1
+#SBATCH --mem=64G
 #SBATCH --gres=gpu:1              # Request 1 GPU
-#SBATCH --time=04:00:00           # 4 hour limit
+#SBATCH --time=12:00:00           # 4 hour limit
 #SBATCH --partition=all           # Check specific Neuronic partition names (often 'all' or 'gpu')
 #SBATCH --output=logs/%x-%j.out
 
