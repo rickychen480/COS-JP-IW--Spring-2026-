@@ -5,7 +5,7 @@ python controller.py \
   --model meta-llama/Llama-3.1-8B-Instruct \
   --limit 10
 
-huggingface-cli download meta-llama/Llama-3.1-8B-Instruct \
+hf download meta-llama/Llama-3.1-8B-Instruct \
   --local-dir /scratch/$USER/hf_models/Llama-3.1-8B-Instruct \
   --local-dir-use-symlinks False
 """
