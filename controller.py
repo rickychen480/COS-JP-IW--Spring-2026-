@@ -99,7 +99,7 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
             d["transcript"].append({"turn": turn, "speaker": "Target", "content": msg_t})
 
             # Check if the User signaled the end
-            if "bye" in msg_u.lower() or "have a good day" in msg_u.lower():
+            if "bye" in msg_u.lower() or "have a good day" in msg_u.lower() or "adi\u00f3s" in msg_u.lower():
                 d["done"] = True
 
             # Check if the Target signaled the end
