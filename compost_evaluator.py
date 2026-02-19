@@ -2,15 +2,15 @@
 python compost_evaluator.py \
     --data pilot_results.json \
     --out compost_llama8b.json \
-    --judge /scratch/rc5898/hf_models/Llama-3.1-70B
+    --judge /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4
 
 python compost_evaluator.py \
     --data pilot_results.json \
     --out compost_llama8b.json \
     --judge /scratch/rc5898/hf_models/Llama-3.1-8B-Instruct
 
-hf download meta-llama/Llama-3.1-70B \
-  --local-dir /scratch/$USER/hf_models/Llama-3.1-70B
+hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
+    --local-dir /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4
 """
 
 import json
@@ -61,11 +61,14 @@ def evaluate_simulators(input_file, output_file, judge_model):
     # Filter out Control (Unmarked) since they have no identity to stereotype
     eval_targets = [r for r in results if r["metadata"]["persona"]["demographic"] != "Unmarked"]
 
-    print(f"Loading Judge Model: {judge_model}...")
+    print(f"Loading Quantized Judge Model: {judge_model}...")
+    
     llm = LLM(
-        model=judge_model,
+        model=judge_model, 
         tensor_parallel_size=1,
-        gpu_memory_utilization=0.8
+        quantization="awq",
+        gpu_memory_utilization=0.9,
+        max_model_len=8192
     )
     tokenizer = AutoTokenizer.from_pretrained(judge_model)
     sampling_params = SamplingParams(temperature=0.0, max_tokens=150) # Temp 0 for deterministic judging
@@ -120,7 +123,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, required=True, help="Path to user simulator json file")
     parser.add_argument("--out", type=str, required=True, help="Path to save evaluation results")
-    parser.add_argument("--judge", type=str, default="meta-llama/Llama-3-70b-chat-hf", help="Model to use as the CoMPosT Judge")
+    parser.add_argument("--judge", type=str, default="/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4", help="Path to the AWQ model")
     args = parser.parse_args()
     
     evaluate_simulators(args.data, args.out, args.judge)
