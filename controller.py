@@ -98,11 +98,13 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
             # Log
             d["transcript"].append({"turn": turn, "speaker": "Target", "content": msg_t})
 
-            # # Optional: Heuristic stopping (if Agent U says "Thank you" or "Goodbye")
-            # if "thank you" in msg_t.lower() or "goodbye" in msg_t.lower():
-            #     # We typically let it run to MAX_TURNS to see if bias emerges later, 
-            #     # but you can set d["done"] = True here if you want short dialogues.
-            #     pass
+            # Check if the User signaled the end
+            if "bye" in msg_u.lower() or "have a good day" in msg_u.lower():
+                d["done"] = True
+
+            # Check if the Target signaled the end
+            if "is there anything else" in msg_t.lower() and "no" in msg_u.lower():
+                d["done"] = True
 
     # SAVE RESULTS
     # TODO: Verify format aligns with the paper's needs
