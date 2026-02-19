@@ -15,6 +15,22 @@ from vllm import LLM, SamplingParams
 from transformers import AutoTokenizer
 
 
+def check_early_stopping(msg_u, msg_t):
+    """Heuristic to detect natural conversation ends to prevent Zombie Loops."""
+    end_phrases = ["bye", "goodbye", "have a great day", "hasta luego", "have a good one", "adiós"]
+    msg_u_lower = msg_u.lower()
+    msg_t_lower = msg_t.lower()
+    
+    # If user says bye
+    if any(phrase in msg_u_lower for phrase in end_phrases):
+        return True
+    
+    # If target asks if there's anything else, and user says no/thanks
+    if "anything else" in msg_t_lower and any(word in msg_u_lower for word in ["no", "nope", "i'm good", "that's all"]):
+        return True
+        
+    return False
+
 def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None):
     # LOAD DATA
     with open(input_file, "r") as f:
@@ -29,7 +45,7 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
     print(f"Loading model: {model_path}...")
     llm = LLM(model=model_path, tensor_parallel_size=1) 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    sampling_params = SamplingParams(temperature=0.7, max_tokens=256)
+    sampling_params = SamplingParams(temperature=0.7, max_tokens=512)
 
     # INITIALIZE STATE (Maintain a 'running state' for every dialogue in the batch)
     active_dialogues = []
@@ -88,6 +104,9 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
         
         for d, out in zip(batch_u, outputs_t):
             msg_t = out.outputs[0].text.strip()
+
+            # Fetch the just-added User message to evaluate stopping
+            last_msg_u = d["transcript"][-1]["content"]
             
             # Update T's own history (I said this)
             d["history_t"].append({"role": "assistant", "content": msg_t})
@@ -98,14 +117,11 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
             # Log
             d["transcript"].append({"turn": turn, "speaker": "Target", "content": msg_t})
 
-            # Check if the User signaled the end
-            if "bye" in msg_u.lower() or "have a good day" in msg_u.lower() or "adi\u00f3s" in msg_u.lower():
+            # Check for early stopping
+            if check_early_stopping(last_msg_u, msg_t):
                 d["done"] = True
-
-            # Check if the Target signaled the end
-            if "is there anything else" in msg_t.lower() and "no" in msg_u.lower():
-                d["done"] = True
-
+            
+            
     # SAVE RESULTS
     # TODO: Verify format aligns with the paper's needs
     final_output = [
