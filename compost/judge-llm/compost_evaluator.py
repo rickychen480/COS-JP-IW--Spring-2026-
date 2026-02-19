@@ -1,12 +1,7 @@
 """
 python compost_evaluator.py \
     --data pilot_results.json \
-    --out compost_llama8b.json \
-    --judge /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4
-
-python compost_evaluator.py \
-    --data pilot_results.json \
-    --out compost_llama8b.json \
+    --out results/compost/judge-llm/compost_llama8b.json \
     --judge /scratch/rc5898/hf_models/Llama-3.1-8B-Instruct
 
 hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \

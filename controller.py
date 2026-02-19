@@ -1,7 +1,7 @@
 """
 python controller.py \
-  --data intersectional_scenarios.json \
-  --out pilot_results.json \
+  --data data/intersectional_scenarios.json \
+  --out results/pilot_results.json \
   --model /scratch/rc5898/hf_models/Llama-3.1-8B-Instruct \
   --limit 1
 
