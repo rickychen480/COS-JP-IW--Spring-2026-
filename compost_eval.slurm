@@ -8,13 +8,12 @@
 #SBATCH --output=slurm-%j.out         ## Save standard output to this file
 #SBATCH --error=slurm-%j.err          ## Save errors to this file
 
-conda init
+eval "$(conda shell.bash hook)"
 conda activate env
 
 echo "Provisioning local scratch on compute node..."
 hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
     --local-dir /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
-    --local-dir-use-symlinks False
 
 echo "Starting CoMPosT Evaluation with Llama 70B AWQ on 2 GPUs..."
 # Run the python script
