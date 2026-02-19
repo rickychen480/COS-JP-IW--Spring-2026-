@@ -8,6 +8,7 @@
 #SBATCH --output=slurm-%j.out         ## Save standard output to this file
 #SBATCH --error=slurm-%j.err          ## Save errors to this file
 
+conda init
 conda activate env
 
 echo "Provisioning local scratch on compute node..."
