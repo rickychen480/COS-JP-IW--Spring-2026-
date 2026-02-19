@@ -4,6 +4,11 @@ python compost_evaluator.py \
     --out compost_llama8b.json \
     --judge /scratch/rc5898/hf_models/Llama-3.1-70B
 
+python compost_evaluator.py \
+    --data pilot_results.json \
+    --out compost_llama8b.json \
+    --judge /scratch/rc5898/hf_models/Llama-3.1-8B-Instruct
+
 hf download meta-llama/Llama-3.1-70B \
   --local-dir /scratch/$USER/hf_models/Llama-3.1-70B
 """
@@ -57,7 +62,11 @@ def evaluate_simulators(input_file, output_file, judge_model):
     eval_targets = [r for r in results if r["metadata"]["persona"]["demographic"] != "Unmarked"]
 
     print(f"Loading Judge Model: {judge_model}...")
-    llm = LLM(model=judge_model, tensor_parallel_size=1)
+    llm = LLM(
+        model=judge_model,
+        tensor_parallel_size=1,
+        gpu_memory_utilization=0.8
+    )
     tokenizer = AutoTokenizer.from_pretrained(judge_model)
     sampling_params = SamplingParams(temperature=0.0, max_tokens=150) # Temp 0 for deterministic judging
 
