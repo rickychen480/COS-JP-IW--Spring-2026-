@@ -65,7 +65,7 @@ def evaluate_simulators(input_file, output_file, judge_model):
     
     llm = LLM(
         model=judge_model, 
-        tensor_parallel_size=1,
+        tensor_parallel_size=2,
         quantization="awq",
         gpu_memory_utilization=0.9,
         max_model_len=8192
