@@ -9,7 +9,7 @@
 #SBATCH --error=slurm-%j.err          ## Save errors to this file
 
 eval "$(conda shell.bash hook)"
-conda activate env
+conda activate scratch/$USER/conda_envs/env
 
 echo "Provisioning local scratch on compute node..."
 hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
@@ -17,9 +17,9 @@ hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
 
 echo "Starting CoMPosT Evaluation with Llama 70B AWQ on 2 GPUs..."
 # Run the python script
-python compost_evaluator.py \
-    --data pilot_results.json \
-    --out compost_llama70b_awq.json \
+python compost/judge-llm/compost_evaluator.py \
+    --data results/pilot_results.json \
+    --out compost/results/compost_llama70b.json \
     --judge /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4
 
 echo "Evaluation Complete!"
