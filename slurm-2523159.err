@@ -1,0 +1,51 @@
+Fetching 19 files:   0%|          | 0/19 [00:00<?, ?it/s]Downloading 'model-00002-of-00009.safetensors' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/yuVulc4YeTNXejtaZ2kK8j1ycp0=.91e1bccca02d6f7799e15f8428176313a470c1763e9a28cde9444c6f9228e8d0.incomplete'
+Downloading 'generation_config.json' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/3EVKVggOldJcKSsGjSdoUCN1AyQ=.c85e356463cb94425264a907d7c3fea022326e80.incomplete'
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/generation_config.json
+Downloading 'LICENSE' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/DhCjcNQuMpl4FL346qr3tvNUCgY=.a7c3ca16cee30425ed6ad841a809590f2bcbf290.incomplete'
+Downloading 'USE_POLICY.md' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/UcPfAI5B08awK9_TiALuc0iOThI=.81ebb55902285e8dd5804ccf423d17ffb2a622ee.incomplete'
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/LICENSE
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/USE_POLICY.md
+Downloading 'model-00003-of-00009.safetensors' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/UZV6EydrdFXcgvC-VQGG8yg3h9I=.683afcf7c573c9daed296a0c032ea8dadf65e3545345ea6d6f5f98e969e0aafa.incomplete'
+Downloading 'model-00004-of-00009.safetensors' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/6LdFF-WbnM4VOetjGJ3GtcQ2jF4=.e4b67a751698f7ae14cad445f0931a2f0cd43e48c9a6db25fe2c4efedfcc8964.incomplete'
+Downloading 'README.md' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/Xn7B-BWUGOee2Y6hCZtEhtFu4BE=.712bd48346a78432b029ae639b320591ad472cde.incomplete'
+Downloading 'config.json' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/8_PA_wEVGiVa2goH2H4KQOQpvVY=.43971dc513f78554ddb3b666a3d255c1d96b0b92.incomplete'
+Downloading '.gitattributes' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/wPaCkH-WbT7GsmxMKKrNZTV4nSM=.a6344aac8c09253b3b630fb776ae94478aa0275b.incomplete'
+Downloading 'model-00001-of-00009.safetensors' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/DmO5O4jlgxnBHJKLvjYW_mpyWy8=.f1e5572d6b0bb1a5bf71cce73c069cffa03dd0d1fbe38bb2b85056e50dd76476.incomplete'
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/config.json
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/README.md
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.gitattributes
+Fetching 19 files:   5%|▌         | 1/19 [00:00<00:05,  3.08it/s]Downloading 'model-00007-of-00009.safetensors' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/40dGrjlKyxdmpKjk-97To6ZlClg=.0c2757078c06ea33142d490664a77dfba021cffa4b2155ba7203481f3a72e3b9.incomplete'
+Downloading 'model-00006-of-00009.safetensors' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/KJ8cCBR2J7aBLF_InTWDtQJlP5U=.115e2ebd500b97d6ce6847cc2ebf15d8ed183ac9dce629b78aa9655ac98730e7.incomplete'
+Downloading 'model-00008-of-00009.safetensors' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/-FqrZZ9xFsMdHzzrhYGv4rf7zYQ=.11f968a3247058e30fe184d0817c26f9f394d2bdea744f9491e50a8d2595f9d5.incomplete'
+Downloading 'model-00005-of-00009.safetensors' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/pCSygD-fZXfXjpb3HvS9YcXPzGk=.8cff18b15c84f52e9dccaa870d42aa29b9444c1ad9cc9a1c69a1708a88ff1ac3.incomplete'
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/model-00008-of-00009.safetensors
+Downloading 'model-00009-of-00009.safetensors' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/_rpzUhTkYXMRzx1YZhMdbHmD_T8=.c979ddf3feae9f9074a741187a2b4746a694b749d792c6b19a7956ad3ac84de8.incomplete'
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/model-00003-of-00009.safetensors
+Downloading 'model.safetensors.index.json' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/yVzAsSxRSINSz-tQbpx-TLpfkLU=.fb9c6b81cc3ee82aacca1c1842097217436ab2d0.incomplete'
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/model.safetensors.index.json
+Downloading 'special_tokens_map.json' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/ahkChHUJFxEmOdq5GDFEmerRzCY=.110786f3bf232f6cc72f4fa08b432a2c700f78ba.incomplete'
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/special_tokens_map.json
+Downloading 'tokenizer.json' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/HgM_lKo9sdSCfRtVg7MMFS7EKqo=.f916e71031fa08f3c6ef1680a590c15b52d3cdd9.incomplete'
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/model-00007-of-00009.safetensors
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/tokenizer.json
+Downloading 'tokenizer_config.json' to '/scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/.cache/huggingface/download/vzaExXFZNBay89bvlQv-ZcI6BTg=.db88166e2bc4c799fd5d1ae643b75e84d03ee70e.incomplete'
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/tokenizer_config.json
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/model-00004-of-00009.safetensors
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/model-00006-of-00009.safetensors
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/model-00005-of-00009.safetensors
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/model-00001-of-00009.safetensors
+Fetching 19 files:  37%|███▋      | 7/19 [00:36<01:05,  5.50s/it]Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/model-00002-of-00009.safetensors
+Download complete. Moving file to /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4/model-00009-of-00009.safetensors
+Fetching 19 files:  79%|███████▉  | 15/19 [00:37<00:08,  2.09s/it]Fetching 19 files: 100%|██████████| 19/19 [00:37<00:00,  1.98s/it]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards:   0% Completed | 0/9 [00:00<?, ?it/s]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards:  11% Completed | 1/9 [00:01<00:10,  1.30s/it]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards:  22% Completed | 2/9 [00:01<00:04,  1.42it/s]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards:  33% Completed | 3/9 [00:02<00:05,  1.03it/s]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards:  44% Completed | 4/9 [00:04<00:05,  1.17s/it]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards:  56% Completed | 5/9 [00:05<00:04,  1.15s/it]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards:  67% Completed | 6/9 [00:06<00:03,  1.25s/it]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards:  78% Completed | 7/9 [00:08<00:02,  1.32s/it]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards:  89% Completed | 8/9 [00:09<00:01,  1.37s/it]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards: 100% Completed | 9/9 [00:10<00:00,  1.24s/it]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m Loading safetensors checkpoint shards: 100% Completed | 9/9 [00:10<00:00,  1.20s/it]
+[0;36m(EngineCore_DP0 pid=1258212)[0;0m [0;36m(Worker_TP0 pid=1258219)[0;0m 
