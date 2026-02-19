@@ -2,7 +2,7 @@
 python compost_evaluator.py \
     --data pilot_results.json \
     --out compost_llama8b.json \
-    --model /scratch/rc5898/hf_models/Llama-3.1-70B
+    --judge /scratch/rc5898/hf_models/Llama-3.1-70B
 
 hf download meta-llama/Llama-3.1-70B \
   --local-dir /scratch/$USER/hf_models/Llama-3.1-70B
