@@ -10,12 +10,16 @@
 
 conda activate env
 
-echo "Starting CoMPosT Evaluation with Llama 70B AWQ on 2 GPUs..."
+echo "Provisioning local scratch on compute node..."
+hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
+    --local-dir /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
+    --local-dir-use-symlinks False
 
+echo "Starting CoMPosT Evaluation with Llama 70B AWQ on 2 GPUs..."
 # Run the python script
 python compost_evaluator.py \
     --data pilot_results.json \
     --out compost_llama70b_awq.json \
-    --judge /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4
+    --judge /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4
 
 echo "Evaluation Complete!"
