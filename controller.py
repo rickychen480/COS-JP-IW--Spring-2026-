@@ -1,7 +1,13 @@
 """
 python controller.py \
-  --data data/scenarios.json \
-  --out results/pilot_results.json \
+  --data data/target_simulations.json \
+  --out results/pilot/target_simulations.json \
+  --model /scratch/rc5898/hf_models/Llama-3.1-8B-Instruct \
+  --limit 10
+
+python controller.py \
+  --data data/default_topics.json \
+  --out results/pilot/default_topics.json \
   --model /scratch/rc5898/hf_models/Llama-3.1-8B-Instruct \
   --limit 10
 
