@@ -1,0 +1,8 @@
+
+EnvironmentLocationNotFound: Not a conda environment: /auto/u/rc5898/COS-JP-IW--Spring-2026-/scratch/rc5898/conda_envs/env
+
+/var/spool/slurmd/job2523382/slurm_script: line 15: hf: command not found
+Traceback (most recent call last):
+  File "/auto/u/rc5898/COS-JP-IW--Spring-2026-/compost/judge-llm/compost_evaluator.py", line 20, in <module>
+    from vllm import LLM, SamplingParams
+ModuleNotFoundError: No module named 'vllm'
