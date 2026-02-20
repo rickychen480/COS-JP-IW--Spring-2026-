@@ -1,12 +1,12 @@
 """
 python compost/judge-llm/compost_evaluator.py \
     --data results/pilot_results.json \
-    --out compost/results/compost_llama8b.json \
+    --out results/compost/judge-llm/compost_llama8b.json \
     --judge /scratch/rc5898/hf_models/Llama-3.1-8B-Instruct
 
 python compost/judge-llm/compost_evaluator.py \
     --data results/pilot_results.json \
-    --out compost/results/compost_llama70b.json \
+    --out results/compost/judge-llm/compost_llama70b.json \
     --judge /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4
 
 hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
