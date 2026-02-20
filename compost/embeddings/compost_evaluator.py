@@ -87,7 +87,7 @@ def get_log_odds(df1, df2, df0):
 
     return delta
 
-def get_seed_words(df1, df2, df0, threshold=0.50):
+def get_seed_words(df1, df2, df0, threshold=1.96):
     """Extracts words with a z-score above the threshold."""
     deltas = get_log_odds(df1['response'], df2['response'], df0['response'])
     top_words = [k for k, v in deltas.items() if v > threshold]
@@ -196,6 +196,11 @@ def measure_exaggeration(df, model, default_persona="Unmarked", default_topic="g
             print(f"Persona: {p:<30} Topic: {t[:20]:<20} Exaggeration: {exag_score:.3f}")
 
     df_scores = pd.DataFrame(exag_scores)
+
+    if df_scores.empty:
+        print("\n[WARNING] No exaggeration scores were calculated.")
+        return df_scores
+
     print("\nMEAN EXAGGERATION BY PERSONA (Lower is better):")
     print(df_scores.groupby('persona')['exaggeration'].mean().sort_values(ascending=False))
     return df_scores
