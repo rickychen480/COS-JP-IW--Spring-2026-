@@ -7,6 +7,8 @@
 #SBATCH --time=04:00:00
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err 
+#SBATCH --mail-type=end
+#SBATCH --mail-user=ricky.chen@princeton.edu   
 
 # Route massive caches to the COMPUTE node's scratch
 export CONDA_PKGS_DIRS=/scratch/$USER/conda_pkgs
