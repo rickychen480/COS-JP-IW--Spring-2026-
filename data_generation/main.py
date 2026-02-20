@@ -7,10 +7,14 @@ import generators as gen
 
 
 NUM_SAMPLES = 10000
-OUT_FILE = Path("data/scenarios.json")
+OUT_DIR = Path("data")
 
 
 def main() -> None:
+    target_file = OUT_DIR / "target_simulations.json"
+    control_file = OUT_DIR / "control_simulations.json"
+    default_topic_file = OUT_DIR / "default_topics.json"
+
     tasks_file = Path("data_generation/metalwoz/tasks.txt")
     tasks_list = []
 
@@ -31,7 +35,9 @@ def main() -> None:
         print("No high-stakes tasks found. Exiting to avoid errors.")
         return
 
-    scenarios = []
+    target_simulations = []
+    control_simulations = []
+
     for _ in range(NUM_SAMPLES):
         # Extract attributes from MetaLWOz (Goal Source) - from high-stakes domains
         mw_sample = random.choice(high_stakes_tasks)
@@ -42,27 +48,34 @@ def main() -> None:
         gender = random.choice(const.GENDERS)
         occupation = random.choice(const.OCCUPATIONS_GRID)
 
-        scenarios.extend(
-            gen.generate_task_scenarios(goal, demographic, gender, occupation)
-        )
+        task_variants = gen.generate_task_scenarios(goal, demographic, gender, occupation)
+        for variant in task_variants:
+            if variant["variant_type"] in ("implicit", "explicit"):
+                target_simulations.append(variant)
+            elif variant["variant_type"] == "control":
+                control_simulations.append(variant)
 
     default_topics = gen.generate_default_topic_scenarios()
-    scenarios.extend(default_topics)
 
-    with OUT_FILE.open("w", encoding="utf-8") as f:
-        json.dump(scenarios, f, indent=2)
+    with target_file.open("w", encoding="utf-8") as f:
+        json.dump(target_simulations, f, indent=2)
 
-    counts = {
-        variant: sum(1 for s in scenarios if s["variant_type"] == variant)
-        for variant in ("explicit", "implicit", "control", "default_topic")
-    }
+    with control_file.open("w", encoding="utf-8") as f:
+        json.dump(control_simulations, f, indent=2)
+        
+    with default_topic_file.open("w", encoding="utf-8") as f:
+        json.dump(default_topics, f, indent=2)
 
-    print(f"\nSuccessfully saved {len(scenarios)} total scenarios to {OUT_FILE}.")
+    explicit_count = sum(1 for s in target_simulations if s["variant_type"] == "explicit")
+    implicit_count = sum(1 for s in target_simulations if s["variant_type"] == "implicit")
+
+    print(f"\nSuccessfully saved scenarios to {OUT_DIR}.")
     print("Dataset Breakdown:")
-    print(f"  - Explicit Variants (Target): {counts['explicit']}")
-    print(f"  - Implicit Variants (Target): {counts['implicit']}")
-    print(f"  - Control Variants (Default-Persona): {counts['control']}")
-    print(f"  - Default-Topic Variants: {counts['default_topic']}")
+    print(f"  - target_simulations.json: {len(target_simulations)} total")
+    print(f"      -> Explicit Variants: {explicit_count}")
+    print(f"      -> Implicit Variants: {implicit_count}")
+    print(f"  - control_simulations.json: {len(control_simulations)} total")
+    print(f"  - default_topics.json: {len(default_topics)} total")
 
 
 if __name__ == "__main__":
