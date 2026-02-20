@@ -18,11 +18,8 @@ from sklearn.metrics import accuracy_score
 from numpy import dot
 from numpy.linalg import norm
 
-# Ensure nltk punkt is downloaded for sentence tokenization
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
+
+nltk.download('punkt_tab')
 
 def load_transcripts_to_dataframe(json_paths):
     """Parses multiple JSON files into a single Pandas DataFrame."""
