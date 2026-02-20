@@ -14,10 +14,11 @@ export PIP_CACHE_DIR=/scratch/$USER/pip_cache
 export HF_HUB_CACHE=/scratch/$USER/hf_cache
 
 eval "$(conda shell.bash hook)"
-conda create --prefix /scratch/$USER/conda_envs/env python=3.12 -y
-conda activate /scratch/$USER/conda_envs/env
+conda create --prefix /scratch/$USER/env python=3.12 -y
+conda activate /scratch/$USER/env
 
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+pip install torch transformers vllm huggingface_hub --ignore-installed packaging
 
 echo "Provisioning local scratch on compute node..."
 hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
