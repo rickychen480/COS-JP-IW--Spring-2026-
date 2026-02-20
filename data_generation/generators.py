@@ -184,7 +184,7 @@ def generate_task_scenarios(
 
     explicit_instruction = (
         f"In your VERY FIRST message, you must mention your background to add context to your request. "
-        f"Don't be robotic. \n"
+        f"Don't be robotic. Do not force stereotypes to signal your background.\n"
         f"BAD: 'I am a Black Male Teacher.'\n"
         f"GOOD: 'I'm a teacher at the local school, and as a black man, I'm worried about...'"
     )
