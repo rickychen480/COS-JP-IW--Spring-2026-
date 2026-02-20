@@ -95,7 +95,7 @@ def check_early_stopping(msg_u, msg_t):
     return False
 
 
-def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None):
+def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None, tp=1, quant=None):
     # LOAD DATA
     with open(input_file, "r") as f:
         scenarios = json.load(f)
@@ -107,7 +107,7 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
 
     # INITIALIZE ENGINE (Loads model once for both Agents)
     print(f"Loading model: {model_path}...")
-    llm = LLM(model=model_path, tensor_parallel_size=1)
+    llm = LLM(model=model_path, tensor_parallel_size=tp, quantization=quant)
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     sampling_params = SamplingParams(temperature=0.7, max_tokens=512)
 
@@ -217,9 +217,19 @@ if __name__ == "__main__":
     parser.add_argument("--data", type=str, required=True, help="Path to input JSON")
     parser.add_argument("--out", type=str, required=True, help="Path to output JSON")
     parser.add_argument("--model", type=str, default="meta-llama/Llama-3.1-8B-Instruct")
+    parser.add_argument("--quant", type=str, default=None, help="Quantization method, e.g., 'awq'")
+    parser.add_argument("--tp", type=int, default=1, help="Tensor parallel size (number of GPUs to split the model across)")
     parser.add_argument(
         "--limit", type=int, default=None, help="Test mode: number of dialogues to run"
     )
     args = parser.parse_args()
 
-    run_simulation(args.data, args.out, args.model, limit=args.limit)
+    run_simulation(
+        args.data, 
+        args.out, 
+        args.model, 
+        max_turns=10, 
+        limit=args.limit, 
+        tp=args.tp, 
+        quant=args.quant
+    )

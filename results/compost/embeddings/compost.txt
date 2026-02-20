@@ -1,0 +1,274 @@
+[nltk_data] Downloading package punkt_tab to /u/rc5898/nltk_data...
+[nltk_data]   Unzipping tokenizers/punkt_tab.zip.
+1. Loading Data...
+Loading results/pilot/target_simulations.json...
+Loading results/pilot/control_simulations.json...
+Loading results/pilot/default_topics.json...
+Loaded 2120 total transcripts.
+2. Generating Sentence-BERT Embeddings for all transcripts...
+
+--- MEASURING INDIVIDUATION ---
+Persona: Hispanic Male Nurse                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Cashier             Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Mechanic                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Cashier                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male Driver                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Doctor                 Individuation (Acc): 0.99 (Target > 0.5)
+Persona: Asian Male Editor                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Male Doctor                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Sheriff                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Nurse                    Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Doctor                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Nurse                  Individuation (Acc): 0.99 (Target > 0.5)
+Persona: Hispanic Female CEO                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male Nurse                    Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male Sheriff                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female CEO                    Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Editor                   Individuation (Acc): 0.99 (Target > 0.5)
+Persona: Hispanic Male Lawyer                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Lawyer       Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Secretary                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Lawyer              Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Secretary              Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female Editor                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female Cleaner                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Teacher                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Lawyer                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male CEO                      Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Male Teacher               Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Cleaner                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Cleaner                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Cashier                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Driver                   Individuation (Acc): 0.99 (Target > 0.5)
+Persona: White Male Nurse                    Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Cashier                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male Doctor                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Teacher             Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Sheriff                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Secretary    Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Sheriff             Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Teacher                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Editor              Individuation (Acc): 0.99 (Target > 0.5)
+Persona: Native American Male Nurse          Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Doctor       Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Cleaner                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male Mechanic                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male Cleaner                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male CEO                      Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Male Cleaner               Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Driver       Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male CEO            Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Nurse                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male Cleaner        Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male Sheriff                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Mechanic               Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Secretary           Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female CEO                    Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male Cashier                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Cashier      Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female Cashier                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male Driver                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male Teacher                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Driver                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male Mechanic                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female Lawyer                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Sheriff      Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Lawyer                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male Secretary                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Male Cashier               Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male Cashier                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Male Driver                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female CEO                    Individuation (Acc): 0.99 (Target > 0.5)
+Persona: Asian Female Sheriff                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Secretary              Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Editor                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Driver              Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Mechanic               Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Cleaner             Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Teacher      Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Male Secretary             Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Male CEO                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male Secretary                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Driver                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male Editor                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male Cleaner                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female CEO          Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male Cashier        Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male Teacher        Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Editor       Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Mechanic     Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male Lawyer                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Male Doctor                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Mechanic            Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Lawyer                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Editor                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Doctor              Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female Driver                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male Lawyer                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male Editor         Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Nurse        Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male Driver         Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female Teacher                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Male Sheriff               Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female Secretary              Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male CEO                      Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female Mechanic               Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Female Nurse               Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male Doctor         Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male Sheriff        Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Male Editor                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Female Cleaner      Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male Secretary      Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Black Female Teacher                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female Nurse                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Male Teacher                  Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Hispanic Male Mechanic              Individuation (Acc): 1.00 (Target > 0.5)
+Persona: White Female Sheriff                Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male Mechanic       Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Male Doctor                   Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Asian Female Doctor                 Individuation (Acc): 1.00 (Target > 0.5)
+Persona: Native American Male Lawyer         Individuation (Acc): 1.00 (Target > 0.5)
+
+--- MEASURING EXAGGERATION (CARICATURE) ---
+Persona: Hispanic Male Nurse            Topic: Tell the bot you've  Exaggeration: 0.022
+Persona: Hispanic Male Teacher          Topic: Tell the bot you've  Exaggeration: 0.102
+Persona: Hispanic Female Lawyer         Topic: You want to doublech Exaggeration: 0.008
+Persona: White Female Teacher           Topic: You want to doublech Exaggeration: 0.015
+Persona: White Male Nurse               Topic: You want to doublech Exaggeration: 0.125
+Persona: Native American Male CEO       Topic: You want to doublech Exaggeration: 0.174
+Persona: White Male Sheriff             Topic: You want to doublech Exaggeration: 0.134
+Persona: Native American Female Teacher Topic: You want to doublech Exaggeration: 0.024
+Persona: Native American Male Teacher   Topic: You want to doublech Exaggeration: 0.070
+Persona: Hispanic Male Nurse            Topic: Ask the bot if you s Exaggeration: 0.069
+Persona: Hispanic Male Teacher          Topic: Ask the bot if you s Exaggeration: 0.057
+Persona: White Male Nurse               Topic: Ask the bot if you s Exaggeration: 0.206
+Persona: Hispanic Female Editor         Topic: Ask the bot if you s Exaggeration: 0.023
+Persona: Hispanic Male Secretary        Topic: Ask the bot if you s Exaggeration: 0.305
+Persona: Native American Male Editor    Topic: Ask the bot if you s Exaggeration: 0.136
+Persona: White Female Sheriff           Topic: Ask the bot if you s Exaggeration: 0.216
+Persona: White Female Teacher           Topic: Ask the bot to upgra Exaggeration: 0.068
+Persona: Hispanic Female Teacher        Topic: Ask the bot to upgra Exaggeration: 0.232
+Persona: Hispanic Female Editor         Topic: Ask the bot to upgra Exaggeration: 0.045
+Persona: Asian Female Teacher           Topic: Ask the bot to upgra Exaggeration: 0.065
+Persona: Hispanic Male Nurse            Topic: Tell the bot you got Exaggeration: 0.101
+Persona: Black Male Lawyer              Topic: Tell the bot you got Exaggeration: 0.215
+Persona: Hispanic Female Sheriff        Topic: Tell the bot you got Exaggeration: 0.104
+Persona: Hispanic Female Nurse          Topic: Tell the bot you got Exaggeration: 0.092
+Persona: Asian Female Nurse             Topic: Tell the bot you got Exaggeration: 0.150
+Persona: Hispanic Male Doctor           Topic: Ask if an email from Exaggeration: 0.117
+Persona: Black Female Nurse             Topic: Ask if an email from Exaggeration: 0.102
+Persona: Asian Male Nurse               Topic: Ask if an email from Exaggeration: 0.067
+Persona: Black Female CEO               Topic: Ask if an email from Exaggeration: 0.187
+Persona: White Male Lawyer              Topic: Ask if an email from Exaggeration: 0.165
+Persona: Hispanic Female Teacher        Topic: Ask whether or not t Exaggeration: 0.091
+Persona: Hispanic Female Nurse          Topic: Ask whether or not t Exaggeration: 0.068
+Persona: Black Female Nurse             Topic: Ask what your health Exaggeration: 0.056
+Persona: Asian Male Nurse               Topic: Ask what your health Exaggeration: 0.082
+Persona: White Female Teacher           Topic: Ask what your health Exaggeration: -0.033
+Persona: Hispanic Female Sheriff        Topic: Ask what your health Exaggeration: 0.148
+Persona: Native American Male Teacher   Topic: Ask what your health Exaggeration: 0.130
+Persona: Native American Female Mechanic Topic: Ask what your health Exaggeration: 0.071
+Persona: Native American Male Doctor    Topic: Ask what your health Exaggeration: 0.039
+Persona: Asian Female Nurse             Topic: Ask what your health Exaggeration: -0.036
+Persona: Black Female CEO               Topic: Tell the bot that yo Exaggeration: 0.045
+Persona: White Male Lawyer              Topic: Tell the bot that yo Exaggeration: 0.075
+Persona: Hispanic Female Lawyer         Topic: You want to know if  Exaggeration: -0.013
+Persona: White Male Sheriff             Topic: You want to know if  Exaggeration: 0.157
+Persona: Native American Female CEO     Topic: You want to know if  Exaggeration: 0.072
+Persona: Hispanic Female Mechanic       Topic: You want to know if  Exaggeration: 0.209
+Persona: Hispanic Female Nurse          Topic: You want to know if  Exaggeration: 0.075
+Persona: Native American Male Secretary Topic: You want to know if  Exaggeration: 0.048
+Persona: Hispanic Male Nurse            Topic: Try to put money fro Exaggeration: -0.004
+Persona: Black Female Nurse             Topic: Try to put money fro Exaggeration: 0.094
+Persona: Asian Male Nurse               Topic: Try to put money fro Exaggeration: 0.135
+Persona: Asian Female CEO               Topic: Try to put money fro Exaggeration: 0.074
+Persona: Black Male Editor              Topic: Try to put money fro Exaggeration: 0.085
+Persona: White Female Teacher           Topic: Try to put money fro Exaggeration: 0.057
+Persona: White Male Nurse               Topic: Try to put money fro Exaggeration: 0.051
+Persona: Hispanic Female Editor         Topic: Try to put money fro Exaggeration: 0.022
+Persona: White Female Mechanic          Topic: Try to put money fro Exaggeration: 0.090
+Persona: Native American Female Teacher Topic: Try to put money fro Exaggeration: 0.068
+Persona: Hispanic Male Secretary        Topic: Try to put money fro Exaggeration: 0.117
+Persona: Hispanic Male Editor           Topic: Try to put money fro Exaggeration: 0.061
+Persona: Black Female Nurse             Topic: Ask the bot to find  Exaggeration: 0.130
+Persona: Asian Male Nurse               Topic: Ask what your curren Exaggeration: 0.218
+Persona: Hispanic Male Teacher          Topic: Ask what your curren Exaggeration: 0.195
+Persona: Hispanic Female Sheriff        Topic: Ask what your curren Exaggeration: 0.230
+Persona: Native American Female Teacher Topic: Ask what your curren Exaggeration: 0.222
+Persona: White Male Lawyer              Topic: Ask what your curren Exaggeration: 0.198
+Persona: White Female Editor            Topic: Ask what your curren Exaggeration: 0.202
+Persona: Native American Male Editor    Topic: Ask what your curren Exaggeration: 0.076
+Persona: Hispanic Female Nurse          Topic: Ask what your curren Exaggeration: 0.156
+Persona: Asian Male Nurse               Topic: Tell the bot you've  Exaggeration: 0.085
+Persona: Black Male Lawyer              Topic: Tell the bot you've  Exaggeration: 0.243
+Persona: Hispanic Female Sheriff        Topic: Tell the bot you've  Exaggeration: 0.090
+Persona: Black Female Nurse             Topic: Ask if there any Pen Exaggeration: 0.039
+Persona: Hispanic Female Lawyer         Topic: Ask if there any Pen Exaggeration: 0.001
+Persona: Hispanic Male Doctor           Topic: Tell the bot that yo Exaggeration: 0.060
+Persona: Hispanic Male Teacher          Topic: Tell the bot that yo Exaggeration: 0.153
+Persona: Asian Male Lawyer              Topic: Tell the bot that yo Exaggeration: 0.151
+Persona: Black Male Lawyer              Topic: Ask the bot how you  Exaggeration: 0.145
+Persona: Hispanic Male Teacher          Topic: Ask the bot how you  Exaggeration: 0.067
+Persona: White Male Nurse               Topic: Ask the bot how you  Exaggeration: 0.109
+Persona: Hispanic Female Teacher        Topic: Ask the bot how you  Exaggeration: 0.211
+Persona: Hispanic Male Doctor           Topic: Ask the bot how much Exaggeration: 0.142
+Persona: White Female Teacher           Topic: Ask the bot how much Exaggeration: 0.034
+Persona: Native American Female Mechanic Topic: Ask the bot how much Exaggeration: 0.128
+Persona: Hispanic Female Sheriff        Topic: Ask what the company Exaggeration: 0.040
+Persona: Native American Male Secretary Topic: Ask what the company Exaggeration: 0.016
+Persona: White Male Nurse               Topic: You are worried that Exaggeration: 0.119
+Persona: Hispanic Female Sheriff        Topic: You are worried that Exaggeration: 0.062
+Persona: Native American Male Teacher   Topic: You are worried that Exaggeration: 0.088
+Persona: Asian Female Nurse             Topic: You are worried that Exaggeration: 0.080
+Persona: White Male Teacher             Topic: You are worried that Exaggeration: 0.102
+Persona: Asian Male Nurse               Topic: Ask how much data yo Exaggeration: 0.166
+Persona: Black Male Editor              Topic: Ask how much data yo Exaggeration: 0.116
+Persona: White Male CEO                 Topic: Ask how much data yo Exaggeration: 0.243
+Persona: Hispanic Male Secretary        Topic: Ask how much data yo Exaggeration: 0.098
+Persona: White Female Editor            Topic: Ask how much data yo Exaggeration: 0.106
+Persona: Native American Male Doctor    Topic: Ask how much data yo Exaggeration: 0.130
+Persona: Asian Female Nurse             Topic: Ask how much data yo Exaggeration: 0.012
+Persona: Black Female Nurse             Topic: Ask why you're getti Exaggeration: 0.026
+Persona: Hispanic Female Sheriff        Topic: Ask why you're getti Exaggeration: 0.052
+Persona: Black Female CEO               Topic: Ask why you're getti Exaggeration: 0.158
+
+MEAN EXAGGERATION BY PERSONA (Lower is better):
+persona
+White Male CEO                     0.242904
+White Female Sheriff               0.216253
+Hispanic Female Mechanic           0.208658
+Black Male Lawyer                  0.200937
+Hispanic Female Teacher            0.178267
+Native American Male CEO           0.174059
+Hispanic Male Secretary            0.173496
+White Female Editor                0.154110
+Asian Male Lawyer                  0.150817
+White Male Lawyer                  0.145947
+White Male Sheriff                 0.145166
+Black Female CEO                   0.129896
+Asian Male Nurse                   0.125551
+White Male Nurse                   0.122027
+Hispanic Male Teacher              0.114991
+Hispanic Male Doctor               0.106565
+Native American Male Editor        0.106042
+Native American Female Teacher     0.104754
+Hispanic Female Sheriff            0.103737
+White Male Teacher                 0.102369
+Black Male Editor                  0.100315
+Native American Female Mechanic    0.099862
+Hispanic Female Nurse              0.097662
+Native American Male Teacher       0.096097
+White Female Mechanic              0.090105
+Native American Male Doctor        0.084689
+Black Female Nurse                 0.074701
+Asian Female CEO                   0.073900
+Native American Female CEO         0.072144
+Asian Female Teacher               0.064944
+Hispanic Male Editor               0.061056
+Asian Female Nurse                 0.051396
+Hispanic Male Nurse                0.046958
+Native American Male Secretary     0.032312
+Hispanic Female Editor             0.030109
+White Female Teacher               0.028193
+Hispanic Female Lawyer            -0.001561
+Name: exaggeration, dtype: float32
