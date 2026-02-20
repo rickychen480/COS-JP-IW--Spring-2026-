@@ -1,5 +1,6 @@
 """
-python empirical_compost.py --data all_transcripts.json
+python compost/embeddings/compost_evaluator.py \
+    --data data/target_simulations.json data/control_simulations.json data/default_topics.json
 """
 
 import json
@@ -23,37 +24,42 @@ try:
 except LookupError:
     nltk.download('punkt')
 
-def load_transcripts_to_dataframe(json_path):
-    """Parses your specific JSON structure into a Pandas DataFrame."""
-    with open(json_path, 'r') as f:
-        data = json.load(f)
-    
+def load_transcripts_to_dataframe(json_paths):
+    """Parses multiple JSON files into a single Pandas DataFrame."""
     rows = []
-    for d in data:
-        persona_dict = d['metadata']['persona']
-        # Define the Persona String. Treat the control group as the "Default-Persona"
-        if persona_dict.get('demographic') == 'Unmarked':
-            p_str = 'Unmarked'
-        else:
-            p_str = f"{persona_dict.get('demographic')} {persona_dict.get('gender')} {persona_dict.get('occupation')}"
+    
+    # Loop through all provided file paths
+    for path in json_paths:
+        print(f"Loading {path}...")
+        with open(path, 'r') as f:
+            data = json.load(f)
         
-        t_str = d['metadata']['task_description']
-        
-        # Flatten all "User" dialogue turns into a single string for analysis
-        user_text = " ".join([t['content'] for t in d['transcript'] if t['speaker'] == 'User'])
-        
-        rows.append({
-            'persona': p_str,
-            'topic': t_str,
-            'response': user_text
-        })
+        for d in data:
+            persona_dict = d['metadata']['persona']
+            # Define the Persona String. Treat the control group as the "Default-Persona"
+            if persona_dict.get('demographic') == 'Unmarked':
+                p_str = 'Unmarked'
+            else:
+                p_str = f"{persona_dict.get('demographic')} {persona_dict.get('gender')} {persona_dict.get('occupation')}"
+            
+            t_str = d['metadata']['task_description']
+            
+            # Flatten all "User" dialogue turns into a single string for analysis
+            user_text = " ".join([t['content'] for t in d['transcript'] if t['speaker'] == 'User'])
+            
+            rows.append({
+                'persona': p_str,
+                'topic': t_str,
+                'response': user_text
+            })
+            
     return pd.DataFrame(rows)
 
 def get_log_odds(df1, df2, df0):
     """Monroe et al. Fightin' Words method to identify top words."""
-    counts1 = defaultdict(int, df1.str.lower().str.split(expand=True).stack().replace('[^a-zA-Z\s]','',regex=True).value_counts().to_dict())
-    counts2 = defaultdict(int, df2.str.lower().str.split(expand=True).stack().replace('[^a-zA-Z\s]','',regex=True).value_counts().to_dict())
-    prior = defaultdict(int, df0.str.lower().str.split(expand=True).stack().replace('[^a-zA-Z\s]','',regex=True).value_counts().to_dict())
+    counts1 = defaultdict(int, df1.str.lower().str.split(expand=True).stack().replace(r'[^a-zA-Z\s]','',regex=True).value_counts().to_dict())
+    counts2 = defaultdict(int, df2.str.lower().str.split(expand=True).stack().replace(r'[^a-zA-Z\s]','',regex=True).value_counts().to_dict())
+    prior = defaultdict(int, df0.str.lower().str.split(expand=True).stack().replace(r'[^a-zA-Z\s]','',regex=True).value_counts().to_dict())
 
     sigma = defaultdict(float)
     delta = defaultdict(float)
@@ -196,12 +202,14 @@ def measure_exaggeration(df, model, default_persona="Unmarked", default_topic="g
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, required=True, help="Path to combined transcripts JSON")
+    parser.add_argument("--data", type=str, nargs='+', required=True, help="Paths to the transcript JSONs")
     args = parser.parse_args()
 
     print("1. Loading Data...")
-    df = load_transcripts_to_dataframe(args.data)
-    
+    df = load_transcripts_to_dataframe(args.data) 
+    print(f"Loaded {len(df)} total transcripts.")
+
+    # TODO: use a diff model?
     print("2. Generating Sentence-BERT Embeddings for all transcripts...")
     model = SentenceTransformer('all-mpnet-base-v2')
     df['embedding'] = list(model.encode(df['response'].tolist()))
