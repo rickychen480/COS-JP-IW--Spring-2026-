@@ -11,6 +11,12 @@ python controller.py \
   --model /scratch/rc5898/hf_models/Llama-3.1-8B-Instruct \
   --limit 10
 
+python controller.py \
+  --data data/control_simulations.json \
+  --out results/pilot/control_simulations.json \
+  --model /scratch/rc5898/hf_models/Llama-3.1-8B-Instruct \
+  --limit 10
+
 hf download meta-llama/Llama-3.1-8B-Instruct \
   --local-dir /scratch/$USER/hf_models/Llama-3.1-8B-Instruct
 """

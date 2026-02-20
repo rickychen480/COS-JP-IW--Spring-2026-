@@ -1,6 +1,6 @@
 """
 python compost/embeddings/compost_evaluator.py \
-    --data data/target_simulations.json data/control_simulations.json data/default_topics.json
+    --data results/pilot/target_simulations.json results/pilot/control_simulations.json results/pilot/default_topics.json
 """
 
 import json
