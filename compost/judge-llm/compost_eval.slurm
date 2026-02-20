@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:2
 #SBATCH -c 8
 #SBATCH --mem=64G
-#SBATCH --t 04:00:00
+#SBATCH --time=04:00:00
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err 
 
