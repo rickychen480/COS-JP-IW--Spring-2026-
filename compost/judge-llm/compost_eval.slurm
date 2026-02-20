@@ -17,7 +17,7 @@ eval "$(conda shell.bash hook)"
 conda create --prefix /scratch/$USER/conda_envs/env python=3.12 -y
 conda activate /scratch/$USER/conda_envs/env
 
-pip install requirements.txt
+pip install -r requirements.txt
 
 echo "Provisioning local scratch on compute node..."
 hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
