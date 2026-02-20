@@ -107,7 +107,12 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
 
     # INITIALIZE ENGINE (Loads model once for both Agents)
     print(f"Loading model: {model_path}...")
-    llm = LLM(model=model_path, tensor_parallel_size=tp, quantization=quant)
+    llm = LLM(
+        model=model_path, 
+        tensor_parallel_size=tp, 
+        quantization=quant,
+        max_model_len=8192
+    )
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     sampling_params = SamplingParams(temperature=0.7, max_tokens=512)
 
@@ -200,15 +205,16 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
             if check_early_stopping(last_msg_u, msg_t):
                 d["done"] = True
 
-    # SAVE RESULTS
-    # TODO: Verify format aligns with the paper's needs
-    final_output = [
-        {"id": d["id"], "metadata": d["meta"], "transcript": d["transcript"]}
-        for d in active_dialogues
-    ]
+        # INCREMENTALLY SAVE RESULTS
+        # TODO: Verify format aligns with the paper's needs
+        final_output = [
+            {"id": d["id"], "metadata": d["meta"], "transcript": d["transcript"]}
+            for d in active_dialogues
+        ]
 
-    with open(output_file, "w") as f:
-        json.dump(final_output, f, indent=2)
+        with open(output_file, "w") as f:
+            json.dump(final_output, f, indent=2)
+    
     print(f"Simulation complete. Saved {len(final_output)} dialogues to {output_file}")
 
 
