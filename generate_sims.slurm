@@ -26,6 +26,7 @@ python -m pip install --upgrade pip
 pip install torch transformers vllm huggingface_hub --ignore-installed packaging
 
 echo "Provisioning local scratch on compute node..."
+source ~/.hf_token
 hf download meta-llama/Llama-3.1-8B-Instruct \
   --local-dir /scratch/$USER/hf_models/Llama-3.1-8B-Instruct
 
