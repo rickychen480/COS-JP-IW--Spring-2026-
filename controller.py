@@ -1,9 +1,9 @@
 """
 python controller.py \
-  --data data/intersectional_scenarios.json \
+  --data data/scenarios.json \
   --out results/pilot_results.json \
   --model /scratch/rc5898/hf_models/Llama-3.1-8B-Instruct \
-  --limit 1
+  --limit 10
 
 hf download meta-llama/Llama-3.1-8B-Instruct \
   --local-dir /scratch/$USER/hf_models/Llama-3.1-8B-Instruct
