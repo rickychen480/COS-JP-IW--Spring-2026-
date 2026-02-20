@@ -27,7 +27,7 @@ echo "Starting CoMPosT Evaluation with Llama 70B AWQ on 2 GPUs..."
 
 python compost/judge-llm/compost_evaluator.py \
     --data results/pilot_results.json \
-    --out compost/results/compost_llama70b.json \
+    --out results/compost/compost_llama70b.json \
     --judge /scratch/rc5898/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4
 
 echo "Evaluation Complete!"
