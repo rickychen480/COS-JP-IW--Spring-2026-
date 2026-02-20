@@ -87,7 +87,7 @@ def get_log_odds(df1, df2, df0):
 
     return delta
 
-def get_seed_words(df1, df2, df0, threshold=1.96):
+def get_seed_words(df1, df2, df0, threshold=0.50):
     """Extracts words with a z-score above the threshold."""
     deltas = get_log_odds(df1['response'], df2['response'], df0['response'])
     top_words = [k for k, v in deltas.items() if v > threshold]
