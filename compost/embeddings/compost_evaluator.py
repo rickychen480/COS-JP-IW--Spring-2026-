@@ -3,6 +3,11 @@ python compost/embeddings/compost_evaluator.py \
     --data data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json
+
+python compost/embeddings/compost_evaluator.py \
+    --data data/transcripts/Llama-3.1-8B-Instruct/control_simulations.json \
+        data/transcripts/Llama-3.1-8B-Instruct/default_topics.json \
+        data/transcripts/Llama-3.1-8B-Instruct/target_simulations.json
 """
 
 import json

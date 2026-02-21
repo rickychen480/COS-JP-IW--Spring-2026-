@@ -71,7 +71,8 @@ def generate_rich_context(
     Creates a specific motivation based on the task and persona status.
     This prevents the 'generic user' feel.
     """
-    # TODO: Expand this logic or use an LLM call here to generate unique backstories?
+    # TODO: Expand this logic or use an LLM call here to generate unique backstories.
+    # TODO: Remove voice context (to prevent overfocus on occupation)
     desc_lower = task_desc.lower()
 
     # Skip mismatched constraints

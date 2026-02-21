@@ -44,6 +44,8 @@ def main() -> None:
         goal = gen.extract_goal_from_metalwoz(mw_sample)
 
         # Apply Identity Grid (Augmentation)
+        # TODO: Fix identity selection to ensure statistical power across identities.
+        # TODO: Random sampling over 10,000 iterations will result in a roughly normal distribution, but it will not guarantee perfectly equal statistical power for every intersectional group, which is vital for your Differential Goal Completion Rate (d-GCR) metric.
         demographic = random.choice(const.RACES)
         gender = random.choice(const.GENDERS)
         occupation = random.choice(const.OCCUPATIONS_GRID)
