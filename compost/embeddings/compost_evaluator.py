@@ -1,9 +1,8 @@
 """
 python compost/embeddings/compost_evaluator.py \
-    --data results/pilot/target_simulations.json results/pilot/control_simulations.json results/pilot/default_topics.json
-
-python compost/embeddings/compost_evaluator.py \
-    --data results/pilot/target_simulations-llama_70b.json results/pilot/control_simulations-llama_70b.json results/pilot/default_topics-llama_70b.json    
+    --data data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
+        data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
+        data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json
 """
 
 import json
