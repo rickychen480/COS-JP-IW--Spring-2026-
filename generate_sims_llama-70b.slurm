@@ -36,8 +36,8 @@ echo "Starting all 3 generation tasks in parallel..."
 
 # Run Target Simulations on GPU 0 (The '&' at the end sends it to the background)
 CUDA_VISIBLE_DEVICES=0,1 python controller.py \
-  --data data/target_simulations.json \
-  --out results/pilot/target_simulations-llama_70b.json \
+  --data data/prompts/target_simulations.json \
+  --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json \
   --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
   --quant awq \
   --tp 2 \
@@ -45,8 +45,8 @@ CUDA_VISIBLE_DEVICES=0,1 python controller.py \
 
 # Run Control Simulations on GPU 1
 CUDA_VISIBLE_DEVICES=2,3 python controller.py \
-  --data data/control_simulations.json \
-  --out results/pilot/control_simulations-llama_70b.json \
+  --data data/prompts/control_simulations.json \
+  --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
   --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
   --quant awq \
   --tp 2 \
@@ -57,8 +57,8 @@ wait
 echo "Batch 1 finished! Starting Batch 2 (Default Topics)..."
 
 CUDA_VISIBLE_DEVICES=0,1 python controller.py \
-  --data data/default_topics.json \
-  --out results/pilot/default_topics-llama_70b.json \
+  --data data/prompts/default_topics.json \
+  --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
   --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
   --quant awq \
   --tp 2 &

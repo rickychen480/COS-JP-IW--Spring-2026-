@@ -7,7 +7,7 @@ import generators as gen
 
 
 NUM_SAMPLES = 10000
-OUT_DIR = Path("data")
+OUT_DIR = Path("data/prompts")
 
 
 def main() -> None:
