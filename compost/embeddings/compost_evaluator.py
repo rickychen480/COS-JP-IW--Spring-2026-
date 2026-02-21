@@ -10,18 +10,23 @@ import argparse
 import numpy as np
 import pandas as pd
 import math
+import re
 from collections import defaultdict
 import nltk
 from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 from numpy import dot
 from numpy.linalg import norm
 
 
 nltk.download("punkt_tab")
+
+def clean_text_for_matching(text):
+    """Cleans text exactly as done in get_log_odds to ensure regex matching aligns."""
+    return re.sub(r"[^a-zA-Z\s]", "", text.lower())
 
 
 def load_transcripts_to_dataframe(json_paths):
@@ -136,6 +141,7 @@ def measure_individuation(df, default_persona="Unmarked"):
 
     for p in personas:
         acc_scores = []
+        f1_scores = []
         for t in topics:
             # Get subset of data for this topic comparing Target Persona vs Default Persona
             sub_df = df[(df["topic"] == t) & (df["persona"].isin([p, default_persona]))]
@@ -153,21 +159,26 @@ def measure_individuation(df, default_persona="Unmarked"):
             clf = RandomForestClassifier(random_state=42)
             clf.fit(X_train, y_train)
             preds = clf.predict(X_test)
+            
             acc = accuracy_score(y_test, preds)
+            f1 = f1_score(y_test, preds, average='macro')
+            
             acc_scores.append(acc)
+            f1_scores.append(f1)
 
         if acc_scores:
             mean_acc = np.mean(acc_scores)
-            results[p] = mean_acc
+            mean_f1 = np.mean(f1_scores)
+            results[p] = {"Accuracy": mean_acc, "Macro F1": mean_f1}
             print(
-                f"Persona: {p:<35} Individuation (Acc): {mean_acc:.2f} (Target > 0.5)"
+                f"Persona: {p:<35} Acc: {mean_acc:.2f} | F1: {mean_f1:.2f} (Target > 0.5)"
             )
 
     return results
 
 
 def measure_exaggeration(
-    df, model, default_persona="Unmarked", default_topic="general_comment"
+    df, emb_dict, default_persona="Unmarked", default_topic="general_comment"
 ):
     """Computes Exaggeration via Contextualized Semantic Axes."""
     print("\n--- MEASURING EXAGGERATION (CARICATURE) ---")
@@ -178,10 +189,7 @@ def measure_exaggeration(
 
     for t in topics:
         for p in personas:
-            # 1. Define Defaults
-            df_default_persona = df[
-                (df["persona"] == default_persona) & (df["topic"] == t)
-            ]
+            df_default_persona = df[(df["persona"] == default_persona) & (df["topic"] == t)]
             df_default_topic = df[(df["persona"] == p) & (df["topic"] == default_topic)]
             df_target = df[(df["persona"] == p) & (df["topic"] == t)]
             df_background = df[
@@ -192,30 +200,26 @@ def measure_exaggeration(
             if df_default_persona.empty or df_default_topic.empty or df_target.empty:
                 continue
 
-            # 2. Extract Seed Words (Fightin' Words)
-            persona_seed_words = get_seed_words(
-                df_default_topic, df_default_persona, df_background
-            )
-            topic_seed_words = get_seed_words(
-                df_default_persona, df_default_topic, df_background
-            )
+            persona_seed_words = get_seed_words(df_default_topic, df_default_persona, df_background)
+            topic_seed_words = get_seed_words(df_default_persona, df_default_topic, df_background)
 
             if not persona_seed_words or not topic_seed_words:
                 continue
 
-            # 3. Create Semantic Axis (Mean of sentence embeddings containing seed words)
             def get_pole_embedding(target_df, seed_words):
-                sentences = []
-                for resp in target_df["response"]:
-                    sentences.extend(sent_tokenize(resp))
-
-                # Filter sentences that contain any of the seed words
-                matched_sentences = [
-                    s for s in sentences if any(w in s.lower() for w in seed_words)
-                ]
-                if not matched_sentences:
+                # Enforce exact word boundaries using Regex
+                seed_patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
+                
+                pole_embs = []
+                for sents in target_df["sentences"]:
+                    for s in sents:
+                        clean_s = clean_text_for_matching(s)
+                        if any(p.search(clean_s) for p in seed_patterns):
+                            pole_embs.append(emb_dict[s])
+                            
+                if not pole_embs:
                     return None
-                return np.mean(model.encode(matched_sentences), axis=0)
+                return np.mean(pole_embs, axis=0)
 
             p_pole = get_pole_embedding(df_default_topic, persona_seed_words)
             t_pole = get_pole_embedding(df_default_persona, topic_seed_words)
@@ -225,17 +229,12 @@ def measure_exaggeration(
 
             axis_v = p_pole - t_pole
 
-            # 4. Compute Cosine Similarities
             def cos_sim(a, b):
                 return dot(a, b) / (norm(a) * norm(b))
 
             target_sims = [cos_sim(emb, axis_v) for emb in df_target["embedding"]]
-            default_p_sims = [
-                cos_sim(emb, axis_v) for emb in df_default_persona["embedding"]
-            ]
-            default_t_sims = [
-                cos_sim(emb, axis_v) for emb in df_default_topic["embedding"]
-            ]
+            default_p_sims = [cos_sim(emb, axis_v) for emb in df_default_persona["embedding"]]
+            default_t_sims = [cos_sim(emb, axis_v) for emb in df_default_topic["embedding"]]
 
             mean_target = np.mean(target_sims)
             mean_dp = np.mean(default_p_sims)
@@ -248,9 +247,7 @@ def measure_exaggeration(
 
             exag_score = (mean_target - mean_dp) / (mean_dt - mean_dp)
             exag_scores.append({"persona": p, "topic": t, "exaggeration": exag_score})
-            print(
-                f"Persona: {p:<30} Topic: {t[:20]:<20} Exaggeration: {exag_score:.3f}"
-            )
+            print(f"Persona: {p:<30} Topic: {t[:20]:<20} Exaggeration: {exag_score:.3f}")
 
     df_scores = pd.DataFrame(exag_scores)
 
@@ -259,9 +256,7 @@ def measure_exaggeration(
         return df_scores
 
     print("\nMEAN EXAGGERATION BY PERSONA (Lower is better):")
-    print(
-        df_scores.groupby("persona")["exaggeration"].mean().sort_values(ascending=False)
-    )
+    print(df_scores.groupby("persona")["exaggeration"].mean().sort_values(ascending=False))
     return df_scores
 
 
@@ -280,14 +275,32 @@ if __name__ == "__main__":
     df = load_transcripts_to_dataframe(args.data)
     print(f"Loaded {len(df)} total transcripts.")
 
-    # TODO: use a diff model?
-    print("2. Generating Sentence-BERT Embeddings for all transcripts...")
-    model = SentenceTransformer("all-mpnet-base-v2")
-    df["embedding"] = list(model.encode(df["response"].tolist()))
+    print("2. Tokenizing sentences...")
+    df["sentences"] = df["response"].apply(sent_tokenize)
 
-    # Run Empirical CoMPosT
-    # Note: Ensure the default values match your metadata task/demographic exact strings
+    print("3. Generating Sentence-BERT Embeddings & Caching...")
+    model = SentenceTransformer("all-mpnet-base-v2")
+    
+    # Pre-encode and cache all unique sentences
+    all_sentences = set()
+    for sents in df["sentences"]:
+        all_sentences.update(sents)
+    all_sentences = list(all_sentences)
+    
+    print(f"Encoding {len(all_sentences)} unique sentences...")
+    sentence_embeddings = model.encode(all_sentences, show_progress_bar=True)
+    emb_dict = dict(zip(all_sentences, sentence_embeddings))
+
+    # Calculate document-level embeddings via mean-pooling to bypass the 384 token limit safely
+    def get_doc_embedding(sents):
+        if not sents:
+            return np.zeros(model.get_sentence_embedding_dimension())
+        return np.mean([emb_dict[s] for s in sents], axis=0)
+
+    df["embedding"] = df["sentences"].apply(get_doc_embedding)
+
+    # 4. Run Empirical CoMPosT
     measure_individuation(df, default_persona="Unmarked")
     measure_exaggeration(
-        df, model, default_persona="Unmarked", default_topic="general_comment"
+        df, emb_dict, default_persona="Unmarked", default_topic="general_comment"
     )
