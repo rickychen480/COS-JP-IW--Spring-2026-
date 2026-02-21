@@ -206,6 +206,10 @@ def measure_exaggeration(
             if not persona_seed_words or not topic_seed_words:
                 continue
 
+            print(f"\n--- SEED WORDS FOR: {p} | Topic: {t[:20]} ---")
+            print(f"Persona Seed Words (Top 15): {persona_seed_words[:15]}")
+            print(f"Topic Seed Words (Top 15):   {topic_seed_words[:15]}")
+
             def get_pole_embedding(target_df, seed_words):
                 # Enforce exact word boundaries using Regex
                 seed_patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
