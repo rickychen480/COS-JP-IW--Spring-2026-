@@ -2,7 +2,7 @@
 #
 #SBATCH --job-name=generate_sims
 #SBATCH -N 1
-#SBATCH --gres=gpu:2                  
+#SBATCH --gres=gpu:4                  
 #SBATCH -c 16
 #SBATCH --mem=128G
 #SBATCH -t 12:00:00
@@ -34,34 +34,35 @@ mkdir -p results/pilot/
 
 echo "Starting all 3 generation tasks in parallel..."
 
-# # Run Target Simulations on GPU 0 (The '&' at the end sends it to the background)
-# CUDA_VISIBLE_DEVICES=0,1 python controller.py \
-#   --data data/target_simulations.json \
-#   --out results/pilot/target_simulations-llama_70b.json \
-#   --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
-#   --quant awq \
-#   --tp 2 \
-#   --limit 1000 &
+# Run Target Simulations on GPU 0 (The '&' at the end sends it to the background)
+CUDA_VISIBLE_DEVICES=0,1 python controller.py \
+  --data data/target_simulations.json \
+  --out results/pilot/target_simulations-llama_70b.json \
+  --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
+  --quant awq \
+  --tp 2 \
+  --limit 1000 &
 
-# # Run Control Simulations on GPU 1
-# CUDA_VISIBLE_DEVICES=2,3 python controller.py \
-#   --data data/control_simulations.json \
-#   --out results/pilot/control_simulations-llama_70b.json \
-#   --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
-#   --quant awq \
-#   --tp 2 \
-#   --limit 1000 &
+# Run Control Simulations on GPU 1
+CUDA_VISIBLE_DEVICES=2,3 python controller.py \
+  --data data/control_simulations.json \
+  --out results/pilot/control_simulations-llama_70b.json \
+  --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
+  --quant awq \
+  --tp 2 \
+  --limit 1000 &
 
-# # Wait for Batch 1 to finish completely
-# wait
-# echo "Batch 1 finished! Starting Batch 2 (Default Topics)..."
+# Wait for Batch 1 to finish completely
+wait
+echo "Batch 1 finished! Starting Batch 2 (Default Topics)..."
 
 CUDA_VISIBLE_DEVICES=0,1 python controller.py \
   --data data/default_topics.json \
   --out results/pilot/default_topics-llama_70b.json \
   --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
   --quant awq \
-  --tp 2 \
-  --limit 1000 &
+  --tp 2 &
+
+wait
 
 echo "All 3 datasets generated successfully!"
