@@ -56,7 +56,6 @@ def process_all_transcripts(target_path: str, control_path: str, default_topic_p
         atc = alloc_eval.calculate_atc(transcript, is_successful=bool(gcr))
         
         # 2. Representational (d-CCD)
-        # NOTE: Your inference script MUST save target_logprobs to the transcript JSON!
         logprobs = meta.get('target_logprobs', [])
         confidence = rep_eval.calculate_confidence(logprobs)
         
