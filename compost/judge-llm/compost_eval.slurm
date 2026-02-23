@@ -5,8 +5,8 @@
 #SBATCH -c 8
 #SBATCH --mem=64G
 #SBATCH --time=04:00:00
-#SBATCH --output=slurm-%j.out
-#SBATCH --error=slurm-%j.err 
+#SBATCH --output=logs/slurm-%j.out
+#SBATCH --error=logs/slurm-%j.err 
 #SBATCH --mail-type=end
 #SBATCH --mail-user=ricky.chen@princeton.edu   
 

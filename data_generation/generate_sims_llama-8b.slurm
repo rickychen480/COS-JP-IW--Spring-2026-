@@ -6,8 +6,8 @@
 #SBATCH -c 12                         ## Request 12 CPUs (4 per script)
 #SBATCH --mem=96G                     ## Request 96GB RAM (plenty for 3x 8B models)
 #SBATCH -t 12:00:00                   ## Request 12 hours of walltime
-#SBATCH --output=slurm-%j.out         
-#SBATCH --error=slurm-%j.err   
+#SBATCH --output=logs/slurm-%j.out         
+#SBATCH --error=logs/slurm-%j.err   
 #SBATCH --mail-type=end
 #SBATCH --mail-user=ricky.chen@princeton.edu       
 
