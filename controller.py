@@ -53,6 +53,7 @@ def check_early_stopping(msg_u, msg_t):
         "thanks for your help",
         "i'll go ahead and do that now",
         "appreciate your help",
+        "you're welcome",
     ]
     if any(
         msg_u_lower.endswith(phrase)

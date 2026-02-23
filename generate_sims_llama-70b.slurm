@@ -2,7 +2,7 @@
 #
 #SBATCH --job-name=generate_sims
 #SBATCH -N 1
-#SBATCH --gres=gpu:4                  
+#SBATCH --gres=gpu:6                 
 #SBATCH -c 16
 #SBATCH --mem=128G
 #SBATCH -t 12:00:00
@@ -52,11 +52,7 @@ CUDA_VISIBLE_DEVICES=2,3 python controller.py \
   --tp 2 \
   --limit 1000 &
 
-# Wait for Batch 1 to finish completely
-wait
-echo "Batch 1 finished! Starting Batch 2 (Default Topics)..."
-
-CUDA_VISIBLE_DEVICES=0,1 python controller.py \
+CUDA_VISIBLE_DEVICES=4,5 python controller.py \
   --data data/prompts/default_topics.json \
   --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
   --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
