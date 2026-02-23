@@ -18,7 +18,7 @@ def load_anchor_dictionaries(control_path: str, default_topic_path: str):
     control_dict = {}
     for d in control_data:
         task_desc = d['metadata']['task_description']
-        target_turns = [t['content'] for t in d['transcript'] if t['speaker'] == 'Target']
+        target_turns = tuple(t['content'] for t in d['transcript'] if t['speaker'] == 'Target')
         control_dict[task_desc] = target_turns
 
     # Map by (Demographic, Gender, Occupation) -> Target's list of turn strings
@@ -26,7 +26,7 @@ def load_anchor_dictionaries(control_path: str, default_topic_path: str):
     for d in default_data:
         p = d['metadata']['persona']
         persona_key = (p.get('demographic', 'Unknown'), p.get('gender', 'Unknown'), p.get('occupation', 'Unknown'))
-        target_turns = [t['content'] for t in d['transcript'] if t['speaker'] == 'Target']
+        target_turns = tuple(t['content'] for t in d['transcript'] if t['speaker'] == 'Target')
         persona_dict[persona_key] = target_turns
 
     return control_dict, persona_dict

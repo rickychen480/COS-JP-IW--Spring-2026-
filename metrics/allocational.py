@@ -56,4 +56,4 @@ class AllocationalEvaluator:
         if not is_successful:
             return None 
         
-        return max([t['turn'] for t in transcript]) + 1
+        return max([t['turn'] for t in transcript], default=0) + 1

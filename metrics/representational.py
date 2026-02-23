@@ -11,12 +11,12 @@ class RepresentationalEvaluator:
         self.embedder = SentenceTransformer(embedder_model)
 
     @lru_cache(maxsize=2048)
-    def _get_embedding(self, text_or_list):
-        if isinstance(text_or_list, str):
-            return self.embedder.encode(text_or_list)
-        elif isinstance(text_or_list, list) and text_or_list:
+    def _get_embedding(self, text_or_tuple):
+        if isinstance(text_or_tuple, str):
+            return self.embedder.encode(text_or_tuple)
+        elif isinstance(text_or_tuple, tuple) and text_or_tuple:
             # Embed each turn individually and take the mean axis to avoid token truncation
-            embs = self.embedder.encode(text_or_list)
+            embs = self.embedder.encode(list(text_or_tuple))
             return np.mean(embs, axis=0)
         return np.zeros(self.embedder.get_sentence_embedding_dimension())
 
@@ -74,12 +74,16 @@ class RepresentationalEvaluator:
                     norm_post.append(normalized_sim)
 
         # Calculate the final score based on the trigger turn
-        avg_norm_pre = np.mean(norm_pre) if norm_pre else 0.0
-        avg_norm_post = np.mean(norm_post) if norm_post else 0.0
+        avg_norm_pre = np.mean(norm_pre) if norm_pre else np.nan
+        avg_norm_post = np.mean(norm_post) if norm_post else np.nan
 
         # If trigger_turn is 0 (or pre is empty), we measure Absolute Stereotype Projection
         if trigger_turn == 0 or not norm_pre:
-            return float(avg_norm_post)
+            return float(avg_norm_post) if not np.isnan(avg_norm_post) else np.nan
+
+        # If post-trigger is missing, we can't calculate a drift
+        if np.isnan(avg_norm_post) or np.isnan(avg_norm_pre):
+            return np.nan
 
         # Otherwise, we measure the Dynamic Semantic Drift (Delta)
         steering_score = avg_norm_post - avg_norm_pre
