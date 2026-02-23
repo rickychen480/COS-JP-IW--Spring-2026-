@@ -38,7 +38,7 @@ def load_anchor_dictionaries(control_path: str, default_topic_path: str):
     return control_dict, persona_dict
 
 
-def process_all_transcripts(target_path: str, control_path: str, default_topic_path: str, trigger_turn: int = 1):
+def process_all_transcripts(target_path: str, control_path: str, default_topic_path: str, trigger_turn: int = 0):
     """
     Runs the evaluation metrics using the CoMPosT anchors mapped from the dataset.
     """
