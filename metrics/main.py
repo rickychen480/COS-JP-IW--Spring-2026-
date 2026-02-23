@@ -1,6 +1,13 @@
+"""
+python main.py \
+  --dir data/transcripts/Llama-3.1-8B-Instruct \
+  --out results/Llama-8B_evaluation_results.csv
+"""
+
+import argparse
 import json
 import pandas as pd
-from pathlib import Path
+import os
 from allocational import AllocationalEvaluator
 from representational import RepresentationalEvaluator
 
@@ -121,13 +128,16 @@ def generate_differential_results(df: pd.DataFrame, baseline_group: str = "White
     return grouped
 
 if __name__ == "__main__":
-    # Point to the actual TRANSCRIPT directories (post-inference), not just the prompt generation dir
-    transcript_dir = Path("data/transcripts/Llama-3.1-8B-Instruct/")
-    target_path = transcript_dir / "target_simulations.json"
-    control_path = transcript_dir / "control_simulations.json"
-    default_topic_path = transcript_dir / "default_topics.json"
+    parser = argparse.ArgumentParser(description="Evaluate dynamic intersectional bias.")
+    parser.add_argument("--dir", type=str, required=True, help="Directory containing the transcript JSONs")
+    parser.add_argument("--out", type=str, default="dynamic_bias_results.csv", help="Output CSV filename")
+    args = parser.parse_args()
+
+    target_path = os.path.join(args.dir, 'target_simulations.json')
+    control_path = os.path.join(args.dir, 'control_simulations.json')
+    default_topic_path = os.path.join(args.dir, 'default_topics.json')
     
-    print("Evaluating transcripts...")
+    print(f"Evaluating transcripts in: {args.dir}")
     raw_df = process_all_transcripts(target_path, control_path, default_topic_path)
     
     print("Aggregating metrics and calculating differentials...")
@@ -136,5 +146,7 @@ if __name__ == "__main__":
     print("\n=== Final Bias Evaluation Results ===")
     print(final_results[['group_label', 'd_GCR', 'd_CCD', 'Rejections', 'Steering_Score']].to_string(index=False))
     
-    final_results.to_csv('dynamic_bias_results.csv', index=False)
-    print("\nResults exported to dynamic_bias_results.csv")
+    # Ensure the output directory exists
+    os.makedirs(os.path.dirname(args.out) or '.', exist_ok=True)
+    final_results.to_csv(args.out, index=False)
+    print(f"\nResults exported to {args.out}")
