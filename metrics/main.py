@@ -14,23 +14,22 @@ def load_anchor_dictionaries(control_path: str, default_topic_path: str):
     with open(default_topic_path, 'r') as f:
         default_data = json.load(f)
 
-    # Map by Task Description -> Target's concatenated text
+    # Map by Task Description -> Target's list of turn strings
     control_dict = {}
     for d in control_data:
         task_desc = d['metadata']['task_description']
-        target_text = " ".join([t['content'] for t in d['transcript'] if t['speaker'] == 'Target'])
-        control_dict[task_desc] = target_text
+        target_turns = [t['content'] for t in d['transcript'] if t['speaker'] == 'Target']
+        control_dict[task_desc] = target_turns
 
-    # Map by (Demographic, Gender, Occupation) -> Target's concatenated text
+    # Map by (Demographic, Gender, Occupation) -> Target's list of turn strings
     persona_dict = {}
     for d in default_data:
         p = d['metadata']['persona']
         persona_key = (p.get('demographic', 'Unknown'), p.get('gender', 'Unknown'), p.get('occupation', 'Unknown'))
-        target_text = " ".join([t['content'] for t in d['transcript'] if t['speaker'] == 'Target'])
-        persona_dict[persona_key] = target_text
+        target_turns = [t['content'] for t in d['transcript'] if t['speaker'] == 'Target']
+        persona_dict[persona_key] = target_turns
 
     return control_dict, persona_dict
-
 
 def process_all_transcripts(target_path: str, control_path: str, default_topic_path: str, trigger_turn: int = 0):
     """

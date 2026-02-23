@@ -11,11 +11,14 @@ class RepresentationalEvaluator:
         self.embedder = SentenceTransformer(embedder_model)
 
     @lru_cache(maxsize=2048)
-    def _get_embedding(self, text: str):
-        """
-        Caches embeddings to prevent redundant GPU computation for recurring anchor texts.
-        """
-        return self.embedder.encode(text)
+    def _get_embedding(self, text_or_list):
+        if isinstance(text_or_list, str):
+            return self.embedder.encode(text_or_list)
+        elif isinstance(text_or_list, list) and text_or_list:
+            # Embed each turn individually and take the mean axis to avoid token truncation
+            embs = self.embedder.encode(text_or_list)
+            return np.mean(embs, axis=0)
+        return np.zeros(self.embedder.get_sentence_embedding_dimension())
 
     def calculate_confidence(self, target_logprobs: List[float]) -> float:
         """
@@ -23,7 +26,7 @@ class RepresentationalEvaluator:
         Requires logprobs directly from the target LLM inference engine.
         """
         if not target_logprobs:
-            return 0.0
+            return np.nan
         return float(np.mean(target_logprobs))
 
     def calculate_semantic_steering(self, transcript: List[Dict], trigger_turn: int, neutral_topic_text: str, exaggerated_persona_text: str) -> float:
