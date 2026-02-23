@@ -26,12 +26,12 @@ python -m pip install --upgrade pip
 pip install pandas numpy sentence-transformers
 
 echo "Running evaluation on Llama 8B Transcripts..."
-python main.py \
+python metrics/main.py \
   --dir data/transcripts/Llama-3.1-8B-Instruct \
   --out results/pilot/Llama-8B_evaluation_results.csv
 
 echo "Running evaluation on Llama 70B Transcripts..."
-python main.py \
+python metrics/main.py \
   --dir data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4 \
   --out results/pilot/Llama-70B_evaluation_results.csv
 
