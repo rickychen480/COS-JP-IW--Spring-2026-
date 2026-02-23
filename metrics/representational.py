@@ -42,9 +42,9 @@ class RepresentationalEvaluator:
         v_axis = v_persona - v_topic
         norm_v_axis = np.linalg.norm(v_axis)
         
-        # Edge case: If the texts are identical, axis is 0
+        # Edge case: If the texts are identical
         if norm_v_axis == 0:
-            return 0.0
+            return np.nan
             
         def get_cos_sim(v, axis, norm_axis):
             return np.dot(v, axis) / (np.linalg.norm(v) * norm_axis)
@@ -56,7 +56,7 @@ class RepresentationalEvaluator:
         
         # Prevent division by zero
         if sim_persona - sim_topic == 0:
-            return 0.0
+            return np.nan
 
         norm_pre = []
         norm_post = []

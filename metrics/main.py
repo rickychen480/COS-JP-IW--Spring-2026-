@@ -1,7 +1,8 @@
 import argparse
 import json
-import pandas as pd
 import os
+import pandas as pd
+import numpy as np
 from allocational import AllocationalEvaluator
 from representational import RepresentationalEvaluator
 
@@ -64,15 +65,19 @@ def process_all_transcripts(target_path: str, control_path: str, default_topic_p
         
         # 3. Semantic Steering (CoMPosT)
         persona_key = (persona.get('demographic', 'Unknown'), persona.get('gender', 'Unknown'), persona.get('occupation', 'Unknown'))
-        neutral_topic_text = control_dict.get(task_desc, "Fallback neutral text.")
-        exaggerated_persona_text = persona_dict.get(persona_key, "Fallback persona text.")
+        neutral_topic_text = control_dict.get(task_desc)
+        exaggerated_persona_text = persona_dict.get(persona_key)
         
-        steering = rep_eval.calculate_semantic_steering(
-            transcript=transcript,
-            trigger_turn=trigger_turn,
-            neutral_topic_text=neutral_topic_text,
-            exaggerated_persona_text=exaggerated_persona_text
-        )
+        if neutral_topic_text is None or exaggerated_persona_text is None:
+            # If anchors are missing, skip steering calculation to avoid corrupting data
+            steering = np.nan
+        else:
+            steering = rep_eval.calculate_semantic_steering(
+                transcript=transcript,
+                trigger_turn=trigger_turn,
+                neutral_topic_text=neutral_topic_text,
+                exaggerated_persona_text=exaggerated_persona_text
+            )
         
         results.append({
             "id": item.get('dialogue_id', 'Unknown'),
