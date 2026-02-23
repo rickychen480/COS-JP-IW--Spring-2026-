@@ -57,8 +57,8 @@ class RepresentationalEvaluator:
         sim_topic = get_cos_sim(v_topic, v_axis, norm_v_axis)
         sim_persona = get_cos_sim(v_persona, v_axis, norm_v_axis)
         
-        # Prevent division by zero
-        if sim_persona - sim_topic == 0:
+        # Prevent division by zero or floating-point explosion
+        if abs(sim_persona - sim_topic) < 1e-6:
             return np.nan
 
         norm_pre = []

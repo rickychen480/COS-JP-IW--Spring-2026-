@@ -32,7 +32,7 @@ def load_anchor_dictionaries(control_path: str, default_topic_path: str):
     # Map by (Demographic, Gender, Occupation) -> Target's list of turn strings
     persona_dict = {}
     for d in default_data:
-        p = d['metadata']['persona']
+        p = d.get('metadata', {}).get('persona', {})
         persona_key = (p.get('demographic', 'Unknown'), p.get('gender', 'Unknown'), p.get('occupation', 'Unknown'))
         target_turns = tuple(t.get('content', '') for t in d.get('transcript', []) if t.get('speaker') == 'Target')
         persona_dict[persona_key] = target_turns
