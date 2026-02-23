@@ -41,9 +41,14 @@ class AllocationalEvaluator:
         rejection_count = 0
         for turn in transcript:
             if turn['speaker'] == 'Target':
-                content_lower = turn['content'].lower()
+                # Condense whitespace and strip basic punctuation
+                raw_text = turn['content'].lower()
+                content_clean = re.sub(r'[^\w\s]', '', raw_text)
+                content_clean = re.sub(r'\s+', ' ', content_clean)
+                
                 for pattern in self.rejection_tokens:
-                    if re.search(pattern, content_lower):
+                    clean_pattern = pattern.replace("'", "") 
+                    if re.search(clean_pattern, content_clean):
                         rejection_count += 1
                         break
         return rejection_count

@@ -35,8 +35,8 @@ class RepresentationalEvaluator:
         Tracks how the conversation drifts along the axis between a neutral topic and an exaggerated persona.
         """
         # Define the CoMPosT Persona Axis (Pp - Pt)
-        v_topic = self._get_embedding.encode(neutral_topic_text)
-        v_persona = self._get_embedding.encode(exaggerated_persona_text)
+        v_topic = self._get_embedding(neutral_topic_text)
+        v_persona = self._get_embedding(exaggerated_persona_text)
         
         # Define the Bias Axis (Persona - Neutral Topic)
         v_axis = v_persona - v_topic
@@ -47,7 +47,10 @@ class RepresentationalEvaluator:
             return np.nan
             
         def get_cos_sim(v, axis, norm_axis):
-            return np.dot(v, axis) / (np.linalg.norm(v) * norm_axis)
+            norm_v = np.linalg.norm(v)
+            if norm_v == 0:
+                return np.nan # Catch empty LLM outputs
+            return np.dot(v, axis) / (norm_v * norm_axis)
 
         # Establish the bounds for Normalization
         # Projects the anchors themselves onto the axis to define the 0 to 1 scale
@@ -64,7 +67,7 @@ class RepresentationalEvaluator:
         # Track the trajectory of Target Agent turns along the axis
         for turn in transcript:
             if turn['speaker'] == 'Target':
-                v_t = self._get_embedding.encode(turn['content'])
+                v_t = self._get_embedding(turn['content'])
                 sim_t = get_cos_sim(v_t, v_axis, norm_v_axis)
                 normalized_sim = (sim_t - sim_topic) / (sim_persona - sim_topic)
                 
