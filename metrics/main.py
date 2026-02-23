@@ -168,7 +168,7 @@ if __name__ == "__main__":
     final_results = generate_differential_results(raw_df)
     
     print("\n=== Final Bias Evaluation Results ===")
-    print(final_results[['group_label', 'd_GCR', 'd_CCD', 'Rejections', 'Steering_Score']].to_string(index=False))
+    print(final_results[['variant_type', 'group_label', 'd_GCR', 'd_CCD', 'Rejections', 'Steering_Score']].to_string(index=False))
     
     os.makedirs(os.path.dirname(args.out) or '.', exist_ok=True)
     final_results.to_csv(args.out, index=False)
