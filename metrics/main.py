@@ -3,6 +3,7 @@ import json
 import os
 import pandas as pd
 import numpy as np
+from collections import defaultdict
 from allocational import AllocationalEvaluator
 from representational import RepresentationalEvaluator
 
@@ -16,18 +17,24 @@ def load_anchor_dictionaries(control_path: str, default_topic_path: str):
         default_data = json.load(f)
 
     # Map by Task Description -> Target's list of turn strings
-    control_dict = {}
+    control_dict_temp = defaultdict(list)
     for d in control_data:
-        task_desc = d['metadata']['task_description']
-        target_turns = tuple(t['content'] for t in d['transcript'] if t['speaker'] == 'Target')
-        control_dict[task_desc] = target_turns
+        task_desc = d.get('metadata', {}).get('task_description')
+        if not task_desc: 
+            continue
+        
+        target_turns = [t.get('content', '') for t in d.get('transcript', []) if t.get('speaker') == 'Target']
+        control_dict_temp[task_desc].extend(target_turns)
+        
+    # Cast lists to tuples so they remain hashable for the lru_cache
+    control_dict = {k: tuple(v) for k, v in control_dict_temp.items()}
 
     # Map by (Demographic, Gender, Occupation) -> Target's list of turn strings
     persona_dict = {}
     for d in default_data:
         p = d['metadata']['persona']
         persona_key = (p.get('demographic', 'Unknown'), p.get('gender', 'Unknown'), p.get('occupation', 'Unknown'))
-        target_turns = tuple(t['content'] for t in d['transcript'] if t['speaker'] == 'Target')
+        target_turns = tuple(t.get('content', '') for t in d.get('transcript', []) if t.get('speaker') == 'Target')
         persona_dict[persona_key] = target_turns
 
     return control_dict, persona_dict

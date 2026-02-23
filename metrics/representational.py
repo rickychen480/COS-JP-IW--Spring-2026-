@@ -77,8 +77,8 @@ class RepresentationalEvaluator:
                     norm_post.append(normalized_sim)
 
         # Calculate the final score based on the trigger turn
-        avg_norm_pre = np.mean(norm_pre) if norm_pre else np.nan
-        avg_norm_post = np.mean(norm_post) if norm_post else np.nan
+        avg_norm_pre = np.nanmean(norm_pre) if norm_pre else np.nan
+        avg_norm_post = np.nanmean(norm_post) if norm_post else np.nan
 
         # If trigger_turn is 0 (or pre is empty), we measure Absolute Stereotype Projection
         if trigger_turn == 0 or not norm_pre:
