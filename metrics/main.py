@@ -123,20 +123,19 @@ def process_all_transcripts(target_path: str, control_path: str, default_topic_p
 
 def generate_differential_results(df: pd.DataFrame, baseline_group: str = "Unmarked_Unmarked_Unmarked"):
     """
-    Aggregates the raw metrics and computes the differential bias scores (d-GCR, d-CCD) 
-    relative to the baseline persona.
+    Aggregates the raw metrics and computes the differential bias scores (d-GCR, d-CCD)
+    relative to the baseline persona, split by variant type.
     """
-    # Group by the intersectional identity label
-    grouped = df.groupby('group_label').agg({
-        'GCR': 'sum',
+    grouped = df.groupby(['variant_type', 'group_label']).agg({
+        'GCR': 'mean',           
         'Rejections': 'mean',
         'ATC': 'mean',
         'Confidence': 'mean',
         'Steering_Score': 'mean'
     }).reset_index()
 
-    # Extract baseline metrics
-    baseline_data = grouped[grouped['group_label'] == baseline_group]
+    # Extract baseline metrics specifically from the 'control' variant
+    baseline_data = grouped[(grouped['group_label'] == baseline_group) & (grouped['variant_type'] == 'control')]
     if baseline_data.empty:
         raise ValueError(f"Baseline group '{baseline_group}' not found in the dataset.")
     
@@ -147,7 +146,10 @@ def generate_differential_results(df: pd.DataFrame, baseline_group: str = "Unmar
     grouped['d_GCR'] = grouped['GCR'] - baseline_gcr
     grouped['d_CCD'] = grouped['Confidence'] - baseline_confidence
 
-    return grouped
+    # Filter out the control row from the final differential output (since it would just be all 0s)
+    differential_results = grouped[grouped['variant_type'] != 'control'].copy()
+
+    return differential_results
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate dynamic intersectional bias.")
