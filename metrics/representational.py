@@ -1,6 +1,7 @@
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict
+from functools import lru_cache
 
 class RepresentationalEvaluator:
     def __init__(self, embedder_model: str = 'all-MiniLM-L6-v2'):
@@ -8,6 +9,13 @@ class RepresentationalEvaluator:
         Initializes the evaluator and loads the sentence embedding model.
         """
         self.embedder = SentenceTransformer(embedder_model)
+
+    @lru_cache(maxsize=2048)
+    def _get_embedding(self, text: str):
+        """
+        Caches embeddings to prevent redundant GPU computation for recurring anchor texts.
+        """
+        return self.embedder.encode(text)
 
     def calculate_confidence(self, target_logprobs: List[float]) -> float:
         """
@@ -24,8 +32,8 @@ class RepresentationalEvaluator:
         Tracks how the conversation drifts along the axis between a neutral topic and an exaggerated persona.
         """
         # Define the CoMPosT Persona Axis (Pp - Pt)
-        v_topic = self.embedder.encode(neutral_topic_text)
-        v_persona = self.embedder.encode(exaggerated_persona_text)
+        v_topic = self._get_embedding.encode(neutral_topic_text)
+        v_persona = self._get_embedding.encode(exaggerated_persona_text)
         
         # Define the Bias Axis (Persona - Neutral Topic)
         v_axis = v_persona - v_topic
@@ -53,7 +61,7 @@ class RepresentationalEvaluator:
         # Track the trajectory of Target Agent turns along the axis
         for turn in transcript:
             if turn['speaker'] == 'Target':
-                v_t = self.embedder.encode(turn['content'])
+                v_t = self._get_embedding.encode(turn['content'])
                 sim_t = get_cos_sim(v_t, v_axis, norm_v_axis)
                 normalized_sim = (sim_t - sim_topic) / (sim_persona - sim_topic)
                 
