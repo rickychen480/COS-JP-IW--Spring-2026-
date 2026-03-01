@@ -11,51 +11,43 @@
 #SBATCH --mail-type=end
 #SBATCH --mail-user=ricky.chen@princeton.edu       
 
-# Route massive caches to the COMPUTE node's scratch
-export CONDA_PKGS_DIRS=/scratch/$USER/conda_pkgs
-export PIP_CACHE_DIR=/scratch/$USER/pip_cache
-export HF_HUB_CACHE=/scratch/$USER/hf_cache
+echo "Initializing environment..."
 
-echo "Creating temporary Conda environment on local scratch..."
+cd ~/COS-JP
 eval "$(conda shell.bash hook)"
-conda create --prefix /scratch/$USER/env python=3.12 -y
-conda activate /scratch/$USER/env
+conda activate ./env
 
-echo "Installing packages..."
-python -m pip install --upgrade pip
-pip install torch transformers vllm huggingface_hub --ignore-installed packaging
-
-echo "Provisioning local scratch on compute node..."
 source ~/.hf_token
 hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
-    --local-dir /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4
+    --local-dir /n/fs/dynamicbias/models/Llama-3.1-70B-Instruct-AWQ-INT4
+MODEL_ID="/n/fs/dynamicbias/models/Llama-3.1-70B-Instruct-AWQ-INT4"
 
-mkdir -p results/pilot/
+echo "Provisioning complete. Starting all 3 generation tasks in parallel..."
+mkdir -p data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/
 
-echo "Starting all 3 generation tasks in parallel..."
-
-# Run Target Simulations on GPU 0 (The '&' at the end sends it to the background)
+# Run Target Simulations on GPUs 0 and 1
 CUDA_VISIBLE_DEVICES=0,1 python controller.py \
   --data data/prompts/target_simulations.json \
   --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json \
-  --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
+  --model $MODEL_ID \
   --quant awq \
   --tp 2 \
   --limit 1000 &
 
-# Run Control Simulations on GPU 1
+# Run Control Simulations on GPUs 2 and 3
 CUDA_VISIBLE_DEVICES=2,3 python controller.py \
   --data data/prompts/control_simulations.json \
   --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
-  --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
+  --model $MODEL_ID \
   --quant awq \
   --tp 2 \
   --limit 1000 &
 
+# Run Default Topics on GPUs 4 and 5
 CUDA_VISIBLE_DEVICES=4,5 python controller.py \
   --data data/prompts/default_topics.json \
   --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
-  --model /scratch/$USER/hf_models/Llama-3.1-70B-Instruct-AWQ-INT4 \
+  --model $MODEL_ID \
   --quant awq \
   --tp 2 &
 

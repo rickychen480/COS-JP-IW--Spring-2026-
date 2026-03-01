@@ -11,19 +11,11 @@
 #SBATCH --mail-type=end
 #SBATCH --mail-user=ricky.chen@princeton.edu       
 
-# Route massive caches to the COMPUTE node's scratch
-export CONDA_PKGS_DIRS=/scratch/$USER/conda_pkgs
-export PIP_CACHE_DIR=/scratch/$USER/pip_cache
-export HF_HUB_CACHE=/scratch/$USER/hf_cache
+echo "Initializing environment..."
 
-echo "Creating temporary Conda environment on local scratch..."
+cd ~/COS-JP
 eval "$(conda shell.bash hook)"
-conda create --prefix /scratch/$USER/env python=3.12 -y
-conda activate /scratch/$USER/env
-
-echo "Installing packages..."
-python -m pip install --upgrade pip
-pip install pandas numpy sentence-transformers
+conda activate ./env
 
 echo "Running evaluation on Llama 8B Transcripts..."
 python metrics/main.py \
