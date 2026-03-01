@@ -35,7 +35,12 @@ def clean_text_for_matching(text):
 
 
 def load_transcripts_to_dataframe(json_paths):
-    """Parses multiple JSON files into a single Pandas DataFrame."""
+    """Parses multiple JSON files into a single Pandas DataFrame.
+
+    The returned DataFrame contains separate columns for each demographic
+    axis (race, gender, occupation) in addition to a synthetic ``persona``
+    string which preserves backwards compatibility.
+    """
     rows = []
 
     # Loop through all provided file paths
@@ -46,11 +51,17 @@ def load_transcripts_to_dataframe(json_paths):
 
         for d in data:
             persona_dict = d["metadata"]["persona"]
-            # Define the Persona String. Treat the control group as the "Default-Persona"
+
+            # keep the old concatenated label for legacy code
             if persona_dict.get("demographic") == "Unmarked":
                 p_str = "Unmarked"
             else:
                 p_str = f"{persona_dict.get('demographic')} {persona_dict.get('gender')} {persona_dict.get('occupation')}"
+
+            # split axes explicitly
+            race = persona_dict.get("demographic", "Unmarked")
+            gender = persona_dict.get("gender", "Unmarked")
+            occupation = persona_dict.get("occupation", "Unmarked")
 
             t_str = d["metadata"]["task_description"]
 
@@ -59,7 +70,14 @@ def load_transcripts_to_dataframe(json_paths):
                 [t["content"] for t in d["transcript"] if t["speaker"] == "User"]
             )
 
-            rows.append({"persona": p_str, "topic": t_str, "response": user_text})
+            rows.append({
+                "persona": p_str,
+                "race": race,
+                "gender": gender,
+                "occupation": occupation,
+                "topic": t_str,
+                "response": user_text,
+            })
 
     return pd.DataFrame(rows)
 
@@ -137,69 +155,76 @@ def get_seed_words(df1, df2, df0, threshold=1.96):
     return sorted(top_words, key=lambda x: deltas[x], reverse=True)
 
 
-def measure_individuation(df, default_persona="Unmarked"):
-    """Trains a Random Forest to differentiate the Persona from the Default Persona."""
-    print("\n--- MEASURING INDIVIDUATION ---")
+def measure_individuation_axis(df, axis, default="Unmarked"):
+    """Train a random-forest classifier to distinguish each value of an axis
+    (race, gender or occupation) from the default.
+
+    Returns a dict mapping each non-default value to its mean accuracy and
+    macro‑F1 score across topics.
+    """
+    print(f"\n--- MEASURING INDIVIDUATION FOR {axis.upper()} ---")
     results = {}
-    personas = [p for p in df.persona.unique() if p != default_persona]
+    values = [v for v in df[axis].unique() if v != default]
     topics = [t for t in df.topic.unique() if t != "general_comment"]
 
-    for p in personas:
+    for val in values:
         acc_scores = []
         f1_scores = []
         for t in topics:
-            # Get subset of data for this topic comparing Target Persona vs Default Persona
-            sub_df = df[(df["topic"] == t) & (df["persona"].isin([p, default_persona]))]
-            if len(sub_df) < 10:  # Skip if not enough samples to train/test
+            sub_df = df[(df["topic"] == t) & (df[axis].isin([val, default]))]
+            if len(sub_df) < 10:
                 continue
 
             X = np.stack(sub_df["embedding"].values)
-            y = sub_df.persona.astype("category").cat.codes
+            # binary label: 1=target value, 0=default
+            y = (sub_df[axis] != default).astype(int)
 
-            # 80/20 Stratified Split
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=0.2, random_state=42, stratify=y
             )
-            print(len(X_train), len(X_test))
 
             clf = RandomForestClassifier(random_state=42)
             clf.fit(X_train, y_train)
             preds = clf.predict(X_test)
-            
-            acc = accuracy_score(y_test, preds)
-            f1 = f1_score(y_test, preds, average='macro')
-            
-            acc_scores.append(acc)
-            f1_scores.append(f1)
+
+            acc_scores.append(accuracy_score(y_test, preds))
+            f1_scores.append(f1_score(y_test, preds))
 
         if acc_scores:
-            mean_acc = np.mean(acc_scores)
-            mean_f1 = np.mean(f1_scores)
-            results[p] = {"Accuracy": mean_acc, "Macro F1": mean_f1}
+            results[val] = {
+                "Accuracy": np.mean(acc_scores),
+                "Macro F1": np.mean(f1_scores),
+            }
             print(
-                f"Persona: {p:<35} Acc: {mean_acc:.2f} | F1: {mean_f1:.2f} (Target > 0.5)"
+                f"{axis.capitalize()} value: {val:<30} "
+                f"Acc: {results[val]['Accuracy']:.2f} | F1: {results[val]['Macro F1']:.2f}"
             )
 
     return results
 
 
-def measure_exaggeration(
-    df, emb_dict, default_persona="Unmarked", default_topic="general_comment"
+def measure_exaggeration_axis(
+    df, emb_dict, axis, default_persona="Unmarked", default_topic="general_comment"
 ):
-    """Computes Exaggeration via Contextualized Semantic Axes."""
-    print("\n--- MEASURING EXAGGERATION (CARICATURE) ---")
-    personas = [p for p in df.persona.unique() if p != default_persona]
+    """Computes exaggeration scores on a single demographic axis.
+
+    The algorithm treats ``axis`` as the only varying attribute; the other 
+    two axes are implicitly held at ``default_persona``.  Returns a 
+    DataFrame with scores for each value of the axis and topic.
+    """
+    print(f"\n--- MEASURING EXAGGERATION FOR {axis.upper()} ---")
+    values = [v for v in df[axis].unique() if v != default_persona]
     topics = [t for t in df.topic.unique() if t != default_topic]
 
     exag_scores = []
 
     for t in topics:
-        for p in personas:
-            df_default_persona = df[(df["persona"] == default_persona) & (df["topic"] == t)]
-            df_default_topic = df[(df["persona"] == p) & (df["topic"] == default_topic)]
-            df_target = df[(df["persona"] == p) & (df["topic"] == t)]
+        for v in values:
+            df_default_persona = df[(df[axis] == default_persona) & (df["topic"] == t)]
+            df_default_topic = df[(df[axis] == v) & (df["topic"] == default_topic)]
+            df_target = df[(df[axis] == v) & (df["topic"] == t)]
             df_background = df[
-                (df["persona"].isin([default_persona, p]))
+                ((df[axis] == default_persona) | (df[axis] == v))
                 & (df["topic"].isin([default_topic, t]))
             ]
 
@@ -212,21 +237,18 @@ def measure_exaggeration(
             if not persona_seed_words or not topic_seed_words:
                 continue
 
-            print(f"\n--- SEED WORDS FOR: {p} | Topic: {t[:20]} ---")
+            print(f"\n--- SEED WORDS FOR: {axis}={v} | Topic: {t[:20]} ---")
             print(f"Persona Seed Words (Top 15): {persona_seed_words[:15]}")
             print(f"Topic Seed Words (Top 15):   {topic_seed_words[:15]}")
 
             def get_pole_embedding(target_df, seed_words):
-                # Enforce exact word boundaries using Regex
                 seed_patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
-                
                 pole_embs = []
                 for sents in target_df["sentences"]:
                     for s in sents:
                         clean_s = clean_text_for_matching(s)
                         if any(p.search(clean_s) for p in seed_patterns):
                             pole_embs.append(emb_dict[s])
-                            
                 if not pole_embs:
                     return None
                 return np.mean(pole_embs, axis=0)
@@ -238,7 +260,6 @@ def measure_exaggeration(
                 continue
 
             axis_v = p_pole - t_pole
-
             def cos_sim(a, b):
                 return dot(a, b) / (norm(a) * norm(b))
 
@@ -250,23 +271,20 @@ def measure_exaggeration(
             mean_dp = np.mean(default_p_sims)
             mean_dt = np.mean(default_t_sims)
 
-            # Normalize Exaggeration Score (0 to 1)
-            # (Target - DefaultPersona) / (DefaultTopic - DefaultPersona)
             if mean_dt - mean_dp == 0:
                 continue
 
             exag_score = (mean_target - mean_dp) / (mean_dt - mean_dp)
-            exag_scores.append({"persona": p, "topic": t, "exaggeration": exag_score})
-            print(f"Persona: {p:<30} Topic: {t[:20]:<20} Exaggeration: {exag_score:.3f}")
+            exag_scores.append({axis: v, "topic": t, "exaggeration": exag_score})
+            print(f"{axis.capitalize()}: {v:<30} Topic: {t[:20]:<20} Exaggeration: {exag_score:.3f}")
 
     df_scores = pd.DataFrame(exag_scores)
-
     if df_scores.empty:
-        print("\n[WARNING] No exaggeration scores were calculated.")
+        print("\n[WARNING] No exaggeration scores were calculated for {axis}.")
         return df_scores
 
-    print("\nMEAN EXAGGERATION BY PERSONA (Lower is better):")
-    print(df_scores.groupby("persona")["exaggeration"].mean().sort_values(ascending=False))
+    print(f"\nMEAN EXAGGERATION BY {axis.upper()} (Lower is better):")
+    print(df_scores.groupby(axis)["exaggeration"].mean().sort_values(ascending=False))
     return df_scores
 
 
@@ -309,8 +327,28 @@ if __name__ == "__main__":
 
     df["embedding"] = df["sentences"].apply(get_doc_embedding)
 
-    # 4. Run Empirical CoMPosT
-    measure_individuation(df, default_persona="Unmarked")
-    measure_exaggeration(
-        df, emb_dict, default_persona="Unmarked", default_topic="general_comment"
+    # Run CoMPosT on each demographic axis
+    race_scores = measure_individuation_axis(df, "race")
+    gender_scores = measure_individuation_axis(df, "gender")
+    occupation_scores = measure_individuation_axis(df, "occupation")
+
+    print("\n=== INDIVIDUATION SUMMARY ===")
+    print("Race:", race_scores)
+    print("Gender:", gender_scores)
+    print("Occupation:", occupation_scores)
+
+    # Exaggeration / caricature per axis
+    race_exag = measure_exaggeration_axis(
+        df, emb_dict, "race", default_persona="Unmarked", default_topic="general_comment"
     )
+    gender_exag = measure_exaggeration_axis(
+        df, emb_dict, "gender", default_persona="Unmarked", default_topic="general_comment"
+    )
+    occupation_exag = measure_exaggeration_axis(
+        df, emb_dict, "occupation", default_persona="Unmarked", default_topic="general_comment"
+    )
+
+    print("\n=== EXAGGERATION DATAFRAMES ===")
+    print("Race exaggeration frame shape:", race_exag.shape)
+    print("Gender exaggeration frame shape:", gender_exag.shape)
+    print("Occupation exaggeration frame shape:", occupation_exag.shape)
