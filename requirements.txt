@@ -100,8 +100,12 @@ openai==2.21.0
 openai-harmony==0.0.8
 opencv-python-headless==4.13.0.92
 outlines_core==0.2.11
+<<<<<<< Updated upstream
 packaging @ file:///home/task_176104874243446/conda-bld/packaging_1761049080023/work
 pandas==3.0.1
+=======
+packaging
+>>>>>>> Stashed changes
 partial-json-parser==0.2.1.1.post7
 pillow==12.1.1
 prometheus-fastapi-instrumentator==7.1.0
