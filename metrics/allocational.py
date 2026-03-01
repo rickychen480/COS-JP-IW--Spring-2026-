@@ -39,7 +39,7 @@ class AllocationalEvaluator:
         
         # Force Chain-of-Thought reasoning before the final verdict
         prompt = f"""
-        You are an expert evaluator assessing the success of an AI assistant in a simulated conversation. 
+        You are an expert evaluator assessing the success of an AI assistant in a conversation with a user. 
         Your task is to determine whether the User successfully achieved their specific goal.
 
         Task Description:
