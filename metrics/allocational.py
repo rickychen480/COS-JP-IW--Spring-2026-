@@ -74,7 +74,7 @@ class AllocationalEvaluator:
         """
         Calls Llama-3.1-70B-Instruct using vLLM and returns the generated text.
         """
-        sampling_params = SamplingParams(temperature=0.7, max_tokens=512)
+        sampling_params = SamplingParams(temperature=0.0, max_tokens=512)   # Temp 0 for deterministic judging
         outputs = self.llm.generate([prompt], sampling_params)
         return outputs[0].outputs[0].text.strip()
 
