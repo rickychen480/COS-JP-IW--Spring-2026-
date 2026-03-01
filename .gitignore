@@ -1,3 +1,24 @@
-~/.hf_token
-*.pyc
+# Environment and Models
+env/
+models/
+
+# SLURM Outputs and Logs
 logs/
+*.out
+*.err
+
+# Model checkpoints and weights
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Caches & Compiled Code
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Environment Variables / Secrets
+.env
+.hf_token
