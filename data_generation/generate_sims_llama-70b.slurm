@@ -11,7 +11,6 @@
 #SBATCH --mail-type=end
 #SBATCH --mail-user=ricky.chen@princeton.edu
 
-export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_70b_$SLURM_ARRAY_TASK_ID
 export VLLM_DISABLE_COMPILE_CACHE=1
 
 echo "Initializing environment..."
@@ -33,6 +32,7 @@ mkdir -p logs
 
 
 # Run Target Simulations on GPUs 0 and 1
+export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_70b_${SLURM_ARRAY_TASK_ID}_gpu01
 CUDA_VISIBLE_DEVICES=0,1 python controller.py \
   --data data/prompts/target_simulations.json \
   --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_chunk_${SLURM_ARRAY_TASK_ID}.json \
@@ -42,7 +42,10 @@ CUDA_VISIBLE_DEVICES=0,1 python controller.py \
   --chunk_index $SLURM_ARRAY_TASK_ID \
   --total_chunks 12 &
 
+sleep 300
+
 # Run Control Simulations on GPUs 2 and 3
+export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_70b_${SLURM_ARRAY_TASK_ID}_gpu23
 CUDA_VISIBLE_DEVICES=2,3 python controller.py \
   --data data/prompts/control_simulations.json \
   --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations_chunk_${SLURM_ARRAY_TASK_ID}.json \
@@ -52,7 +55,10 @@ CUDA_VISIBLE_DEVICES=2,3 python controller.py \
   --chunk_index $SLURM_ARRAY_TASK_ID \
   --total_chunks 12 &
 
+sleep 300
+
 # Run Default Topics on GPUs 4 and 5
+export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_70b_${SLURM_ARRAY_TASK_ID}_gpu45
 CUDA_VISIBLE_DEVICES=4,5 python controller.py \
   --data data/prompts/default_topics.json \
   --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics_chunk_${SLURM_ARRAY_TASK_ID}.json \
