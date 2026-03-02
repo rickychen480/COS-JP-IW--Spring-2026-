@@ -113,7 +113,26 @@ def load_transcripts_to_dataframe(json_paths, semantic_masker=None, apply_maskin
                 "masking_applied": masking_applied if apply_masking else False,
             })
 
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+
+    # sanity checks on scenario_id
+    if "scenario_id" in df.columns:
+        df["scenario_id"] = df["scenario_id"].astype(str)
+        unique_scen = df["scenario_id"].nunique()
+        unique_topics = df["topic"].nunique()
+        if unique_scen <= 1:
+            logger.warning("All scenario_id values are identical or missing. "
+                           "Scenario-disjoint CV will collapse to a single fold.")
+            logger.warning("Assigning unique ids from dialogue_id to salvage splitting.")
+            df["scenario_id"] = df["dialogue_id"].astype(str)
+        else:
+            # check whether each scenario maps to only one topic
+            mapping = df.groupby("scenario_id")["topic"].nunique()
+            if mapping.max() == 1 and unique_scen == unique_topics:
+                logger.warning("Each scenario_id appears to correspond to exactly one topic.")
+                logger.warning("This means the grouping key mirrors topic/ task_description, "
+                               "so scenario-disjoint CV will not generalize across topics.")
+    return df
 
 
 def get_log_odds(df1, df2, df0):
