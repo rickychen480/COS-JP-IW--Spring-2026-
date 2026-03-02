@@ -314,8 +314,17 @@ def measure_exaggeration_axis(
                 continue
 
             axis_v = p_pole - t_pole
+            
+            # Normalize axis vector to avoid numerical instability
+            axis_norm = norm(axis_v)
+            if axis_norm < 1e-8:
+                logger.debug(f"Degenerate axis vector (norm={axis_norm:.2e}). Skipping.")
+                continue
+            axis_v = axis_v / axis_norm
+            
             def cos_sim(a, b):
-                return dot(a, b) / (norm(a) * norm(b))
+                denom = norm(a) * norm(b) + 1e-8
+                return dot(a, b) / denom
 
             target_sims = [cos_sim(emb, axis_v) for emb in df_target["embedding"]]
             default_p_sims = [cos_sim(emb, axis_v) for emb in df_default_persona["embedding"]]
@@ -325,10 +334,20 @@ def measure_exaggeration_axis(
             mean_dp = np.mean(default_p_sims)
             mean_dt = np.mean(default_t_sims)
 
-            if mean_dt - mean_dp == 0:
+            # Robust denominator check with epsilon tolerance
+            denominator = mean_dt - mean_dp
+            if abs(denominator) < 1e-6:
+                logger.debug(f"Near-zero denominator ({denominator:.2e}). Skipping.")
                 continue
 
-            exag_score = (mean_target - mean_dp) / (mean_dt - mean_dp)
+            exag_score = (mean_target - mean_dp) / denominator
+            
+            # Bounds check: flag extreme scores
+            if np.isnan(exag_score) or np.isinf(exag_score):
+                logger.warning(f"Invalid exaggeration score (NaN/Inf): {axis}={v}, {t}")
+                continue
+            if abs(exag_score) > 100:
+                logger.warning(f"Extreme exaggeration: {exag_score:.2f} for {axis}={v}, {t}")
             exag_scores.append({axis: v, "topic": t, "exaggeration": exag_score})
             print(f"{axis.capitalize()}: {v:<30} Topic: {t[:20]:<20} Exaggeration: {exag_score:.3f}")
 
@@ -339,6 +358,129 @@ def measure_exaggeration_axis(
 
     print(f"\nMEAN EXAGGERATION BY {axis.upper()} (Lower is better):")
     print(df_scores.groupby(axis)["exaggeration"].mean().sort_values(ascending=False))
+    return df_scores
+
+
+def measure_exaggeration_intersectional(
+    df, emb_dict, default_persona="Unmarked", default_topic="general_comment"
+):
+    """Computes exaggeration scores for intersectional groups.
+    
+    Treats intersectional_id as the primary key, pitting each specific cohort 
+    (e.g., Hispanic_Male_Nurse) directly against the Unmarked baseline.
+    Uses Monroe et al. log-odds to extract persona seed words.
+    """
+    print(f"\n--- MEASURING EXAGGERATION FOR INTERSECTIONAL GROUPS ---")
+    
+    # Ensure intersectional_id column exists
+    if "intersectional_id" not in df.columns:
+        logger.warning("intersectional_id column not found. Skipping intersectional exaggeration.")
+        return pd.DataFrame()
+    
+    intersectional_ids = [iid for iid in df["intersectional_id"].unique() 
+                          if iid != default_persona]
+    topics = [t for t in df["topic"].unique() if t != default_topic]
+    
+    exag_scores = []
+    
+    for cohort_id in intersectional_ids:
+        for t in topics:
+            # Target: specific intersectional cohort on specific topic
+            df_target = df[(df["intersectional_id"] == cohort_id) & (df["topic"] == t)]
+            
+            # Persona pole: same cohort on default topic
+            df_persona_pole = df[(df["intersectional_id"] == cohort_id) & (df["topic"] == default_topic)]
+            
+            # Topic pole: Unmarked baseline on specific topic
+            df_topic_pole = df[(df["intersectional_id"] == default_persona) & (df["topic"] == t)]
+            
+            # Background: all samples from Unmarked + target cohort
+            df_background = df[df["intersectional_id"].isin([default_persona, cohort_id])]
+            
+            if df_target.empty or df_persona_pole.empty or df_topic_pole.empty:
+                continue
+            
+            # Extract seed words: persona words distinctive of cohort vs Unmarked
+            persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, df_background)
+            
+            # Extract seed words: topic words distinctive of Unmarked vs cohort
+            topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, df_background)
+            
+            if not persona_seed_words or not topic_seed_words:
+                continue
+            
+            print(f"\n--- INTERSECTIONAL EXAGGERATION: {cohort_id} | Topic: {t[:20]} ---")
+            print(f"Persona Seed Words (Top 15): {persona_seed_words[:15]}")
+            print(f"Topic Seed Words (Top 15):   {topic_seed_words[:15]}")
+            
+            def get_pole_embedding(target_df, seed_words):
+                seed_patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
+                pole_embs = []
+                for sents in target_df["sentences"]:
+                    for s in sents:
+                        clean_s = clean_text_for_matching(s)
+                        if any(p.search(clean_s) for p in seed_patterns):
+                            pole_embs.append(emb_dict[s])
+                if not pole_embs:
+                    return None
+                return np.mean(pole_embs, axis=0)
+            
+            p_pole = get_pole_embedding(df_persona_pole, persona_seed_words)
+            t_pole = get_pole_embedding(df_topic_pole, topic_seed_words)
+            
+            if p_pole is None or t_pole is None:
+                continue
+            
+            axis_v = p_pole - t_pole
+            
+            # Normalize axis vector to avoid numerical instability
+            axis_norm = norm(axis_v)
+            if axis_norm < 1e-8:
+                logger.debug(f"Degenerate axis vector (norm={axis_norm:.2e}). Skipping.")
+                continue
+            axis_v = axis_v / axis_norm
+            
+            def cos_sim(a, b):
+                denom = norm(a) * norm(b) + 1e-8
+                return dot(a, b) / denom
+            
+            target_sims = [cos_sim(emb, axis_v) for emb in df_target["embedding"]]
+            persona_pole_sims = [cos_sim(emb, axis_v) for emb in df_persona_pole["embedding"]]
+            topic_pole_sims = [cos_sim(emb, axis_v) for emb in df_topic_pole["embedding"]]
+            
+            mean_target = np.mean(target_sims)
+            mean_p_pole = np.mean(persona_pole_sims)
+            mean_t_pole = np.mean(topic_pole_sims)
+            
+            # Robust denominator check
+            denominator = mean_t_pole - mean_p_pole
+            if abs(denominator) < 1e-6:
+                logger.debug(f"Near-zero denominator ({denominator:.2e}). Skipping.")
+                continue
+            
+            exag_score = (mean_target - mean_p_pole) / denominator
+            
+            # Bounds check
+            if np.isnan(exag_score) or np.isinf(exag_score):
+                logger.warning(f"Invalid exaggeration score (NaN/Inf): {cohort_id}, {t}")
+                continue
+            if abs(exag_score) > 100:
+                logger.warning(f"Extreme exaggeration: {exag_score:.2f} for {cohort_id}, {t}")
+            
+            exag_scores.append({
+                "intersectional_id": cohort_id, 
+                "topic": t, 
+                "exaggeration": exag_score
+            })
+            print(f"Cohort: {cohort_id:<40} Topic: {t[:20]:<20} Exaggeration: {exag_score:.3f}")
+    
+    df_scores = pd.DataFrame(exag_scores)
+    if df_scores.empty:
+        print("\n[WARNING] No intersectional exaggeration scores were calculated.")
+        return df_scores
+    
+    print(f"\nMEAN EXAGGERATION BY INTERSECTIONAL_ID (Lower is better):")
+    print(df_scores.groupby("intersectional_id")["exaggeration"].mean().sort_values(ascending=False))
     return df_scores
 
 
@@ -466,11 +608,20 @@ if __name__ == "__main__":
     occupation_exag = measure_exaggeration_axis(
         df, emb_dict, "occupation", default_persona="Unmarked", default_topic="general_comment"
     )
+    
+    # Intersectional exaggeration (if intersectional column exists)
+    intersectional_exag = None
+    if "intersectional_id" in df.columns:
+        intersectional_exag = measure_exaggeration_intersectional(
+            df, emb_dict, default_persona="Unmarked", default_topic="general_comment"
+        )
 
     logger.info("\n=== EXAGGERATION DATAFRAMES ===")
     logger.info(f"Race exaggeration frame shape: {race_exag.shape}")
     logger.info(f"Gender exaggeration frame shape: {gender_exag.shape}")
     logger.info(f"Occupation exaggeration frame shape: {occupation_exag.shape}")
+    if intersectional_exag is not None and not intersectional_exag.empty:
+        logger.info(f"Intersectional exaggeration frame shape: {intersectional_exag.shape}")
     
     if not race_exag.empty:
         race_exag.to_csv(output_dir / "exaggeration_race.csv", index=False)
@@ -481,6 +632,9 @@ if __name__ == "__main__":
     if not occupation_exag.empty:
         occupation_exag.to_csv(output_dir / "exaggeration_occupation.csv", index=False)
         logger.info(f"Saved occupation exaggeration to exaggeration_occupation.csv")
+    if intersectional_exag is not None and not intersectional_exag.empty:
+        intersectional_exag.to_csv(output_dir / "exaggeration_intersectional.csv", index=False)
+        logger.info(f"Saved intersectional exaggeration to exaggeration_intersectional.csv")
 
     # Intersectional Evaluation
     if args.enable_intersectional_eval:
