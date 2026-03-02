@@ -222,49 +222,46 @@ def measure_individuation_axis(df, axis, default="Unmarked", use_scenario_cv=Fal
     logger.info(f"\n--- MEASURING INDIVIDUATION FOR {axis.upper()} ---")
     results = {}
     values = [v for v in df[axis].unique() if v != default]
-    topics = [t for t in df.topic.unique() if t != "general_comment"]
 
     for val in values:
-        acc_scores = []
-        f1_scores = []
-        
-        for t in topics:
-            sub_df = df[(df["topic"] == t) & (df[axis].isin([val, default]))]
-            if len(sub_df) < 10:
-                continue
+        sub_df = df[df[axis].isin([val, default])]
+        if len(sub_df) < 10:
+            continue
 
-            X = np.stack(sub_df["embedding"].values)
-            # binary label: 1=target value, 0=default
-            y = (sub_df[axis] != default).astype(int)
+        X = np.stack(sub_df["embedding"].values)
+        # binary label: 1=target value, 0=default
+        y = (sub_df[axis] != default).astype(int)
 
-            if use_scenario_cv and "scenario_id" in sub_df.columns:
-                # Use scenario-disjoint CV
-                validator = ScenarioDisjointValidator(
-                    cv_strategy="GroupKFold",
-                    n_splits=min(5, len(np.unique(sub_df["scenario_id"]))),
-                    classifier_type="RandomForest"
-                )
-                groups = sub_df["scenario_id"].values
-                cv_results = validator.validate_by_scenario(X, y, groups)
-                acc_scores.append(cv_results['accuracy_mean'])
-                f1_scores.append(cv_results['f1_macro_mean'])
-            else:
-                # Use traditional random split (legacy)
-                X_train, X_test, y_train, y_test = train_test_split(
-                    X, y, test_size=0.2, random_state=42, stratify=y
-                )
-
-                clf = RandomForestClassifier(random_state=42)
-                clf.fit(X_train, y_train)
-                preds = clf.predict(X_test)
-
-                acc_scores.append(accuracy_score(y_test, preds))
-                f1_scores.append(f1_score(y_test, preds))
-
-        if acc_scores:
+        if use_scenario_cv and "scenario_id" in sub_df.columns:
+            # scenario-disjoint evaluation across all topics together
+            validator = ScenarioDisjointValidator(
+                cv_strategy="GroupKFold",
+                n_splits=min(5, len(np.unique(sub_df["scenario_id"]))),
+                classifier_type="RandomForest"
+            )
+            groups = sub_df["scenario_id"].values
+            cv_results = validator.validate_by_scenario(X, y, groups)
             results[val] = {
-                "Accuracy": np.mean(acc_scores),
-                "Macro F1": np.mean(f1_scores),
+                "Accuracy": cv_results['accuracy_mean'],
+                "Macro F1": cv_results['f1_macro_mean'],
+            }
+            logger.info(
+                f"{axis.capitalize()} value: {val:<30} "
+                f"CV Acc: {results[val]['Accuracy']:.2f} | CV F1: {results[val]['Macro F1']:.2f}"
+            )
+        else:
+            # fallback to random split
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42, stratify=y
+            )
+
+            clf = RandomForestClassifier(random_state=42)
+            clf.fit(X_train, y_train)
+            preds = clf.predict(X_test)
+
+            results[val] = {
+                "Accuracy": accuracy_score(y_test, preds),
+                "Macro F1": f1_score(y_test, preds),
             }
             logger.info(
                 f"{axis.capitalize()} value: {val:<30} "
@@ -285,88 +282,88 @@ def measure_exaggeration_axis(
     """
     print(f"\n--- MEASURING EXAGGERATION FOR {axis.upper()} ---")
     values = [v for v in df[axis].unique() if v != default_persona]
-    topics = [t for t in df.topic.unique() if t != default_topic]
 
     exag_scores = []
 
-    for t in topics:
-        for v in values:
-            df_default_persona = df[(df[axis] == default_persona) & (df["topic"] == t)]
-            df_default_topic = df[(df[axis] == v) & (df["topic"] == default_topic)]
-            df_target = df[(df[axis] == v) & (df["topic"] == t)]
-            df_background = df[
-                ((df[axis] == default_persona) | (df[axis] == v))
-                & (df["topic"].isin([default_topic, t]))
-            ]
+    for v in values:
+        # restrict to only the relevant personas across all topics
+        sub_df = df[df[axis].isin([default_persona, v])]
+        if sub_df.empty:
+            continue
 
-            if df_default_persona.empty or df_default_topic.empty or df_target.empty:
-                continue
+        df_default_persona = sub_df[sub_df[axis] == default_persona]
+        df_default_topic = sub_df[(sub_df[axis] == v) & (sub_df["topic"] == default_topic)]
+        df_target = sub_df[(sub_df[axis] == v) & (sub_df["topic"] != default_topic)]
+        df_background = sub_df  # both personas on all topics
 
-            persona_seed_words = get_seed_words(df_default_topic, df_default_persona, df_background)
-            topic_seed_words = get_seed_words(df_default_persona, df_default_topic, df_background)
+        if df_default_persona.empty or df_default_topic.empty or df_target.empty:
+            continue
 
-            if not persona_seed_words or not topic_seed_words:
-                continue
+        persona_seed_words = get_seed_words(df_default_topic, df_default_persona, df_background)
+        topic_seed_words = get_seed_words(df_default_persona, df_default_topic, df_background)
 
-            print(f"\n--- SEED WORDS FOR: {axis}={v} | Topic: {t[:20]} ---")
-            print(f"Persona Seed Words (Top 15): {persona_seed_words[:15]}")
-            print(f"Topic Seed Words (Top 15):   {topic_seed_words[:15]}")
+        if not persona_seed_words or not topic_seed_words:
+            continue
 
-            def get_pole_embedding(target_df, seed_words):
-                seed_patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
-                pole_embs = []
-                for sents in target_df["sentences"]:
-                    for s in sents:
-                        clean_s = clean_text_for_matching(s)
-                        if any(p.search(clean_s) for p in seed_patterns):
-                            pole_embs.append(emb_dict[s])
-                if not pole_embs:
-                    return None
-                return np.mean(pole_embs, axis=0)
+        print(f"\n--- SEED WORDS FOR: {axis}={v} ---")
+        print(f"Persona Seed Words (Top 15): {persona_seed_words[:15]}")
+        print(f"Topic Seed Words (Top 15):   {topic_seed_words[:15]}")
 
-            p_pole = get_pole_embedding(df_default_topic, persona_seed_words)
-            t_pole = get_pole_embedding(df_default_persona, topic_seed_words)
+        def get_pole_embedding(target_df, seed_words):
+            seed_patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
+            pole_embs = []
+            for sents in target_df["sentences"]:
+                for s in sents:
+                    clean_s = clean_text_for_matching(s)
+                    if any(p.search(clean_s) for p in seed_patterns):
+                        pole_embs.append(emb_dict[s])
+            if not pole_embs:
+                return None
+            return np.mean(pole_embs, axis=0)
 
-            if p_pole is None or t_pole is None:
-                continue
+        p_pole = get_pole_embedding(df_default_topic, persona_seed_words)
+        t_pole = get_pole_embedding(df_default_persona, topic_seed_words)
 
-            axis_v = p_pole - t_pole
-            
-            # Normalize axis vector to avoid numerical instability
-            axis_norm = norm(axis_v)
-            if axis_norm < 1e-8:
-                logger.debug(f"Degenerate axis vector (norm={axis_norm:.2e}). Skipping.")
-                continue
-            axis_v = axis_v / axis_norm
-            
-            def cos_sim(a, b):
-                denom = norm(a) * norm(b) + 1e-8
-                return dot(a, b) / denom
+        if p_pole is None or t_pole is None:
+            continue
 
-            target_sims = [cos_sim(emb, axis_v) for emb in df_target["embedding"]]
-            default_p_sims = [cos_sim(emb, axis_v) for emb in df_default_persona["embedding"]]
-            default_t_sims = [cos_sim(emb, axis_v) for emb in df_default_topic["embedding"]]
+        axis_v = p_pole - t_pole
+        
+        # Normalize axis vector to avoid numerical instability
+        axis_norm = norm(axis_v)
+        if axis_norm < 1e-8:
+            logger.debug(f"Degenerate axis vector (norm={axis_norm:.2e}). Skipping.")
+            continue
+        axis_v = axis_v / axis_norm
+        
+        def cos_sim(a, b):
+            denom = norm(a) * norm(b) + 1e-8
+            return dot(a, b) / denom
 
-            mean_target = np.mean(target_sims)
-            mean_dp = np.mean(default_p_sims)
-            mean_dt = np.mean(default_t_sims)
+        target_sims = [cos_sim(emb, axis_v) for emb in df_target["embedding"]]
+        default_p_sims = [cos_sim(emb, axis_v) for emb in df_default_persona["embedding"]]
+        default_t_sims = [cos_sim(emb, axis_v) for emb in df_default_topic["embedding"]]
 
-            # Robust denominator check with epsilon tolerance
-            denominator = mean_dt - mean_dp
-            if abs(denominator) < 1e-6:
-                logger.debug(f"Near-zero denominator ({denominator:.2e}). Skipping.")
-                continue
+        mean_target = np.mean(target_sims)
+        mean_dp = np.mean(default_p_sims)
+        mean_dt = np.mean(default_t_sims)
 
-            exag_score = (mean_target - mean_dp) / denominator
-            
-            # Bounds check: flag extreme scores
-            if np.isnan(exag_score) or np.isinf(exag_score):
-                logger.warning(f"Invalid exaggeration score (NaN/Inf): {axis}={v}, {t}")
-                continue
-            if abs(exag_score) > 100:
-                logger.warning(f"Extreme exaggeration: {exag_score:.2f} for {axis}={v}, {t}")
-            exag_scores.append({axis: v, "topic": t, "exaggeration": exag_score})
-            print(f"{axis.capitalize()}: {v:<30} Topic: {t[:20]:<20} Exaggeration: {exag_score:.3f}")
+        # Robust denominator check with epsilon tolerance
+        denominator = mean_dt - mean_dp
+        if abs(denominator) < 1e-6:
+            logger.debug(f"Near-zero denominator ({denominator:.2e}). Skipping.")
+            continue
+
+        exag_score = (mean_target - mean_dp) / denominator
+        
+        # Bounds check: flag extreme scores
+        if np.isnan(exag_score) or np.isinf(exag_score):
+            logger.warning(f"Invalid exaggeration score (NaN/Inf): {axis}={v}")
+            continue
+        if abs(exag_score) > 100:
+            logger.warning(f"Extreme exaggeration: {exag_score:.2f} for {axis}={v}")
+        exag_scores.append({axis: v, "exaggeration": exag_score})
+        print(f"{axis.capitalize()}: {v:<30} Exaggeration: {exag_score:.3f}")
 
     df_scores = pd.DataFrame(exag_scores)
     if df_scores.empty:
