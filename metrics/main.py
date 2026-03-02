@@ -62,7 +62,7 @@ def process_all_transcripts(target_path: str, control_path: str, default_topic_p
         task_desc = meta.get('task_description', '')
         
         # 1. Allocational
-        gcr = alloc_eval.calculate_gcr_llm_judge(transcript)
+        gcr = alloc_eval.calculate_gcr_llm_judge(transcript, task_desc)
         rejections = alloc_eval.calculate_rejection_rate(transcript)
         atc = alloc_eval.calculate_atc(transcript, is_successful=bool(gcr))
         
