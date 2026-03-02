@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 class SemanticMasker:
     """
     Redacts explicit demographic identifiers and occupational titles using spaCy NER.
-    Supports both implicit (no redaction needed) and explicit (redaction required) modes.
     """
     
     # Domain-specific occupation titles to redact
@@ -126,22 +125,17 @@ class SemanticMasker:
     def process_transcript(
         self, 
         transcript: List[Dict], 
-        variant_type: str = "implicit"
     ) -> List[Dict]:
         """
         Process a full transcript, redacting based on variant type.
         
         Args:
             transcript: List of turn dicts with 'speaker' and 'content' keys
-            variant_type: "implicit" (no redaction) or "explicit" (apply redaction)
             
         Returns:
             Processed transcript with redacted content for explicit variants
-        """
-        if variant_type == "implicit":
-            return transcript
-        
-        # For explicit variants, redact identifiers
+        """        
+        # Redact identifiers
         processed_turns = []
         for turn in transcript:
             turn_copy = turn.copy()
@@ -168,15 +162,11 @@ class SemanticMasker:
         # If variant_type is in DataFrame, use per-row application
         if "variant_type" in df.columns:
             df["response"] = df.apply(
-                lambda row: self.redact_explicit_identifiers(row["response"]) 
-                if row.get("variant_type") == "explicit" 
-                else row["response"],
+                lambda row: self.redact_explicit_identifiers(row["response"]),
                 axis=1
             )
         else:
-            # Otherwise apply uniform redaction if variant_type is explicit
-            if variant_type == "explicit":
-                df["response"] = df["response"].apply(self.redact_explicit_identifiers)
+            df["response"] = df["response"].apply(self.redact_explicit_identifiers)
         
         logger.info(f"Semantic masking complete. Processed {len(df)} rows.")
 

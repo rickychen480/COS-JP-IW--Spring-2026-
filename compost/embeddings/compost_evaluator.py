@@ -92,8 +92,8 @@ def load_transcripts_to_dataframe(json_paths, semantic_masker=None, apply_maskin
                 [t["content"] for t in d.get("transcript", []) if t["speaker"] == "User"]
             )
             
-            # Apply semantic masking if enabled and variant is explicit
-            if apply_masking and semantic_masker and variant_type == "explicit":
+            # Apply semantic masking if enabled
+            if apply_masking and semantic_masker:
                 user_text_original = user_text
                 user_text = semantic_masker.redact_explicit_identifiers(user_text)
                 masking_applied = user_text != user_text_original
