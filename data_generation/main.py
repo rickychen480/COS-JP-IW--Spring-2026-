@@ -37,7 +37,10 @@ def main() -> None:
         return
 
     # Create stratified sample of tasks for balanced representation
-    task_sampler = cycle(high_stakes_tasks)
+    # Task indices for scenario ID
+    task_indices = list(range(len(high_stakes_tasks)))
+    random.shuffle(task_indices)
+    task_sampler = cycle(task_indices)
     
     # Create stratified sample of identities for balanced representation
     # 5 races × 2 genders × 12 occupations = 120 unique intersectional combinations
@@ -52,13 +55,16 @@ def main() -> None:
 
     for _ in range(NUM_SAMPLES):
         # Extract attributes from MetaLWOz (Goal Source) - from high-stakes domains
-        mw_sample = next(task_sampler)
+        task_idx = next(task_sampler)
+        mw_sample = high_stakes_tasks[task_idx]
         goal = gen.extract_goal_from_metalwoz(mw_sample)
 
         # Apply Identity Grid (Augmentation) - stratified to ensure balance
         demographic, gender, occupation = next(identity_sampler)
 
-        task_variants = gen.generate_task_scenarios(goal, demographic, gender, occupation)
+        task_variants = gen.generate_task_scenarios(
+            goal, demographic, gender, occupation, scenario_id=f"{task_idx:04d}"
+        )
         for variant in task_variants:
             if variant["variant_type"] in ("implicit", "explicit"):
                 target_simulations.append(variant)
