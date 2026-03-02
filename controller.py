@@ -1,5 +1,6 @@
 import json
 import argparse
+import math
 from vllm import LLM, SamplingParams
 from transformers import AutoTokenizer
 
@@ -73,10 +74,18 @@ def check_early_stopping(msg_u, msg_t):
     return False
 
 
-def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None, tp=1, quant=None):
+def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None, tp=1, quant=None, chunk_index=0, total_chunks=1):
     # LOAD DATA
     with open(input_file, "r") as f:
         scenarios = json.load(f)
+
+    # Calculate chunk boundaries
+    chunk_size = math.ceil(len(scenarios) / total_chunks)
+    start_idx = chunk_index * chunk_size
+    end_idx = min(start_idx + chunk_size, len(scenarios))
+    scenarios = scenarios[start_idx:end_idx]
+    
+    print(f"Processing chunk {chunk_index}/{total_chunks}: scenarios {start_idx}-{end_idx-1}")
 
     # Allow running a small slice for testing
     if limit:
@@ -202,6 +211,8 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="meta-llama/Llama-3.1-8B-Instruct")
     parser.add_argument("--quant", type=str, default=None, help="Quantization method, e.g., 'awq'")
     parser.add_argument("--tp", type=int, default=1, help="Tensor parallel size (number of GPUs to split the model across)")
+    parser.add_argument("--chunk_index", type=int, default=0, help="Index of the current chunk (from SLURM)")
+    parser.add_argument("--total_chunks", type=int, default=1, help="Total number of parallel chunks")
     parser.add_argument(
         "--limit", type=int, default=None, help="Test mode: number of dialogues to run"
     )
@@ -214,5 +225,7 @@ if __name__ == "__main__":
         max_turns=10, 
         limit=args.limit, 
         tp=args.tp, 
-        quant=args.quant
+        quant=args.quant,
+        chunk_index=args.chunk_index,
+        total_chunks=args.total_chunks
     )
