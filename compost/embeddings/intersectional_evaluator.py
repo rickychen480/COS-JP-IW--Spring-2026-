@@ -23,16 +23,21 @@ class IntersectionalEvaluator:
     isolated demographic dimensions.
     """
     
-    def __init__(self, baseline_label: str = "Unmarked"):
+    def __init__(self, baseline_label: str = "Unmarked", min_group_size: int = 10):
         """
         Initialize intersectional evaluator.
         
         Args:
             baseline_label: The "unmarked" baseline identity to compare against
+            min_group_size: Minimum number of samples required per group for evaluation.
+                           Groups below this threshold will be skipped with a warning.
+                           Default: 10 (provides reasonable statistical power)
         """
         self.baseline_label = baseline_label
+        self.min_group_size = min_group_size
         self.intersectional_results = {}
         self.log_odds_cache = {}
+        self.skipped_groups = []  # Track which groups were excluded
     
     def create_intersectional_tuple(
         self,
@@ -151,7 +156,8 @@ class IntersectionalEvaluator:
         predictions: np.ndarray,
         ground_truth: np.ndarray,
         embeddings: np.ndarray,
-        intersectional_col: str = 'intersectional_id'
+        intersectional_col: str = 'intersectional_id',
+        min_group_size: Optional[int] = None
     ) -> pd.DataFrame:
         """
         Evaluate classification performance per intersectional group.
@@ -162,18 +168,32 @@ class IntersectionalEvaluator:
             ground_truth: True labels
             embeddings: Feature embeddings
             intersectional_col: Column name for intersectional identity
+            min_group_size: Override default minimum group size. If None, uses instance default.
             
         Returns:
             DataFrame with per-group performance metrics
         """
+        # Use provided min_group_size or fall back to instance default
+        threshold = min_group_size if min_group_size is not None else self.min_group_size
+        
         results = []
+        self.skipped_groups = []  # Reset tracking for this evaluation
         
         unique_groups = df[intersectional_col].unique()
+        logger.info(f"Evaluating {len(unique_groups)} unique intersectional groups (min_group_size={threshold})")
         
         for group in unique_groups:
             mask = df[intersectional_col] == group
+            group_size = mask.sum()
             
-            if mask.sum() < 2:  # Skip groups with too few samples
+            # Skip groups with insufficient samples
+            if group_size < threshold:
+                self.skipped_groups.append({
+                    'group': group,
+                    'n_samples': group_size,
+                    'reason': f"Below minimum threshold ({group_size} < {threshold})"
+                })
+                logger.debug(f"Skipped group '{group}': {group_size} samples (min: {threshold})")
                 continue
             
             group_preds = predictions[mask]
@@ -203,6 +223,17 @@ class IntersectionalEvaluator:
             })
         
         df_results = pd.DataFrame(results)
+        
+        # Log skipped groups summary
+        if self.skipped_groups:
+            logger.warning(f"Skipped {len(self.skipped_groups)} underpowered groups:")
+            for skipped in self.skipped_groups:
+                logger.warning(f"  - {skipped['group']}: {skipped['n_samples']} samples")
+        
+        # Log evaluation coverage
+        n_evaluated = len(df_results)
+        n_total = len(unique_groups)
+        logger.info(f"Evaluated {n_evaluated}/{n_total} groups ({100*n_evaluated/n_total:.1f}% coverage)")
         
         # Log group disparities
         if not df_results.empty:
