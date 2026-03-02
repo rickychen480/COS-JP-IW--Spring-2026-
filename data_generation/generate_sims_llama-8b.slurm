@@ -29,22 +29,19 @@ mkdir -p data/transcripts/Llama-3.1-8B-Instruct/
 CUDA_VISIBLE_DEVICES=0 python controller.py \
   --data data/prompts/target_simulations.json \
   --out data/transcripts/Llama-3.1-8B-Instruct/target_simulations.json \
-  --model $MODEL_ID \
-  --limit 1000 &
+  --model $MODEL_ID &
 
 # Run Control Simulations on GPU 1
 CUDA_VISIBLE_DEVICES=1 python controller.py \
   --data data/prompts/control_simulations.json \
   --out data/transcripts/Llama-3.1-8B-Instruct/control_simulations.json \
-  --model $MODEL_ID \
-  --limit 1000 &
+  --model $MODEL_ID &
 
 # Run Default Topics on GPU 2
 CUDA_VISIBLE_DEVICES=2 python controller.py \
   --data data/prompts/default_topics.json \
   --out data/transcripts/Llama-3.1-8B-Instruct/default_topics.json \
-  --model $MODEL_ID \
-  --limit 1000 &
+  --model $MODEL_ID &
 
 # Don't kill the job until all 3 background tasks finish
 wait

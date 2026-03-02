@@ -31,8 +31,7 @@ CUDA_VISIBLE_DEVICES=0,1 python controller.py \
   --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json \
   --model $MODEL_ID \
   --quant awq \
-  --tp 2 \
-  --limit 1000 &
+  --tp 2 &
 
 # Run Control Simulations on GPUs 2 and 3
 CUDA_VISIBLE_DEVICES=2,3 python controller.py \
@@ -40,8 +39,7 @@ CUDA_VISIBLE_DEVICES=2,3 python controller.py \
   --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
   --model $MODEL_ID \
   --quant awq \
-  --tp 2 \
-  --limit 1000 &
+  --tp 2 &
 
 # Run Default Topics on GPUs 4 and 5
 CUDA_VISIBLE_DEVICES=4,5 python controller.py \
