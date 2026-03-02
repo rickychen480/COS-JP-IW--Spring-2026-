@@ -21,6 +21,8 @@ import numpy as np
 import pandas as pd
 import math
 import re
+import os
+from pathlib import Path
 from collections import defaultdict
 import nltk
 from nltk.tokenize import sent_tokenize
@@ -366,7 +368,6 @@ if __name__ == "__main__":
         action="store_true",
         help="Enable intersectional joint probability evaluation (treats identities as indivisible)",
     )
-    # TODO: What is this?
     parser.add_argument(
         "--output-dir",
         type=str,
@@ -375,6 +376,11 @@ if __name__ == "__main__":
     )
     
     args = parser.parse_args()
+
+    # Create output directory
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Output directory: {output_dir.resolve()}")
 
     logger.info("=" * 80)
     logger.info("CoMPosT EVALUATOR")
@@ -439,6 +445,16 @@ if __name__ == "__main__":
     logger.info("Race:" + str(race_scores))
     logger.info("Gender:" + str(gender_scores))
     logger.info("Occupation:" + str(occupation_scores))
+    
+    individuation_results = {
+        'race': race_scores,
+        'gender': gender_scores,
+        'occupation': occupation_scores
+    }
+    individuation_json = output_dir / "individuation_scores.json"
+    with open(individuation_json, 'w') as f:
+        json.dump(individuation_results, f, indent=2)
+    logger.info(f"Saved individuation scores to {individuation_json}")
 
     logger.info("5. Measuring Exaggeration / Caricature...")
     race_exag = measure_exaggeration_axis(
@@ -455,6 +471,16 @@ if __name__ == "__main__":
     logger.info(f"Race exaggeration frame shape: {race_exag.shape}")
     logger.info(f"Gender exaggeration frame shape: {gender_exag.shape}")
     logger.info(f"Occupation exaggeration frame shape: {occupation_exag.shape}")
+    
+    if not race_exag.empty:
+        race_exag.to_csv(output_dir / "exaggeration_race.csv", index=False)
+        logger.info(f"Saved race exaggeration to exaggeration_race.csv")
+    if not gender_exag.empty:
+        gender_exag.to_csv(output_dir / "exaggeration_gender.csv", index=False)
+        logger.info(f"Saved gender exaggeration to exaggeration_gender.csv")
+    if not occupation_exag.empty:
+        occupation_exag.to_csv(output_dir / "exaggeration_occupation.csv", index=False)
+        logger.info(f"Saved occupation exaggeration to exaggeration_occupation.csv")
 
     # Intersectional Evaluation
     if args.enable_intersectional_eval:
@@ -468,6 +494,7 @@ if __name__ == "__main__":
         groups = df.get("scenario_id", df.index).values
         
         # Train classifier with scenario-disjoint CV if enabled
+        cv_report = None
         if use_scenario_cv:
             validator = ScenarioDisjointValidator(
                 cv_strategy=args.cv_strategy,
@@ -475,7 +502,13 @@ if __name__ == "__main__":
                 classifier_type="RandomForest"
             )
             cv_results = validator.validate_by_scenario(X, y_binary, groups)
-            logger.info(validator.get_summary_report())
+            cv_report = validator.get_summary_report()
+            logger.info(cv_report)
+            
+            cv_report_path = output_dir / "scenario_disjoint_cv_report.txt"
+            with open(cv_report_path, 'w') as f:
+                f.write(cv_report)
+            logger.info(f"Saved CV report to scenario_disjoint_cv_report.txt")
         
         # Evaluate per-group performance
         # Use basic split for now (scenario-disjoint for binary predictions)
@@ -501,12 +534,26 @@ if __name__ == "__main__":
         logger.info("\nIntersectional Performance Breakdown:")
         logger.info(intersect_perf.to_string(index=False))
         
-        # Compute parity metrics
+        intersect_perf.to_csv(output_dir / "intersectional_performance.csv", index=False)
+        logger.info(f"Saved intersectional performance to intersectional_performance.csv")
+        
         parity = intersectional_evaluator.compute_intersectional_parity(intersect_perf, metric='f1_score')
         logger.info("\nIntersectional Parity Metrics:")
         for key, val in parity.items():
             logger.info(f"  {key}: {val:.4f}")
+        
+        parity_json = output_dir / "intersectional_parity_metrics.json"
+        with open(parity_json, 'w') as f:
+            json.dump(parity, f, indent=2)
+        logger.info(f"Saved parity metrics to intersectional_parity_metrics.json")
+    
+    summary_path = output_dir / "summary_report.txt"
+    with open(summary_path, 'w') as f:
+        f.write(f"CoMPosT Evaluation Complete at {output_dir.resolve()}\n")
+        f.write(f"Timestamp: {pd.Timestamp.now()}\n")
+    logger.info(f"\nSaved summary report to summary_report.txt")
     
     logger.info("\n" + "=" * 80)
     logger.info("EVALUATION COMPLETE")
+    logger.info(f"All outputs saved to: {output_dir.resolve()}")
     logger.info("=" * 80)
