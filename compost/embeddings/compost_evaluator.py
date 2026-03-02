@@ -393,106 +393,103 @@ def measure_exaggeration_intersectional(
     
     intersectional_ids = [iid for iid in df["intersectional_id"].unique() 
                           if iid != default_persona]
-    topics = [t for t in df["topic"].unique() if t != default_topic]
-    
     exag_scores = []
     
     for cohort_id in intersectional_ids:
-        for t in topics:
-            # Target: specific intersectional cohort on specific topic
-            df_target = df[(df["intersectional_id"] == cohort_id) & (df["topic"] == t)]
-            
-            # Persona pole: same cohort on default topic
-            df_persona_pole = df[(df["intersectional_id"] == cohort_id) & (df["topic"] == default_topic)]
-            
-            # Topic pole: Unmarked baseline on specific topic
-            df_topic_pole = df[(df["intersectional_id"] == default_persona) & (df["topic"] == t)]
-            
-            # Background: all samples from Unmarked + target cohort
-            df_background = df[df["intersectional_id"].isin([default_persona, cohort_id])]
-            
-            if df_target.empty or df_persona_pole.empty or df_topic_pole.empty:
-                continue
-            
-            # Extract seed words: persona words distinctive of cohort vs Unmarked
-            persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, df_background)
-            
-            # Extract seed words: topic words distinctive of Unmarked vs cohort
-            topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, df_background)
-            
-            if not persona_seed_words or not topic_seed_words:
-                continue
-            
-            print(f"\n--- INTERSECTIONAL EXAGGERATION: {cohort_id} | Topic: {t[:20]} ---")
-            print(f"Persona Seed Words (Top 15): {persona_seed_words[:15]}")
-            print(f"Topic Seed Words (Top 15):   {topic_seed_words[:15]}")
-            
-            def get_pole_embedding(target_df, seed_words):
-                seed_patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
-                pole_embs = []
-                for sents in target_df["sentences"]:
-                    for s in sents:
-                        clean_s = clean_text_for_matching(s)
-                        if any(p.search(clean_s) for p in seed_patterns):
-                            pole_embs.append(emb_dict[s])
-                if not pole_embs:
-                    return None
-                return np.mean(pole_embs, axis=0)
-            
-            p_pole = get_pole_embedding(df_persona_pole, persona_seed_words)
-            t_pole = get_pole_embedding(df_topic_pole, topic_seed_words)
-            
-            if p_pole is None or t_pole is None:
-                continue
-            
-            axis_v = p_pole - t_pole
-            
-            # Normalize axis vector to avoid numerical instability
-            axis_norm = norm(axis_v)
-            if axis_norm < 1e-8:
-                logger.debug(f"Degenerate axis vector (norm={axis_norm:.2e}). Skipping.")
-                continue
-            axis_v = axis_v / axis_norm
-            
-            def cos_sim(a, b):
-                denom = norm(a) * norm(b) + 1e-8
-                return dot(a, b) / denom
-            
-            target_sims = [cos_sim(emb, axis_v) for emb in df_target["embedding"]]
-            persona_pole_sims = [cos_sim(emb, axis_v) for emb in df_persona_pole["embedding"]]
-            topic_pole_sims = [cos_sim(emb, axis_v) for emb in df_topic_pole["embedding"]]
-            
-            mean_target = np.mean(target_sims)
-            mean_p_pole = np.mean(persona_pole_sims)
-            mean_t_pole = np.mean(topic_pole_sims)
-            
-            # Robust denominator check
-            denominator = mean_t_pole - mean_p_pole
-            if abs(denominator) < 1e-6:
-                logger.debug(f"Near-zero denominator ({denominator:.2e}). Skipping.")
-                continue
-            
-            exag_score = (mean_target - mean_p_pole) / denominator
-            
-            # Bounds check
-            if np.isnan(exag_score) or np.isinf(exag_score):
-                logger.warning(f"Invalid exaggeration score (NaN/Inf): {cohort_id}, {t}")
-                continue
-            if abs(exag_score) > 100:
-                logger.warning(f"Extreme exaggeration: {exag_score:.2f} for {cohort_id}, {t}")
-            
-            exag_scores.append({
-                "intersectional_id": cohort_id, 
-                "topic": t, 
-                "exaggeration": exag_score
-            })
-            print(f"Cohort: {cohort_id:<40} Topic: {t[:20]:<20} Exaggeration: {exag_score:.3f}")
-    
+        # restrict to samples involving the cohort or unmarked baseline
+        sub_df = df[df["intersectional_id"].isin([default_persona, cohort_id])]
+        if sub_df.empty:
+            continue
+
+        # persona pole: cohort on default topic
+        df_persona_pole = sub_df[(sub_df["intersectional_id"] == cohort_id) & (sub_df["topic"] == default_topic)]
+        # topic pole: unmarked baseline across all topics
+        df_topic_pole = sub_df[sub_df["intersectional_id"] == default_persona]
+        # target: cohort across non-default topics
+        df_target = sub_df[(sub_df["intersectional_id"] == cohort_id) & (sub_df["topic"] != default_topic)]
+        # background: all rows in sub_df
+        df_background = sub_df
+
+        if df_target.empty or df_persona_pole.empty or df_topic_pole.empty:
+            continue
+
+        # persona seed words: cohort vs unmarked baseline
+        persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, df_background)
+        # topic seed words: baseline vs cohort
+        topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, df_background)
+
+        if not persona_seed_words or not topic_seed_words:
+            continue
+
+        print(f"\n--- INTERSECTIONAL EXAGGERATION: {cohort_id} (aggregate) ---")
+        print(f"Persona Seed Words (Top 15): {persona_seed_words[:15]}")
+        print(f"Topic Seed Words (Top 15):   {topic_seed_words[:15]}")
+
+        def get_pole_embedding(target_df, seed_words):
+            seed_patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
+            pole_embs = []
+            for sents in target_df["sentences"]:
+                for s in sents:
+                    clean_s = clean_text_for_matching(s)
+                    if any(p.search(clean_s) for p in seed_patterns):
+                        pole_embs.append(emb_dict[s])
+            if not pole_embs:
+                return None
+            return np.mean(pole_embs, axis=0)
+
+        p_pole = get_pole_embedding(df_persona_pole, persona_seed_words)
+        t_pole = get_pole_embedding(df_topic_pole, topic_seed_words)
+
+        if p_pole is None or t_pole is None:
+            continue
+
+        axis_v = p_pole - t_pole
+
+        # Normalize axis vector to avoid numerical instability
+        axis_norm = norm(axis_v)
+        if axis_norm < 1e-8:
+            logger.debug(f"Degenerate axis vector (norm={axis_norm:.2e}). Skipping.")
+            continue
+        axis_v = axis_v / axis_norm
+
+        def cos_sim(a, b):
+            denom = norm(a) * norm(b) + 1e-8
+            return dot(a, b) / denom
+
+        target_sims = [cos_sim(emb, axis_v) for emb in df_target["embedding"]]
+        persona_pole_sims = [cos_sim(emb, axis_v) for emb in df_persona_pole["embedding"]]
+        topic_pole_sims = [cos_sim(emb, axis_v) for emb in df_topic_pole["embedding"]]
+
+        mean_target = np.mean(target_sims)
+        mean_p_pole = np.mean(persona_pole_sims)
+        mean_t_pole = np.mean(topic_pole_sims)
+
+        # Robust denominator check
+        denominator = mean_t_pole - mean_p_pole
+        if abs(denominator) < 1e-6:
+            logger.debug(f"Near-zero denominator ({denominator:.2e}). Skipping.")
+            continue
+
+        exag_score = (mean_target - mean_p_pole) / denominator
+
+        # Bounds check
+        if np.isnan(exag_score) or np.isinf(exag_score):
+            logger.warning(f"Invalid exaggeration score (NaN/Inf): {cohort_id}")
+            continue
+        if abs(exag_score) > 100:
+            logger.warning(f"Extreme exaggeration: {exag_score:.2f} for {cohort_id}")
+
+        exag_scores.append({
+            "intersectional_id": cohort_id,
+            "exaggeration": exag_score
+        })
+        print(f"Cohort: {cohort_id:<40} Exaggeration: {exag_score:.3f}")
+
     df_scores = pd.DataFrame(exag_scores)
     if df_scores.empty:
         print("\n[WARNING] No intersectional exaggeration scores were calculated.")
         return df_scores
-    
+
     print(f"\nMEAN EXAGGERATION BY INTERSECTIONAL_ID (Lower is better):")
     print(df_scores.groupby("intersectional_id")["exaggeration"].mean().sort_values(ascending=False))
     return df_scores
