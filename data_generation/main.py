@@ -14,6 +14,8 @@ OUT_DIR = Path("data/prompts")
 
 
 def main() -> None:
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+
     target_file = OUT_DIR / "target_simulations.json"
     control_file = OUT_DIR / "control_simulations.json"
     default_topic_file = OUT_DIR / "default_topics.json"
@@ -45,7 +47,7 @@ def main() -> None:
     task_sampler = cycle(task_indices)
     
     # Create stratified sample of identities for balanced representation
-    # 5 races × 2 genders × 12 occupations = 120 unique intersectional combinations
+    # 5 races × 2 genders × 9 occupations = 90 unique intersectional combinations
     identity_combinations = list(product(const.RACES, const.GENDERS, const.OCCUPATIONS_GRID))
     random.shuffle(identity_combinations)
     
