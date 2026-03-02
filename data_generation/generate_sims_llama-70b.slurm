@@ -11,6 +11,9 @@
 #SBATCH --mail-type=end
 #SBATCH --mail-user=ricky.chen@princeton.edu
 
+export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_70b_$SLURM_ARRAY_TASK_ID
+export VLLM_DISABLE_COMPILE_CACHE=1
+
 echo "Initializing environment..."
 
 cd ~/COS-JP
