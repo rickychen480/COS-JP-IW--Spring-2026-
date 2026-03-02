@@ -551,6 +551,16 @@ if __name__ == "__main__":
         intersectional_evaluator = IntersectionalEvaluator()
         df = intersectional_evaluator.add_intersectional_column(df)
         logger.info(f"Created intersectional IDs for {df['intersectional_id'].nunique()} groups")
+        
+        # Warn if sparse groups detected
+        group_counts = df["intersectional_id"].value_counts()
+        sparse_groups = group_counts[group_counts < 30]
+        if len(sparse_groups) > 0:
+            logger.warning(f"\n!!! WARNING: {len(sparse_groups)} intersectional groups have < 30 samples !!!")
+            logger.warning("This may lead to noisy results in scenario-disjoint CV folds.")
+            logger.warning("Sparse groups:")
+            for cohort_id, count in sparse_groups.items():
+                logger.warning(f"  - {cohort_id}: {count} samples")
 
     logger.info("2. Tokenizing sentences...")
     df["sentences"] = df["response"].apply(sent_tokenize)
