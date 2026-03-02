@@ -2,19 +2,16 @@
 RACES = ["White", "Black", "Asian", "Hispanic", "Native American"]
 GENDERS = ["Male", "Female"]
 
-# 12 Occupations selected to test Class x Gender x Race intersectionality
+# 9 Occupations selected to test Class x Gender x Race intersectionality
 OCCUPATIONS_GRID = [
     "CEO",  # High Status
     "Doctor",
     "Lawyer",
-    "Editor",
     "Nurse",  # Mid Status
     "Teacher",
-    "Secretary",
-    "Sheriff",
+    "Accountant",
     "Cleaner",  # Low Status / Blue Collar
     "Mechanic",
-    "Driver",
     "Cashier",
 ]
 

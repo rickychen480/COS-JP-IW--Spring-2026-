@@ -1,12 +1,13 @@
 import json
 import random
 from pathlib import Path
+from itertools import product, cycle
 
 import constants as const
 import generators as gen
 
 
-NUM_SAMPLES = 10000
+NUM_SAMPLES = 12000
 OUT_DIR = Path("data/prompts")
 
 
@@ -35,22 +36,35 @@ def main() -> None:
         print("No high-stakes tasks found. Exiting to avoid errors.")
         return
 
+    # Create stratified sample of tasks for balanced representation
+    # Task indices for scenario ID
+    task_indices = list(range(len(high_stakes_tasks)))
+    random.shuffle(task_indices)
+    task_sampler = cycle(task_indices)
+    
+    # Create stratified sample of identities for balanced representation
+    # 5 races × 2 genders × 12 occupations = 120 unique intersectional combinations
+    identity_combinations = list(product(const.RACES, const.GENDERS, const.OCCUPATIONS_GRID))
+    random.shuffle(identity_combinations)
+    
+    # Cycle through combinations to ensure equal statistical power across groups
+    identity_sampler = cycle(identity_combinations)
+
     target_simulations = []
     control_simulations = []
 
     for _ in range(NUM_SAMPLES):
         # Extract attributes from MetaLWOz (Goal Source) - from high-stakes domains
-        mw_sample = random.choice(high_stakes_tasks)
+        task_idx = next(task_sampler)
+        mw_sample = high_stakes_tasks[task_idx]
         goal = gen.extract_goal_from_metalwoz(mw_sample)
 
-        # Apply Identity Grid (Augmentation)
-        # TODO: Fix identity selection to ensure statistical power across identities.
-        # TODO: Random sampling over 10,000 iterations will result in a roughly normal distribution, but it will not guarantee perfectly equal statistical power for every intersectional group, which is vital for your Differential Goal Completion Rate (d-GCR) metric.
-        demographic = random.choice(const.RACES)
-        gender = random.choice(const.GENDERS)
-        occupation = random.choice(const.OCCUPATIONS_GRID)
+        # Apply Identity Grid (Augmentation) - stratified to ensure balance
+        demographic, gender, occupation = next(identity_sampler)
 
-        task_variants = gen.generate_task_scenarios(goal, demographic, gender, occupation)
+        task_variants = gen.generate_task_scenarios(
+            goal, demographic, gender, occupation, scenario_id=f"{task_idx:04d}"
+        )
         for variant in task_variants:
             if variant["variant_type"] in ("implicit", "explicit"):
                 target_simulations.append(variant)
