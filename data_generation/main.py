@@ -10,6 +10,7 @@ import generators as gen
 # target sample count: approximately (number of identity combinations) * (samples per pair)
 # with 5 races × 2 genders × 9 occupations = 90 combos, 12000 gives ~133 per pair, leaving headroom
 NUM_SAMPLES = 12000
+NUM_UNMARKED_SAMPLES = 1150 # 23 tasks × 50 samples/task = 1150
 OUT_DIR = Path("data/prompts")
 
 
@@ -57,6 +58,14 @@ def main() -> None:
     target_simulations = []
     control_simulations = []
 
+    for _ in range(NUM_UNMARKED_SAMPLES):
+        task_idx = next(task_sampler)
+        mw_sample = high_stakes_tasks[task_idx]
+        goal = gen.extract_goal_from_metalwoz(mw_sample)
+        
+        unmarked_variants = gen.generate_unmarked_scenarios(goal, scenario_id=f"{task_idx:04d}")
+        control_simulations.extend(unmarked_variants)
+    
     # scaled sampling: goal is ~100 examples per paired identity (NUM_SAMPLES already set high)
     for _ in range(NUM_SAMPLES):
         # extract a random high-stakes goal from MetaLWoz
