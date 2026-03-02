@@ -132,6 +132,7 @@ class IntersectionalEvaluator:
             log_odds[dim] = cohens_d
         
         return log_odds
+    
     def get_most_distinctive_dimensions(
         self,
         log_odds: Dict[int, float],
