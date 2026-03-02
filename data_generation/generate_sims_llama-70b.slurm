@@ -37,7 +37,7 @@ CUDA_VISIBLE_DEVICES=0,1 python controller.py \
   --quant awq \
   --tp 2 \
   --chunk_index $SLURM_ARRAY_TASK_ID \
-  --total_chunks 12
+  --total_chunks 12 &
 
 # Run Control Simulations on GPUs 2 and 3
 CUDA_VISIBLE_DEVICES=2,3 python controller.py \
@@ -47,7 +47,7 @@ CUDA_VISIBLE_DEVICES=2,3 python controller.py \
   --quant awq \
   --tp 2 \
   --chunk_index $SLURM_ARRAY_TASK_ID \
-  --total_chunks 12
+  --total_chunks 12 &
 
 # Run Default Topics on GPUs 4 and 5
 CUDA_VISIBLE_DEVICES=4,5 python controller.py \
@@ -57,6 +57,8 @@ CUDA_VISIBLE_DEVICES=4,5 python controller.py \
   --quant awq \
   --tp 2 \
   --chunk_index $SLURM_ARRAY_TASK_ID \
-  --total_chunks 12
+  --total_chunks 12 &
+
+wait
 
 echo "Chunk $SLURM_ARRAY_TASK_ID (all 3 datasets) complete!"

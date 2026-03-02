@@ -34,9 +34,7 @@ CUDA_VISIBLE_DEVICES=0 python controller.py \
   --out data/transcripts/Llama-3.1-8B-Instruct/target_simulations_chunk_${SLURM_ARRAY_TASK_ID}.json \
   --model $MODEL_ID \
   --chunk_index $SLURM_ARRAY_TASK_ID \
-  --total_chunks 12
-
-echo "Target chunk $SLURM_ARRAY_TASK_ID complete. Starting control..."
+  --total_chunks 12 &
 
 # Run Control Simulations on GPU 1
 CUDA_VISIBLE_DEVICES=1 python controller.py \
@@ -44,9 +42,7 @@ CUDA_VISIBLE_DEVICES=1 python controller.py \
   --out data/transcripts/Llama-3.1-8B-Instruct/control_simulations_chunk_${SLURM_ARRAY_TASK_ID}.json \
   --model $MODEL_ID \
   --chunk_index $SLURM_ARRAY_TASK_ID \
-  --total_chunks 12
-
-echo "Control chunk $SLURM_ARRAY_TASK_ID complete. Starting default topics..."
+  --total_chunks 12 &
 
 # Run Default Topics on GPU 2
 CUDA_VISIBLE_DEVICES=2 python controller.py \
@@ -54,6 +50,8 @@ CUDA_VISIBLE_DEVICES=2 python controller.py \
   --out data/transcripts/Llama-3.1-8B-Instruct/default_topics_chunk_${SLURM_ARRAY_TASK_ID}.json \
   --model $MODEL_ID \
   --chunk_index $SLURM_ARRAY_TASK_ID \
-  --total_chunks 12
+  --total_chunks 12 &
+
+wait
 
 echo "Chunk $SLURM_ARRAY_TASK_ID (all 3 datasets) complete!"
