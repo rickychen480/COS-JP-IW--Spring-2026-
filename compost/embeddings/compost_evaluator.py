@@ -121,10 +121,8 @@ def load_transcripts_to_dataframe(json_paths, semantic_masker=None, apply_maskin
         unique_scen = df["scenario_id"].nunique()
         unique_topics = df["topic"].nunique()
         if unique_scen <= 1:
-            logger.warning("All scenario_id values are identical or missing. "
+            logger.warning(f"All scenario_id values in {path} are identical or missing. "
                            "Scenario-disjoint CV will collapse to a single fold.")
-            logger.warning("Assigning unique ids from dialogue_id to salvage splitting.")
-            df["scenario_id"] = df["dialogue_id"].astype(str)
         else:
             # check whether each scenario maps to only one topic
             mapping = df.groupby("scenario_id")["topic"].nunique()
