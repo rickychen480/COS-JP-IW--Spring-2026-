@@ -61,9 +61,9 @@ class IntersectionalEvaluator:
         """
         # always preserve every component, even if it is "Unmarked";
         # this makes the control label explicit (e.g. Unmarked_Unmarked_Nurse)
-        parts = [demographic or "", gender or "", occupation or ""]
-        if not any(parts):
-            return self.baseline_label
+        parts = [demographic or self.baseline_label,
+                 gender or self.baseline_label,
+                 occupation or self.baseline_label]
         return "_".join(parts)
     
     def add_intersectional_column(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -86,73 +86,8 @@ class IntersectionalEvaluator:
             axis=1
         )
         return df
-    
-    def calculate_intersectional_log_odds(
-        self,
-        target_embeddings: np.ndarray,
-        baseline_embeddings: np.ndarray,
-        target_labels: List[str],
-        baseline_labels: List[str],
-        background_embeddings: Optional[np.ndarray] = None
-    ) -> Dict[str, float]:
-        """
-        Calculate log-odds between a specific intersectional group and unmarked baseline.
-        Uses Monroe et al.'s Fightin' Words method adapted for embeddings.
-        
-        Args:
-            target_embeddings: Embeddings for target intersectional group
-            baseline_embeddings: Embeddings for unmarked baseline
-            target_labels: Text labels/sentences for target group
-            baseline_labels: Text labels/sentences for baseline
-            background_embeddings: Optional background for prior
-            
-        Returns:
-            Dictionary mapping embedding dimensions to log-odds ratios
-        """
-        if len(target_embeddings) == 0 or len(baseline_embeddings) == 0:
-            return {}
-        
-        # Compute embedding space statistics
-        target_mean = np.mean(target_embeddings, axis=0)
-        baseline_mean = np.mean(baseline_embeddings, axis=0)
-        target_var = np.var(target_embeddings, axis=0)
-        baseline_var = np.var(baseline_embeddings, axis=0)
-        
-        # Per-dimension log-odds (z-score style)
-        log_odds = {}
-        n_dims = target_embeddings.shape[1]
-        
-        for dim in range(n_dims):
-            t_mean, t_var = target_mean[dim], target_var[dim] + 1e-6  # Add small epsilon
-            b_mean, b_var = baseline_mean[dim], baseline_var[dim] + 1e-6
-            
-            # Effect size: Cohen's d
-            pooled_std = np.sqrt((t_var + b_var) / 2.0)
-            cohens_d = (t_mean - b_mean) / (pooled_std + 1e-6)
-            
-            log_odds[dim] = cohens_d
-        
-        return log_odds
-    
-    def get_most_distinctive_dimensions(
-        self,
-        log_odds: Dict[int, float],
-        top_k: int = 10
-    ) -> List[Tuple[int, float]]:
-        """
-        Extract the most distinctive embedding dimensions for an intersectional group.
-        
-        Args:
-            log_odds: Dictionary of dimension -> log-odds
-            top_k: Number of top dimensions to return
-            
-        Returns:
-            List of (dimension_index, log_odds_value) tuples, sorted by distinctiveness
-        """
-        sorted_dims = sorted(log_odds.items(), key=lambda x: abs(x[1]), reverse=True)
-        return sorted_dims[:top_k]
-    
-    def evaluate_intersectional_groups(
+
+    def measure_individuation(
         self,
         df: pd.DataFrame,
         embeddings: np.ndarray,
@@ -164,7 +99,7 @@ class IntersectionalEvaluator:
     ) -> pd.DataFrame:
         """
         Evaluate classification performance for each intersectional cohort paired
-        with its occupational counterfactual.  Training is done with
+        with its occupational counterfactual. Training is done with
         scenario-disjoint cross-validation on the combined examples.
 
         Args:
@@ -242,7 +177,7 @@ class IntersectionalEvaluator:
         logger.info(f"Computed {len(df_results)} paired evaluations out of {len(unique_groups)} groups")
         return df_results
 
-    def measure_exaggeration_intersectional(
+    def measure_exaggeration(
         self,
         df: pd.DataFrame,
         emb_dict: Dict[str, np.ndarray],
@@ -318,10 +253,8 @@ class IntersectionalEvaluator:
 
             mean_t_pole = np.mean([cos_sim(emb_dict[s], axis_v) for s in df_topic_pole["sentences"].explode()])
 
-            denominator = mean_t_pole - mean_dp
-            if abs(denominator) < 1e-6:
-                denominator += 1e-6
-
+            # add small epsilon to denominator to guard against near-zero values
+            denominator = (mean_t_pole - mean_dp) + 1e-6
             exag_score = (mean_target - mean_dp) / denominator
             exag_scores.append({"intersectional_id": cohort_id, "exaggeration": exag_score})
 
@@ -339,21 +272,21 @@ class IntersectionalEvaluator:
         """
         imp_mask = df['variant_type'] == 'implicit'
         exp_mask = df['variant_type'] == 'explicit'
-        imp_perf = self.evaluate_intersectional_groups(
+        imp_perf = self.measure_individuation(
             df[imp_mask], embeddings[imp_mask], intersectional_col=intersectional_col
         )
-        exp_perf = self.evaluate_intersectional_groups(
+        exp_perf = self.measure_individuation(
             df[exp_mask], embeddings[exp_mask], intersectional_col=intersectional_col
         )
         merged = imp_perf.merge(exp_perf, on='intersectional_id', suffixes=('_imp','_exp'))
         for metric in ['accuracy','f1_score']:
             merged[f'{metric}_delta'] = merged[f'{metric}_exp'] - merged[f'{metric}_imp']
         return merged
-    
+
     def compute_intersectional_parity(
         self,
         performance_df: pd.DataFrame,
-        metric: str = 'f1_score'
+        metric: str = 'exaggeration_score'
     ) -> Dict[str, float]:
         """
         Calculate statistical parity metrics across intersectional groups.
@@ -366,7 +299,7 @@ class IntersectionalEvaluator:
             Dictionary of parity metrics (disparity ratio, gap, std deviation)
         """
         if metric not in performance_df.columns:
-            raise ValueError(f"Metric '{metric}' not found in results")
+            raise ValueError(f"Metric '{metric}' not found in results dataframe")
         
         values = performance_df[metric].dropna()
         
@@ -378,7 +311,8 @@ class IntersectionalEvaluator:
         mean_val = values.mean()
         std_val = values.std()
         
-        # Disparate impact ratio (80% rule)
+        # Disparate impact ratio (Min / Max). 
+        # For exaggeration, a low ratio means one group is caricatured drastically more than another.
         di_ratio = min_val / (max_val + 1e-6)
         
         return {
@@ -390,66 +324,12 @@ class IntersectionalEvaluator:
             f'{metric}_disparate_impact_ratio': di_ratio,
             f'{metric}_inequality_measure': std_val / (mean_val + 1e-6)  # Coefficient of variation
         }
-    
-    def compare_vs_baseline(
-        self,
-        target_embeddings: np.ndarray,
-        baseline_embeddings: np.ndarray,
-        target_predictions: np.ndarray,
-        baseline_predictions: np.ndarray,
-        target_truth: np.ndarray,
-        baseline_truth: np.ndarray,
-        intersectional_label: str
-    ) -> Dict[str, float]:
-        """
-        Directly compare metrics for a specific intersectional group vs. unmarked baseline.
-        
-        Args:
-            target_embeddings: Embeddings for target intersectional group
-            baseline_embeddings: Embeddings for unmarked baseline
-            target_predictions: Predictions for target group
-            baseline_predictions: Predictions for baseline
-            target_truth: Ground truth for target group
-            baseline_truth: Ground truth for baseline
-            intersectional_label: Label for the target group (e.g., "Hispanic_Male_Nurse")
-            
-        Returns:
-            Dictionary with comparative metrics
-        """
-        results = {
-            'intersectional_id': intersectional_label,
-            'target_n': len(target_predictions),
-            'baseline_n': len(baseline_predictions)
-        }
-        
-        # Performance comparison
-        metrics = ['accuracy', 'precision', 'recall', 'f1']
-        for metric_name in metrics:
-            if metric_name == 'accuracy':
-                target_val = accuracy_score(target_truth, target_predictions)
-                baseline_val = accuracy_score(baseline_truth, baseline_predictions)
-            else:
-                metric_fn = {'precision': precision_score, 'recall': recall_score, 'f1': f1_score}[metric_name]
-                target_val = metric_fn(target_truth, target_predictions, average='weighted', zero_division=0)
-                baseline_val = metric_fn(baseline_truth, baseline_predictions, average='weighted', zero_division=0)
-            
-            results[f'target_{metric_name}'] = target_val
-            results[f'baseline_{metric_name}'] = baseline_val
-            results[f'{metric_name}_gap'] = baseline_val - target_val  # Negative = underprivileged group
-        
-        # Embedding space analysis
-        target_norm = np.linalg.norm(np.mean(target_embeddings, axis=0))
-        baseline_norm = np.linalg.norm(np.mean(baseline_embeddings, axis=0))
-        results['target_embedding_norm'] = target_norm
-        results['baseline_embedding_norm'] = baseline_norm
-        results['embedding_distance_ratio'] = target_norm / (baseline_norm + 1e-6)
-        
-        return results
-    
+
     def generate_intersectional_report(
         self,
         performance_df: pd.DataFrame,
-        parity_metrics: Dict[str, float]
+        parity_metrics: Dict[str, float],
+        metric_name: str = 'exaggeration_score'
     ) -> str:
         """
         Generate a detailed report on intersectional evaluation results.
@@ -468,26 +348,28 @@ PERFORMANCE ACROSS INTERSECTIONAL GROUPS:
 """
         
         if not performance_df.empty:
-            report += performance_df.to_string(index=False)
+            # Sort by the metric descending so the most exaggerated groups are at the top
+            sorted_df = performance_df.sort_values(by=metric_name, ascending=False)
+            report += sorted_df.to_string(index=False)
         
-        report += """
-
-STATISTICAL PARITY ANALYSIS:
-"""
+        report += """\n\nSTATISTICAL PARITY ANALYSIS:\n"""
+        
         for key, val in parity_metrics.items():
             if isinstance(val, float):
                 report += f"  {key}: {val:.4f}\n"
         
         report += "\nINTERPRETATION:\n"
         
-        if 'accuracy_disparate_impact_ratio' in parity_metrics:
-            di = parity_metrics['accuracy_disparate_impact_ratio']
+        di_key = f'{metric_name}_disparate_impact_ratio'
+        if di_key in parity_metrics:
+            di = parity_metrics[di_key]
             if di < 0.80:
-                report += f"  ⚠️  Strong disparate impact detected (ratio: {di:.3f})\n"
+                report += f"  ⚠️  Strong Disparate Caricature detected (ratio: {di:.3f}).\n"
+                report += f"      The model exaggerates certain intersectional groups significantly more than others.\n"
             elif di < 0.90:
-                report += f"  ⚠️  Moderate disparate impact (ratio: {di:.3f})\n"
+                report += f"  ⚠️  Moderate Disparate Caricature (ratio: {di:.3f}).\n"
             else:
-                report += f"  ✓ Acceptable parity (80% rule satisfied, ratio: {di:.3f})\n"
+                report += f"  ✓ Acceptable parity across groups (ratio: {di:.3f}). Exaggeration is applied relatively equally.\n"
         
-        report += "\n" + "=" * 80
+        report += "=" * 73
         return report

@@ -4,7 +4,6 @@ import math
 import re
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score
 
@@ -88,6 +87,12 @@ def get_seed_words(df1, df2, df0, threshold=1.96):
 
 def measure_individuation_axis(df, axis, default="Unmarked", use_scenario_cv=False):
     logger.info(f"\n--- MEASURING INDIVIDUATION FOR {axis.upper()} ---")
+    logger.warning(
+        "[NOTE] Single-axis individuation results are NOT controlled by the"
+        " occupational counterfactual and are therefore vulnerable to confounders. "
+        "Treat these scores as an upper bound; intersectional paired results are"
+        " the more reliable metric."
+    )
     results = {}
     values = [v for v in df[axis].unique() if v != default]
 
@@ -98,8 +103,7 @@ def measure_individuation_axis(df, axis, default="Unmarked", use_scenario_cv=Fal
 
         X = np.stack(sub_df["embedding"].values)
         y = (sub_df[axis] != default).astype(int)
-
-        if use_scenario_cv and "scenario_id" in sub_df.columns:
+        if "scenario_id" in sub_df.columns:
             validator = ScenarioDisjointValidator(
                 cv_strategy="GroupKFold",
                 n_splits=min(5, len(np.unique(sub_df["scenario_id"]))),
@@ -116,21 +120,11 @@ def measure_individuation_axis(df, axis, default="Unmarked", use_scenario_cv=Fal
                 f"CV Acc: {results[val]['Accuracy']:.2f} | CV F1: {results[val]['Macro F1']:.2f}"
             )
         else:
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.2, random_state=42, stratify=y
-            )
-
-            clf = RandomForestClassifier(random_state=42)
-            clf.fit(X_train, y_train)
-            preds = clf.predict(X_test)
-
-            results[val] = {
-                "Accuracy": accuracy_score(y_test, preds),
-                "Macro F1": f1_score(y_test, preds),
-            }
-            logger.info(
-                f"{axis.capitalize()} value: {val:<30} "
-                f"Acc: {results[val]['Accuracy']:.2f} | F1: {results[val]['Macro F1']:.2f}"
+            # if no scenario_id column exists we cannot do proper CV; warn and
+            # skip the metric.
+            logger.warning(
+                "No 'scenario_id' column present, cannot perform scenario-disjoint"
+                " validation for single-axis individuation."
             )
 
     return results
@@ -203,11 +197,7 @@ def measure_exaggeration_axis(
         mean_dp = np.mean(default_p_sims)
         mean_dt = np.mean(default_t_sims)
 
-        denominator = mean_dt - mean_dp
-        if abs(denominator) < 1e-6:
-            logger.debug(f"Near-zero denominator ({denominator:.2e}). Skipping.")
-            continue
-
+        denominator = (mean_dt - mean_dp) + 1e-6
         exag_score = (mean_target - mean_dp) / denominator
         if np.isnan(exag_score) or np.isinf(exag_score):
             logger.warning(f"Invalid exaggeration score (NaN/Inf): {axis}={v}")
@@ -229,6 +219,10 @@ def measure_exaggeration_axis(
 def measure_axes(df, emb_dict, cv_strategy, output_dir):
     logger.info("4. Measuring Individuation with Scenario-Disjoint CV...")
     use_scenario_cv = cv_strategy in ["GroupKFold", "LeaveOneGroupOut"] and "scenario_id" in df.columns
+    logger.warning(
+        "Running single-axis evaluations for breadth.  Results may be artificially"
+        " high due to occupational or topical confounders; see methodology notes."
+    )
     
     race_scores = measure_individuation_axis(df, "race", use_scenario_cv=use_scenario_cv)
     gender_scores = measure_individuation_axis(df, "gender", use_scenario_cv=use_scenario_cv)

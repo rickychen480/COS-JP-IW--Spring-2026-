@@ -153,7 +153,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--enable-single-axes-eval",
         action="store_false",
-        help="Enable single axes evaluation (treats each demographic attribute as individual)",
+        help="Enable single axes evaluation (treats each demographic attribute as individual).\n" \
+             "Results may be inflated by occupational confounders; only use for broad scans."
     )
     parser.add_argument(
         "--enable-intersectional-eval",
@@ -244,12 +245,12 @@ if __name__ == "__main__":
     if args.enable_intersectional_eval:
         ie = IntersectionalEvaluator()
         X = np.stack(df["embedding"].values)
-        perf_df = ie.evaluate_intersectional_groups(df, X)
+        perf_df = ie.measure_individuation(df, X)
         perf_path = output_dir / "intersectional_performance.csv"
         perf_df.to_csv(perf_path, index=False)
         logger.info(f"Saved paired intersectional performance to {perf_path}")
 
-        exag_df = ie.measure_exaggeration_intersectional(df, emb_dict)
+        exag_df = ie.measure_exaggeration(df, emb_dict)
         if not exag_df.empty:
             exag_path = output_dir / "exaggeration_intersectional.csv"
             exag_df.to_csv(exag_path, index=False)
@@ -259,6 +260,41 @@ if __name__ == "__main__":
         comp_path = output_dir / "implicit_explicit_comparison.csv"
         comp_df.to_csv(comp_path, index=False)
         logger.info(f"Saved implicit vs explicit comparison to {comp_path}")
+
+        # Generate final intersectional disparity reports
+        logger.info("\nGenerating intersectional disparity analysis...")
+        
+        # Exaggeration Parity Analysis
+        if not exag_df.empty and 'exaggeration' in exag_df.columns:
+            exag_parity = ie.compute_intersectional_parity(
+                performance_df=exag_df,
+                metric='exaggeration'
+            )
+            exag_report = ie.generate_intersectional_report(
+                performance_df=exag_df,
+                parity_metrics=exag_parity,
+                metric_name='exaggeration'
+            )
+            exag_report_path = output_dir / "intersectional_exaggeration_report.txt"
+            with open(exag_report_path, 'w') as f:
+                f.write(exag_report)
+            logger.info(f"Saved exaggeration parity report to {exag_report_path}")
+        
+        # Performance Parity Analysis
+        if not perf_df.empty and 'f1_score' in perf_df.columns:
+            perf_parity = ie.compute_intersectional_parity(
+                performance_df=perf_df,
+                metric='f1_score'
+            )
+            perf_report = ie.generate_intersectional_report(
+                performance_df=perf_df,
+                parity_metrics=perf_parity,
+                metric_name='f1_score'
+            )
+            perf_report_path = output_dir / "intersectional_performance_report.txt"
+            with open(perf_report_path, 'w') as f:
+                f.write(perf_report)
+            logger.info(f"Saved performance parity report to {perf_report_path}")
     
     summary_path = output_dir / "summary_report.txt"
     with open(summary_path, 'w') as f:

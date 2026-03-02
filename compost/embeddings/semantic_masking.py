@@ -92,6 +92,9 @@ class SemanticMasker:
         for keyword in self.OCCUPATION_KEYWORDS:
             pattern = rf"\b{re.escape(keyword)}\b"
             redacted = re.sub(pattern, "[MASKED-ROLE]", redacted, flags=re.IGNORECASE)
+
+        # TODO: for extra stability, add LLM-in-the-loop redaction step to remove all
+        # contextual hints (e.g. "When I do my clinical rounds", "My shift at the hospital", etc.)
         
         return redacted.strip()
     

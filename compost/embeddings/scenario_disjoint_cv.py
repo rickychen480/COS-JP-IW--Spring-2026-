@@ -100,6 +100,27 @@ class ScenarioDisjointValidator:
         logger.info(f"Starting {self.cv_strategy} cross-validation with {self.classifier_type}")
         logger.info(f"Total samples: {len(X)}, Unique groups: {len(np.unique(groups))}")
         
+        # adjust GroupKFold splits if there are fewer unique groups than
+        # the configured number of folds; otherwise sklearn will raise an
+        # exception.  we don't mutate self.n_splits permanently, just use a
+        # local splitter.
+        if self.cv_strategy == "GroupKFold":
+            unique_groups = np.unique(groups)
+            n_groups = len(unique_groups)
+            if n_groups < 2:
+                raise ValueError(
+                    "Cannot perform GroupKFold with fewer than 2 unique groups."
+                )
+            if n_groups < self.n_splits:
+                logger.warning(
+                    f"Reducing n_splits from {self.n_splits} to {n_groups} "
+                    "because only {n_groups} unique groups were provided."
+                )
+            actual_splits = min(self.n_splits, n_groups)
+            cv = GroupKFold(n_splits=actual_splits)
+        else:
+            cv = self.cv
+
         # Run cross-validation with multiple metrics
         scoring = {
             'accuracy': 'accuracy',
@@ -111,14 +132,14 @@ class ScenarioDisjointValidator:
             self.classifier,
             X, y, 
             groups=groups,
-            cv=self.cv,
+            cv=cv,
             scoring=scoring,
             return_train_score=True,
             n_jobs=-1
         )
         
         # Get predictions for per-fold analysis
-        y_pred = cross_val_predict(self.classifier, X, y, groups=groups, cv=self.cv)
+        y_pred = cross_val_predict(self.classifier, X, y, groups=groups, cv=cv)
         
         # Store results
         self.cv_results = {
