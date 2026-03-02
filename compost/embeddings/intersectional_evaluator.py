@@ -8,9 +8,12 @@ Hispanic_Male_Nurse) against an "Unmarked" baseline using log-odds calculations.
 import numpy as np
 import pandas as pd
 import math
+import re
 from collections import defaultdict
 from typing import Dict, List, Tuple, Optional
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from scenario_disjoint_cv import ScenarioDisjointValidator
+from axis_metrics import get_seed_words
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -56,13 +59,11 @@ class IntersectionalEvaluator:
         Returns:
             Intersectional tuple string (e.g., "Hispanic_Male_Nurse")
         """
-        parts = [demographic, gender, occupation]
-        # Filter out "Unmarked" elements for cleaner labeling
-        parts = [p for p in parts if p and p != "Unmarked"]
-        
-        if not parts:
+        # always preserve every component, even if it is "Unmarked";
+        # this makes the control label explicit (e.g. Unmarked_Unmarked_Nurse)
+        parts = [demographic or "", gender or "", occupation or ""]
+        if not any(parts):
             return self.baseline_label
-        
         return "_".join(parts)
     
     def add_intersectional_column(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -154,98 +155,200 @@ class IntersectionalEvaluator:
     def evaluate_intersectional_groups(
         self,
         df: pd.DataFrame,
-        predictions: np.ndarray,
-        ground_truth: np.ndarray,
         embeddings: np.ndarray,
         intersectional_col: str = 'intersectional_id',
+        cv_strategy: str = 'GroupKFold',
+        n_splits: int = 5,
+        classifier_type: str = 'RandomForest',
         min_group_size: Optional[int] = None
     ) -> pd.DataFrame:
         """
-        Evaluate classification performance per intersectional group.
-        
+        Evaluate classification performance for each intersectional cohort paired
+        with its occupational counterfactual.  Training is done with
+        scenario-disjoint cross-validation on the combined examples.
+
         Args:
-            df: DataFrame with intersectional identity and other attributes
-            predictions: Model predictions
-            ground_truth: True labels
-            embeddings: Feature embeddings
-            intersectional_col: Column name for intersectional identity
-            min_group_size: Override default minimum group size. If None, uses instance default.
-            
+            df: DataFrame containing at least the intersectional column and
+                a "scenario_id" column.
+            embeddings: numpy array of document embeddings aligned with df.
+            intersectional_col: name of the column holding the cohort label.
+            cv_strategy: cross-validation strategy to hand to the validator.
+            n_splits: maximum number of folds for GroupKFold.
+            classifier_type: type of sklearn classifier to instantiate.
+            min_group_size: override default minimum group size per cohort/control.
+
         Returns:
-            DataFrame with per-group performance metrics
+            DataFrame with per-cohort metrics (accuracy, f1, sample counts, etc.)
         """
-        # Use provided min_group_size or fall back to instance default
         threshold = min_group_size if min_group_size is not None else self.min_group_size
-        
         results = []
-        self.skipped_groups = []  # Reset tracking for this evaluation
-        
+        self.skipped_groups = []
+
         unique_groups = df[intersectional_col].unique()
-        logger.info(f"Evaluating {len(unique_groups)} unique intersectional groups (min_group_size={threshold})")
-        
-        for group in unique_groups:
-            mask = df[intersectional_col] == group
-            group_size = mask.sum()
-            
-            # Skip groups with insufficient samples
-            if group_size < threshold:
-                self.skipped_groups.append({
-                    'group': group,
-                    'n_samples': group_size,
-                    'reason': f"Below minimum threshold ({group_size} < {threshold})"
-                })
-                logger.debug(f"Skipped group '{group}': {group_size} samples (min: {threshold})")
+        logger.info(f"Evaluating {len(unique_groups)} intersectional groups with pairing (min_group_size={threshold})")
+
+        def occupation_of(label: str) -> str:
+            return label.split("_")[-1] if isinstance(label, str) else ""
+
+        # build mapping from each non‑baseline group to its counterfactual label
+        for target in unique_groups:
+            if target == self.baseline_label or target.startswith(self.baseline_label + "_" + self.baseline_label):
                 continue
-            
-            group_preds = predictions[mask]
-            group_truth = ground_truth[mask]
-            group_embs = embeddings[mask]
-            
-            # Compute metrics
-            accuracy = accuracy_score(group_truth, group_preds)
-            precision = precision_score(group_truth, group_preds, average='weighted', zero_division=0)
-            recall = recall_score(group_truth, group_preds, average='weighted', zero_division=0)
-            f1 = f1_score(group_truth, group_preds, average='weighted', zero_division=0)
-            
-            # Compute group embedding statistics
-            embedding_mean = np.mean(group_embs, axis=0)
-            embedding_std = np.std(group_embs, axis=0)
-            embedding_dist_to_origin = np.linalg.norm(embedding_mean)
-            
+            control_label = f"{self.baseline_label}_{self.baseline_label}_{occupation_of(target)}"
+            if control_label not in unique_groups:
+                logger.warning(f"Control '{control_label}' not found for target '{target}'. Skipping.")
+                continue
+
+            mask = df[intersectional_col].isin([target, control_label])
+            sub_df = df[mask]
+            n_t = (sub_df[intersectional_col] == target).sum()
+            n_c = (sub_df[intersectional_col] == control_label).sum()
+            if n_t < threshold or n_c < threshold:
+                self.skipped_groups.append({
+                    'group': target,
+                    'n_target': n_t,
+                    'n_control': n_c,
+                    'reason': f"Below threshold ({n_t},{n_c} < {threshold})"
+                })
+                continue
+
+            X = embeddings[mask]
+            y = (sub_df[intersectional_col] == target).astype(int).values
+            groups = sub_df.get("scenario_id", sub_df.index).values
+
+            validator = ScenarioDisjointValidator(
+                cv_strategy=cv_strategy,
+                n_splits=min(n_splits, len(np.unique(groups))),
+                classifier_type=classifier_type,
+            )
+            cv_results = validator.validate_by_scenario(X, y, groups)
+
             results.append({
-                'intersectional_id': group,
-                'n_samples': mask.sum(),
-                'accuracy': accuracy,
-                'precision': precision,
-                'recall': recall,
-                'f1_score': f1,
-                'embedding_mean_norm': embedding_dist_to_origin,
-                'embedding_std_mean': np.mean(embedding_std)
+                'intersectional_id': target,
+                'control_id': control_label,
+                'n_target': n_t,
+                'n_control': n_c,
+                'accuracy': cv_results['accuracy_mean'],
+                'f1_score': cv_results['f1_macro_mean'],
             })
-        
+
         df_results = pd.DataFrame(results)
-        
-        # Log skipped groups summary
+
         if self.skipped_groups:
-            logger.warning(f"Skipped {len(self.skipped_groups)} underpowered groups:")
-            for skipped in self.skipped_groups:
-                logger.warning(f"  - {skipped['group']}: {skipped['n_samples']} samples")
-        
-        # Log evaluation coverage
-        n_evaluated = len(df_results)
-        n_total = len(unique_groups)
-        logger.info(f"Evaluated {n_evaluated}/{n_total} groups ({100*n_evaluated/n_total:.1f}% coverage)")
-        
-        # Log group disparities
-        if not df_results.empty:
-            acc_range = df_results['accuracy'].max() - df_results['accuracy'].min()
-            if acc_range > 0.1:
-                logger.warning(f"Large accuracy disparity across groups: {acc_range:.3f}")
-                worst_group = df_results.loc[df_results['accuracy'].idxmin()]
-                logger.warning(f"  Worst: {worst_group['intersectional_id']} "
-                              f"({worst_group['accuracy']:.3f})")
-        
+            logger.warning(f"Skipped {len(self.skipped_groups)} groups due to insufficient data or missing control")
+            for s in self.skipped_groups:
+                logger.warning(f"  - {s}")
+
+        logger.info(f"Computed {len(df_results)} paired evaluations out of {len(unique_groups)} groups")
         return df_results
+
+    def measure_exaggeration_intersectional(
+        self,
+        df: pd.DataFrame,
+        emb_dict: Dict[str, np.ndarray],
+        default_persona: str = "Unmarked",
+        default_topic: str = "general_comment",
+    ) -> pd.DataFrame:
+        """
+        Compute exaggeration scores for each intersectional cohort paired with its
+        occupational counterfactual.  Seed words are extracted using Monroe
+        log-odds between persona pole and topic pole, and exaggeration is the
+        scalar projection described in the specification.
+        """
+        exag_scores = []
+        unique_groups = df["intersectional_id"].unique()
+
+        def occupation_of(label: str) -> str:
+            return label.split("_")[-1] if isinstance(label, str) else ""
+
+        for cohort_id in unique_groups:
+            if cohort_id == default_persona or cohort_id.startswith(default_persona + "_" + default_persona):
+                continue
+            control = f"{default_persona}_{default_persona}_{occupation_of(cohort_id)}"
+            if control not in unique_groups:
+                continue
+
+            sub_df = df[df["intersectional_id"].isin([cohort_id, control])]
+            df_persona_pole = sub_df[(sub_df["intersectional_id"] == cohort_id) & (sub_df["topic"] == default_topic)]
+            df_topic_pole = sub_df[sub_df["intersectional_id"] == control]
+            df_target = sub_df[(sub_df["intersectional_id"] == cohort_id) & (sub_df["topic"] != default_topic)]
+            df_background = sub_df
+
+            if df_persona_pole.empty or df_topic_pole.empty or df_target.empty:
+                continue
+
+            persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, df_background)
+            topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, df_background)
+
+            if not persona_seed_words or not topic_seed_words:
+                continue
+
+            # compute poles
+            def get_pole_embedding(target_df, seed_words):
+                patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
+                embs = []
+                for sents in target_df["sentences"]:
+                    for s in sents:
+                        clean_s = re.sub(r"[^a-zA-Z\s]", "", s.lower())
+                        if any(p.search(clean_s) for p in patterns):
+                            embs.append(emb_dict[s])
+                if not embs:
+                    return None
+                return np.mean(embs, axis=0)
+
+            p_pole = get_pole_embedding(df_persona_pole, persona_seed_words)
+            t_pole = get_pole_embedding(df_topic_pole, topic_seed_words)
+            if p_pole is None or t_pole is None:
+                continue
+
+            axis_v = p_pole - t_pole
+            axis_norm = np.linalg.norm(axis_v)
+            if axis_norm < 1e-8:
+                continue
+            axis_v = axis_v / axis_norm
+
+            def cos_sim(a, b):
+                denom = np.linalg.norm(a) * np.linalg.norm(b) + 1e-8
+                return np.dot(a, b) / denom
+
+            target_sims = [cos_sim(emb_dict[s], axis_v) for s in df_target["sentences"].explode()]
+            mean_target = np.mean(target_sims)
+            default_p_sims = [cos_sim(emb_dict[s], axis_v) for s in df_persona_pole["sentences"].explode()]
+            mean_dp = np.mean(default_p_sims)
+
+            mean_t_pole = np.mean([cos_sim(emb_dict[s], axis_v) for s in df_topic_pole["sentences"].explode()])
+
+            denominator = mean_t_pole - mean_dp
+            if abs(denominator) < 1e-6:
+                denominator += 1e-6
+
+            exag_score = (mean_target - mean_dp) / denominator
+            exag_scores.append({"intersectional_id": cohort_id, "exaggeration": exag_score})
+
+        return pd.DataFrame(exag_scores)
+
+    def compare_implicit_vs_explicit(
+        self,
+        df: pd.DataFrame,
+        embeddings: np.ndarray,
+        intersectional_col: str = 'intersectional_id'
+    ) -> pd.DataFrame:
+        """
+        Compare metrics between implicit and explicit variants for each
+        intersectional cohort. Returns a merged dataframe with deltas.
+        """
+        imp_mask = df['variant_type'] == 'implicit'
+        exp_mask = df['variant_type'] == 'explicit'
+        imp_perf = self.evaluate_intersectional_groups(
+            df[imp_mask], embeddings[imp_mask], intersectional_col=intersectional_col
+        )
+        exp_perf = self.evaluate_intersectional_groups(
+            df[exp_mask], embeddings[exp_mask], intersectional_col=intersectional_col
+        )
+        merged = imp_perf.merge(exp_perf, on='intersectional_id', suffixes=('_imp','_exp'))
+        for metric in ['accuracy','f1_score']:
+            merged[f'{metric}_delta'] = merged[f'{metric}_exp'] - merged[f'{metric}_imp']
+        return merged
     
     def compute_intersectional_parity(
         self,
