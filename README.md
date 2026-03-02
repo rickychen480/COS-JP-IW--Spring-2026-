@@ -14,12 +14,14 @@ We test LLMs for allocational and representational bias across demographic dimen
 
 ```
 ├── controller.py                    # Multi-agent dialogue simulator
+├── merge_simulations.py             # Merge transcript chunks from distributed runs
 ├── requirements.txt                 # Python dependencies
+├── SIMULATION_JOB_ARRAY.md          # Guide for SLURM job array submissions
 ├── data_generation/
 │   ├── main.py                     # Generate simulation scenarios
-│   ├── constants.py                # Identity grid definitions (races, genders, occupations)
+│   ├── constants.py                # Identity grid definitions
 │   ├── generators.py               # Scenario generation utilities
-│   ├── metalwoz/                   # MetaLWOz dialogue dataset (goal source)
+│   ├── metalwoz/                   # MetaLWOz dialogue dataset
 │   ├── generate_sims_llama-8b.slurm   # SLURM job for Llama-8B simulations
 │   └── generate_sims_llama-70b.slurm  # SLURM job for Llama-70B simulations
 ├── metrics/
@@ -29,7 +31,10 @@ We test LLMs for allocational and representational bias across demographic dimen
 │   └── evaluate_bias.slurm         # SLURM job for bias evaluation
 ├── compost/
 │   ├── embeddings/
-│   │   └── compost_evaluator.py    # CoMPosT framework to authenticate our user simulator
+│   │   ├── compost_evaluator.py    # CoMPosT framework to validate our user simulator
+│   │   ├── axis_metrics.py         # Dimensional axis metrics
+│   │   ├── intersectional_evaluator.py # Intersectional semantic evaluation
+│   │   └── semantic_masking.py     # Semantic masking utilities
 │   └── judge-llm/
 │       ├── compost_evaluator.py    # LLM judge evaluation (outdated)
 │       └── compost_eval.slurm      # SLURM job for LLM judge (outdated)
@@ -95,42 +100,40 @@ python data_generation/main.py
 - `data/prompts/control_simulations.json` - Control scenarios with neutral identities
 - `data/prompts/default_topics.json` - General conversation topics (no tasks) with intersectional identities
 
-**Key Details**:
-- Generates 10,000 samples per condition
-- Uses high-stakes domains (banking, legal, healthcare, etc.)
-- Tests intersectionality: race × gender × occupation
-- Variants: implicit bias, explicit bias, and control conditions
-
-### Stage 2: Run Dialogue Simulations
+### Stage 2a: Run Dialogue Simulations
 **Script**: `controller.py`
 
-Simulates multi-turn dialogues with a user simulator and target LLM. Uses batch generation across multiple GPUs for efficiency.
+Simulates multi-turn dialogues with a user simulator and target LLM. For large-scale runs, this is parallelized using SLURM job arrays (see `SIMULATION_JOB_ARRAY.md`).
 
 ```bash
-# Run on single model (example with 1000 limit for testing)
+# Example for a single, non-parallelized run
 CUDA_VISIBLE_DEVICES=0 python controller.py \
   --data data/prompts/target_simulations.json \
   --out data/transcripts/Llama-3.1-8B-Instruct/target_simulations.json \
   --model ./models/Llama-3.1-8B-Instruct \
   --limit 1000
 
-# Run on both control and target scenarios
-CUDA_VISIBLE_DEVICES=0 python controller.py \
-  --data data/prompts/control_simulations.json \
-  --out data/transcripts/Llama-3.1-8B-Instruct/control_simulations.json \
-  --model ./models/Llama-3.1-8B-Instruct
-
-CUDA_VISIBLE_DEVICES=0 python controller.py \
-  --data data/prompts/default_topics.json \
-  --out data/transcripts/Llama-3.1-8B-Instruct/default_topics.json \
-  --model ./models/Llama-3.1-8B-Instruct
+# Example for a distributed run (e.g., inside a SLURM job script)
+# This command processes chunk 0 out of 12 total chunks.
+python controller.py \
+  --data data/prompts/target_simulations.json \
+  --out data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_chunk_0.json \
+  --model ./models/Llama-3.1-70B-Instruct-AWQ-INT4 \
+  --quant awq \
+  --tp 2 \
+  --chunk_index 0 \
+  --total_chunks 12
 ```
 
 **Arguments**:
-- `--data` - Path to input simulation JSON file
-- `--out` - Path to output transcript JSON file
-- `--model` - Path or ID of LLM model
-- `--limit` - Max simulations to run (optional, useful for testing)
+- `--data`: Path to input simulation JSON.
+- `--out`: Path to output transcript JSON.
+- `--model`: Path or ID of the LLM model.
+- `--quant`: Quantization method (e.g., `awq`).
+- `--tp`: Tensor parallel size (number of GPUs).
+- `--chunk_index`: Index of the current data chunk for parallel processing.
+- `--total_chunks`: Total number of chunks the data is split into.
+- `--limit`: Max simulations to run (for testing).
 
 **Outputs**:
 - Transcript JSON with full dialogue history, speaker labels, semantic metadata
@@ -140,6 +143,19 @@ CUDA_VISIBLE_DEVICES=0 python controller.py \
 - Early stopping detection (refusals, goodbyes, dead ends)
 - Batch generation for efficiency
 - Adjustable sampling parameters
+
+### Stage 2b: Merge Simulation Chunks
+**Script**: `merge_simulations.py`
+
+If you ran simulations in parallel, this script merges the resulting transcript chunks back into single files.
+
+```bash
+# Merge chunks for the 70B model
+python merge_simulations.py --model 70b
+
+# Merge chunks for the 8B model
+python merge_simulations.py --model 8b
+```
 
 ### Stage 3a: Evaluate Bias Metrics
 **Script**: `metrics/main.py`
@@ -163,18 +179,15 @@ python metrics/main.py \
 - `--out` - Path to output CSV results file
 
 **Outputs**:
-- CSV with bias metrics per demographic group and condition
-- Metrics computed: allocational bias, representational bias, differential goal completion rate
-
-**Key Metrics**:
+- CSV with bias metrics per demographic group and condition.
+- Key Metrics: `d_GCR` (differential goal completion), `d_CCD` (differential self-confidence), `Steering_Score`.
 - **Allocational Bias**: Disparities in task completion rates across demographics
 - **Representational Bias**: How demographics are talked about in responses
-- **d-GCR**: Differential Goal Completion Rate across intersectional groups
 
 ### Stage 3b: CoMPosT Embedding-Based Auditing
 **Script**: `compost/embeddings/compost_evaluator.py`
 
-Performs semantic embedding analysis using the CoMPosT framework to audit user simulations for caricature and individuation. This establishes a static baseline for our results and probes our User Simulator Agent for bias.
+Performs semantic embedding analysis to audit user simulations for caricature and individuation.
 
 ```bash
 # Evaluate Llama-70B with embeddings
@@ -197,33 +210,31 @@ python compost/embeddings/compost_evaluator.py \
 - JSON/TXT output with semantic bias vectors and dimensional analysis
 
 ## SLURM Job Scripts (For HPC clusters)
-### Simulation Generation
-```bash
-sbatch data_generation/generate_sims_llama-8b.slurm
-sbatch data_generation/generate_sims_llama-70b.slurm
-```
 
-### Bias Evaluation
-```bash
-sbatch metrics/evaluate_bias.slurm
-```
+Refer to `SIMULATION_JOB_ARRAY.md` for detailed instructions on using SLURM for large-scale runs.
+
+1.  **Generate Scenarios**: `sbatch data_generation/generate_sims_llama-8b.slurm`
+2.  **Run Simulations**: The `controller.py` script is run via a job array.
+3.  **Merge Transcripts**: `python merge_simulations.py --model <70b|8b>`
+4.  **Evaluate Bias**: `sbatch metrics/evaluate_bias.slurm`
 
 ## Quick Start (Local Testing)
 
 For testing without large models, run with reduced samples:
 
 ```bash
-# 1. Generate scenarios (quick)
+# 1. Generate scenarios
 python data_generation/main.py
 
-# 2. Run simulations on small subset
+# 2. Run simulations on a small subset
 python controller.py \
   --data data/prompts/target_simulations.json \
   --out data/transcripts/test_output.json \
   --model meta-llama/Llama-3.1-8B-Instruct \
   --limit 100
 
-# 3. Evaluate
+# 3. Evaluate (assuming you have control and default_topics transcripts)
+# Note: For a real evaluation, you need all three transcript types.
 python metrics/main.py \
   --dir data/transcripts/ \
   --out results/test_results.csv
