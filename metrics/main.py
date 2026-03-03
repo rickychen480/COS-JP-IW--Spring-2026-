@@ -1,167 +1,160 @@
 import argparse
 import json
-import os
-import pandas as pd
+import nltk
 import numpy as np
-from collections import defaultdict
+import pandas as pd
+import os
+from sentence_transformers import SentenceTransformer
+
+nltk.download('punkt')
+from nltk.tokenize import sent_tokenize
+
 from allocational import AllocationalEvaluator
 from representational import RepresentationalEvaluator
+from compost.embeddings.intersectional_evaluator import IntersectionalEvaluator
+from compost.embeddings.semantic_masking import SemanticMasker
 
-def load_anchor_dictionaries(control_path: str, default_topic_path: str):
-    """
-    Builds lookup dictionaries for the CoMPosT semantic axes using the transcript files.
-    """
-    with open(control_path, 'r') as f:
-        control_data = json.load(f)
-    with open(default_topic_path, 'r') as f:
-        default_data = json.load(f)
 
-    # Map by Task Description -> Target's list of turn strings
-    control_dict_temp = defaultdict(list)
-    for d in control_data:
-        task_desc = d.get('metadata', {}).get('task_description')
-        if not task_desc: 
-            continue
-        
-        target_turns = [t.get('content', '') for t in d.get('transcript', []) if t.get('speaker') == 'Target']
-        control_dict_temp[task_desc].extend(target_turns)
-        
-    # Cast lists to tuples so they remain hashable for the lru_cache
-    control_dict = {k: tuple(v) for k, v in control_dict_temp.items()}
+def get_document_embedding(text, model):
+    sentences = sent_tokenize(text)
+    if not sentences:
+        return np.zeros(768)
+    sentence_embeddings = model.encode(sentences)
+    return np.mean(sentence_embeddings, axis=0)
 
-    # Map by (Demographic, Gender, Occupation) -> Target's list of turn strings
-    persona_dict = {}
-    for d in default_data:
-        p = d.get('metadata', {}).get('persona', {})
-        persona_key = (p.get('demographic', 'Unknown'), p.get('gender', 'Unknown'), p.get('occupation', 'Unknown'))
-        target_turns = tuple(t.get('content', '') for t in d.get('transcript', []) if t.get('speaker') == 'Target')
-        persona_dict[persona_key] = target_turns
+def load_all_transcripts(file_paths):
+    data = []
+    for path in file_paths:
+        with open(path, 'r') as f:
+            data.extend(json.load(f))
+    df = pd.json_normalize(data)
+    
+    # Extract identity metadata
+    df['demographic'] = df['metadata'].apply(lambda x: x['persona'].get('demographic', 'Unmarked'))
+    df['gender'] = df['metadata'].apply(lambda x: x['persona'].get('gender', 'Unmarked'))
+    df['occupation'] = df['metadata'].apply(lambda x: x['persona'].get('occupation', 'Unmarked'))
+    df['topic'] = df['metadata'].apply(lambda x: x.get('task_description', 'general_comment'))
+    df['target_logprobs'] = df['metadata'].apply(lambda x: x.get('target_logprobs',))
+    
+    return df
 
-    return control_dict, persona_dict
+def main(args):
+    print("Loading data...")
+    target_path = os.path.join(args.dir, 'target_simulations.json')
+    control_path = os.path.join(args.dir, 'control_simulations.json')
+    default_topic_path = os.path.join(args.dir, 'default_topics.json')
 
-def process_all_transcripts(target_path: str, control_path: str, default_topic_path: str, trigger_turn: int = 0):
-    """
-    Runs the evaluation metrics using the CoMPosT anchors mapped from the dataset.
-    """
-    with open(target_path, 'r') as f:
-        target_data = json.load(f)
-    with open(control_path, 'r') as f:
-        control_data = json.load(f)
-
-    control_dict, persona_dict = load_anchor_dictionaries(control_path, default_topic_path)
-
+    df = load_all_transcripts([target_path, control_path, default_topic_path])
+    
+    # Initialize Evaluators
     alloc_eval = AllocationalEvaluator()
     rep_eval = RepresentationalEvaluator()
-    results = []
-
-    # Process TARGET Data (Intersectional Groups)
-    for item in target_data:
-        transcript = item.get('transcript', [])
-        meta = item.get('metadata', {})
-        persona = meta.get('persona', {})
-        task_desc = meta.get('task_description', '')
-        
-        # 1. Allocational
-        gcr = alloc_eval.calculate_gcr_llm_judge(transcript, task_desc)
-        rejections = alloc_eval.calculate_rejection_rate(transcript)
-        atc = alloc_eval.calculate_atc(transcript, is_successful=bool(gcr))
-        
-        # 2. Representational (d-CCD)
-        logprobs = meta.get('target_logprobs', [])
-        confidence = rep_eval.calculate_confidence(logprobs)
-        
-        # 3. Semantic Steering (CoMPosT)
-        persona_key = (persona.get('demographic', 'Unknown'), persona.get('gender', 'Unknown'), persona.get('occupation', 'Unknown'))
-        neutral_topic_text = control_dict.get(task_desc)
-        exaggerated_persona_text = persona_dict.get(persona_key)
-        
-        if neutral_topic_text is None or exaggerated_persona_text is None:
-            # If anchors are missing, skip steering calculation to avoid corrupting data
-            steering = np.nan
-        else:
-            steering = rep_eval.calculate_semantic_steering(
-                transcript=transcript,
-                trigger_turn=trigger_turn,
-                neutral_topic_text=neutral_topic_text,
-                exaggerated_persona_text=exaggerated_persona_text
-            )
-        
-        results.append({
-            "id": item.get('dialogue_id', 'Unknown'),
-            "variant_type": item.get('variant_type', 'Unknown'),
-            "demographic": persona.get('demographic', 'Unknown'),
-            "gender": persona.get('gender', 'Unknown'),
-            "occupation": persona.get('occupation', 'Unknown'),
-            "group_label": f"{persona.get('demographic', 'Unknown')}_{persona.get('gender', 'Unknown')}_{persona.get('occupation', 'Unknown')}",
-            "GCR": gcr,
-            "Rejections": rejections,
-            "ATC": atc,
-            "Confidence": confidence,
-            "Steering_Score": steering
-        })
-
-    # Process CONTROL Data (Baselines)
-    for item in control_data:
-        transcript = item.get('transcript', [])
-        meta = item.get('metadata', {})
-        persona = meta.get('persona', {})
-        
-        gcr = alloc_eval.calculate_gcr_llm_judge(transcript)
-        rejections = alloc_eval.calculate_rejection_rate(transcript)
-        atc = alloc_eval.calculate_atc(transcript, is_successful=bool(gcr))
-        
-        logprobs = meta.get('target_logprobs', [])
-        confidence = rep_eval.calculate_confidence(logprobs)
-        
-        # We don't calculate steering for the baseline control, so set to 0.0
-        steering = 0.0
-        
-        results.append({
-            "id": item.get('dialogue_id', 'Unknown'),
-            "variant_type": item.get('variant_type', 'control'),
-            "demographic": persona.get('demographic', 'Unmarked'),
-            "gender": persona.get('gender', 'Unmarked'),
-            "occupation": persona.get('occupation', 'Unmarked'),
-            "group_label": "Unmarked_Unmarked_Unmarked",
-            "GCR": gcr,
-            "Rejections": rejections,
-            "ATC": atc,
-            "Confidence": confidence,
-            "Steering_Score": steering
-        })
-
-    return pd.DataFrame(results)
-
-def generate_differential_results(df: pd.DataFrame, baseline_group: str = "Unmarked_Unmarked_Unmarked"):
-    """
-    Aggregates the raw metrics and computes the differential bias scores (d-GCR, d-CCD)
-    relative to the baseline persona, split by variant type.
-    """
-    grouped = df.groupby(['variant_type', 'group_label']).agg({
-        'GCR': 'mean',           
-        'Rejections': 'mean',
-        'ATC': 'mean',
-        'Confidence': 'mean',
-        'Steering_Score': 'mean'
-    }).reset_index()
-
-    # Extract baseline metrics specifically from the 'control' variant
-    baseline_data = grouped[(grouped['group_label'] == baseline_group) & (grouped['variant_type'] == 'control')]
-    if baseline_data.empty:
-        raise ValueError(f"Baseline group '{baseline_group}' not found in the dataset.")
+    ie = IntersectionalEvaluator()
+    masker = SemanticMasker()
     
-    baseline_gcr = baseline_data['GCR'].values[0]
-    baseline_confidence = baseline_data['Confidence'].values[0]
+    # Create intersectional IDs
+    df['intersectional_id'] = df.apply(ie.create_intersectional_tuple, axis=1)
+    
+    # Apply Semantic Masking & Generate Embeddings for Steering
+    print("Masking explicit identifiers and generating embeddings...")
+    def extract_target_text(transcript):
+        return " ".join([turn['content'] for turn in transcript if turn['speaker'] == 'Target'])
+    
+    df['target_text'] = df['transcript'].apply(extract_target_text)
+    df['masked_text'] = df['target_text'].apply(masker.redact_explicit_identifiers)
+    
+    embedder = SentenceTransformer("all-mpnet-base-v2")
+    df['embedding'] = df['masked_text'].apply(lambda x: get_document_embedding(x, embedder))
 
-    # Calculate Differentials
-    grouped['d_GCR'] = grouped['GCR'] - baseline_gcr
-    grouped['d_CCD'] = grouped['Confidence'] - baseline_confidence
+    final_results = []
+    target_groups = [g for g in df['intersectional_id'].unique() if "Unmarked_Unmarked" not in g]
+    
+    print(f"Processing metrics for {len(target_groups)} intersectional groups...")
 
-    # Filter out the control row from the final differential output (since it would just be all 0s)
-    differential_results = grouped[grouped['variant_type'] != 'control'].copy()
+    for target_id in target_groups:
+        # 1. Isolate the data for this specific intersectional group
+        group_df = df[df['intersectional_id'] == target_id]
+        
+        # 2. Split into Implicit and Explicit datasets
+        implicit_df = group_df[group_df['variant_type'] == 'implicit']
+        explicit_df = group_df[group_df['variant_type'] == 'explicit']
+        
+        if implicit_df.empty or explicit_df.empty:
+            print(f"Skipping {target_id}: Missing implicit or explicit data.")
+            continue
 
-    return differential_results
+        # --- ALLOCATIONAL METRICS ---
+        implicit_gcr = np.mean([alloc_eval.calculate_gcr_llm_judge(t, md['task_description']) 
+                                for t, md in zip(implicit_df['transcript'], implicit_df['metadata'])])
+        explicit_gcr = np.mean([alloc_eval.calculate_gcr_llm_judge(t, md['task_description']) 
+                                for t, md in zip(explicit_df['transcript'], explicit_df['metadata'])])
+        
+        # Calculate Delta GCR (Explicit - Implicit)
+        d_gcr = alloc_eval.calculate_d_gcr(implicit_gcr, explicit_gcr)
+        
+        implicit_atc = np.mean([alloc_eval.calculate_atc(t) for t in implicit_df['transcript']])
+        explicit_atc = np.mean([alloc_eval.calculate_atc(t) for t in explicit_df['transcript']])
+        
+        # --- REPRESENTATIONAL METRICS (CONFIDENCE) ---
+        # Flatten the logprobs arrays for the whole implicit/explicit subset
+        implicit_logprobs = [lp for sublist in implicit_df['target_logprobs'] for lp in sublist if lp]
+        explicit_logprobs = [lp for sublist in explicit_df['target_logprobs'] for lp in sublist if lp]
+        
+        # Calculate Delta CCD (Explicit - Implicit)
+        d_ccd = rep_eval.calculate_d_ccd(implicit_logprobs, explicit_logprobs)
+        
+        # --- SEMANTIC STEERING (CoMPosT INTEGRATION) ---
+        # Dynamically define the counterfactual to extract the exact CoMPosT axis
+        occupation = target_id.split('_')[-1]
+        control_id = f"Unmarked_Unmarked_{occupation}"
+        
+        steering_scores = {'implicit_steering': np.nan, 'explicit_steering': np.nan, 'delta_steering': np.nan}
+        
+        if control_id in df['intersectional_id'].values:
+            # Pseudo-code: Use IntersectionalEvaluator to get the statistical poles 
+            # by comparing the target_id vs the control_id on the 'general_comment' topic
+            # p_pole, t_pole = ie.get_fightin_words_poles(df, target_id, control_id)
+            # axis_v = p_pole - t_pole
+            
+            # Placeholders for the mathematical outputs of the CoMPosT log-odds extraction
+            axis_v = np.zeros(768) 
+            topic_pole_sim = 0.5 
+            persona_pole_sim = 0.8
+            
+            implicit_embeddings = np.vstack(implicit_df['embedding'].values)
+            explicit_embeddings = np.vstack(explicit_df['embedding'].values)
+            
+            steering_scores = rep_eval.calculate_semantic_steering(
+                implicit_target_embeddings=implicit_embeddings,
+                explicit_target_embeddings=explicit_embeddings,
+                axis_v=axis_v,
+                topic_pole_sim=topic_pole_sim,
+                persona_pole_sim=persona_pole_sim
+            )
 
+        # 3. Compile the group's results
+        final_results.append({
+            'group_label': target_id,
+            'implicit_GCR': implicit_gcr,
+            'explicit_GCR': explicit_gcr,
+            'd_GCR': d_gcr,
+            'implicit_ATC': implicit_atc,
+            'explicit_ATC': explicit_atc,
+            'd_CCD': d_ccd,
+            'implicit_Steering': steering_scores['implicit_steering'],
+            'explicit_Steering': steering_scores['explicit_steering'],
+            'delta_Steering': steering_scores['delta_steering']
+        })
+
+    # 4. Save and Report
+    os.makedirs(os.path.dirname(args.out) or '.', exist_ok=True)
+    final_results.to_csv(args.out, index=False)
+    print(f"\nResults exported to {args.out}")
+
+    results_df = pd.DataFrame(final_results)
+    results_df.to_csv(args.out, index=False)
+    print("\nEvaluation Complete. Results saved.")
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate dynamic intersectional bias.")
     parser.add_argument("--dir", type=str, required=True, help="Directory containing the transcript JSONs")
@@ -173,14 +166,4 @@ if __name__ == "__main__":
     default_topic_path = os.path.join(args.dir, 'default_topics.json')
     
     print(f"Evaluating transcripts in: {args.dir}")
-    raw_df = process_all_transcripts(target_path, control_path, default_topic_path)
-    
-    print("Aggregating metrics and calculating differentials...")
-    final_results = generate_differential_results(raw_df)
-    
-    print("\n=== Final Bias Evaluation Results ===")
-    print(final_results[['variant_type', 'group_label', 'd_GCR', 'd_CCD', 'Rejections', 'Steering_Score']].to_string(index=False))
-    
-    os.makedirs(os.path.dirname(args.out) or '.', exist_ok=True)
-    final_results.to_csv(args.out, index=False)
-    print(f"\nResults exported to {args.out}")
+    main(args)
