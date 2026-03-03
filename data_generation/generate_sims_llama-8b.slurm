@@ -32,6 +32,7 @@ mkdir -p logs
 
 # Run Target Simulations on GPU 0
 export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_8b_${SLURM_ARRAY_TASK_ID}_gpu0
+export TRITON_CACHE_DIR=/scratch/rc5898/triton_cache_8b_${SLURM_ARRAY_TASK_ID}_gpu0
 CUDA_VISIBLE_DEVICES=0 python controller.py \
   --data data/prompts/target_simulations.json \
   --out data/transcripts/Llama-3.1-8B-Instruct/target_simulations_chunk_${SLURM_ARRAY_TASK_ID}.json \
@@ -43,6 +44,7 @@ sleep 120
 
 # Run Control Simulations on GPU 1
 export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_8b_${SLURM_ARRAY_TASK_ID}_gpu1
+export TRITON_CACHE_DIR=/scratch/rc5898/triton_cache_8b_${SLURM_ARRAY_TASK_ID}_gpu1
 CUDA_VISIBLE_DEVICES=1 python controller.py \
   --data data/prompts/control_simulations.json \
   --out data/transcripts/Llama-3.1-8B-Instruct/control_simulations_chunk_${SLURM_ARRAY_TASK_ID}.json \
@@ -54,6 +56,7 @@ sleep 120
 
 # Run Default Topics on GPU 2
 export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_8b_${SLURM_ARRAY_TASK_ID}_gpu2
+export TRITON_CACHE_DIR=/scratch/rc5898/triton_cache_8b_${SLURM_ARRAY_TASK_ID}_gpu2
 CUDA_VISIBLE_DEVICES=2 python controller.py \
   --data data/prompts/default_topics.json \
   --out data/transcripts/Llama-3.1-8B-Instruct/default_topics_chunk_${SLURM_ARRAY_TASK_ID}.json \
