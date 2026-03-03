@@ -373,3 +373,95 @@ PERFORMANCE ACROSS INTERSECTIONAL GROUPS:
         
         report += "=" * 73
         return report
+
+    def get_fightin_words_poles(
+        self,
+        df: pd.DataFrame,
+        target_id: str,
+        control_id: str,
+        variant_type: str = 'implicit',
+        target_topic_id: Optional[str] = None,
+        default_topic: str = "general_comment",
+    ) -> Tuple[np.ndarray, float, float]:
+        """
+        Compute CoMPosT statistical poles for a given intersectional pair, optionally
+        restricted to a single scenario (target_topic_id), using a restricted background
+        corpus of a specific variant type (implicit or explicit).
+
+        This method is designed to be called separately for implicit and explicit variants
+        to avoid variant contamination. When target_topic_id is specified, only that
+        scenario's data (plus the general_comment baseline) is used, ensuring the
+        Monroe log-odds algorithm operates on semantically coherent task vocabularies.
+
+        Args:
+            df: Full dataframe with all transcripts.
+            target_id: Target intersectional identity (e.g., "Hispanic_Male_Nurse").
+            control_id: Control intersectional identity (e.g., "Unmarked_Unmarked_Nurse").
+            variant_type: Either 'implicit' or 'explicit' to use only that variant's data.
+            target_topic_id: Specific scenario ID to restrict poles to. If None, uses all scenarios.
+            default_topic: Label for the neutral baseline topic.
+
+        Returns:
+            axis_v: Normalized vector pointing from topic pole to persona pole.
+            topic_pole_sim: Mean cosine similarity of control examples to axis_v.
+            persona_pole_sim: Mean cosine similarity of target examples to axis_v.
+        """
+        # Filter to the specified variant type first
+        df_variant = df[df['variant_type'] == variant_type].copy()
+
+        # Restrict to just the two identity groups
+        sub_df = df_variant[df_variant["intersectional_id"].isin([target_id, control_id])].copy()
+
+        # Further restrict to a specific scenario if provided (per-topic analysis)
+        if target_topic_id is not None:
+            sub_df = sub_df[
+                (sub_df["scenario_id"] == target_topic_id) | (sub_df["topic"] == default_topic)
+            ].copy()
+
+        if "masked_text" in sub_df.columns:
+            sub_df["response"] = sub_df["masked_text"]
+        elif "target_text" in sub_df.columns:
+            sub_df["response"] = sub_df["target_text"]
+        else:
+            raise ValueError("Dataframe must contain 'masked_text' or 'target_text'.")
+
+        df_persona_pole = sub_df[(sub_df["intersectional_id"] == target_id) & (sub_df["topic"] == default_topic)]
+        df_topic_pole = sub_df[(sub_df["intersectional_id"] == control_id) & (sub_df["topic"] == default_topic)]
+
+        if df_persona_pole.empty or df_topic_pole.empty:
+            # Insufficient data for this scenario/variant combination
+            return np.zeros(768), 0.0, 0.0
+
+        persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, sub_df)
+        topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, sub_df)
+
+        if not persona_seed_words or not topic_seed_words:
+            # Monroe log-odds failed to find significant words
+            return np.zeros(768), 0.0, 0.0
+
+        def contains_any(text: str, words: list) -> bool:
+            clean = re.sub(r"[^a-zA-Z\s]", "", text.lower())
+            return any(re.search(rf"\b{re.escape(w)}\b", clean) for w in words)
+
+        p_vecs = [emb for txt, emb in zip(df_persona_pole.get('masked_text', pd.Series()), df_persona_pole['embedding'])
+                  if contains_any(txt, persona_seed_words)]
+        t_vecs = [emb for txt, emb in zip(df_topic_pole.get('masked_text', pd.Series()), df_topic_pole['embedding'])
+                  if contains_any(txt, topic_seed_words)]
+
+        if p_vecs and t_vecs:
+            p_pole = np.mean(p_vecs, axis=0)
+            t_pole = np.mean(t_vecs, axis=0)
+            axis_v = p_pole - t_pole
+            norm = np.linalg.norm(axis_v)
+            axis_v = axis_v / norm if norm > 1e-8 else np.zeros_like(axis_v)
+        else:
+            return np.zeros(768), 0.0, 0.0
+
+        def cos_sim(a: np.ndarray, b: np.ndarray) -> float:
+            denom = np.linalg.norm(a) * np.linalg.norm(b) + 1e-8
+            return float(np.dot(a, b) / denom)
+
+        topic_pole_sim = np.mean([cos_sim(emb, axis_v) for emb in df_persona_pole['embedding']]) if not df_persona_pole.empty else 0.0
+        persona_pole_sim = np.mean([cos_sim(emb, axis_v) for emb in df_topic_pole['embedding']]) if not df_topic_pole.empty else 0.0
+
+        return axis_v, topic_pole_sim, persona_pole_sim

@@ -4,6 +4,7 @@ import nltk
 import numpy as np
 import pandas as pd
 import os
+import re
 from sentence_transformers import SentenceTransformer
 
 nltk.download('punkt')
@@ -13,6 +14,7 @@ from allocational import AllocationalEvaluator
 from representational import RepresentationalEvaluator
 from compost.embeddings.intersectional_evaluator import IntersectionalEvaluator
 from compost.embeddings.semantic_masking import SemanticMasker
+from compost.embeddings.axis_metrics import get_seed_words
 
 
 def get_document_embedding(text, model):
@@ -108,29 +110,81 @@ def main(args):
         occupation = target_id.split('_')[-1]
         control_id = f"Unmarked_Unmarked_{occupation}"
         
-        steering_scores = {'implicit_steering': np.nan, 'explicit_steering': np.nan, 'delta_steering': np.nan}
+        implicit_steerings = []
+        explicit_steerings = []
         
         if control_id in df['intersectional_id'].values:
-            # Pseudo-code: Use IntersectionalEvaluator to get the statistical poles 
-            # by comparing the target_id vs the control_id on the 'general_comment' topic
-            # p_pole, t_pole = ie.get_fightin_words_poles(df, target_id, control_id)
-            # axis_v = p_pole - t_pole
+            # Get unique scenarios (topics) for this group, excluding the general_comment baseline
+            unique_scenarios = group_df[group_df['topic'] != 'general_comment']['scenario_id'].unique()
             
-            # Placeholders for the mathematical outputs of the CoMPosT log-odds extraction
-            axis_v = np.zeros(768) 
-            topic_pole_sim = 0.5 
-            persona_pole_sim = 0.8
-            
-            implicit_embeddings = np.vstack(implicit_df['embedding'].values)
-            explicit_embeddings = np.vstack(explicit_df['embedding'].values)
-            
-            steering_scores = rep_eval.calculate_semantic_steering(
-                implicit_target_embeddings=implicit_embeddings,
-                explicit_target_embeddings=explicit_embeddings,
-                axis_v=axis_v,
-                topic_pole_sim=topic_pole_sim,
-                persona_pole_sim=persona_pole_sim
-            )
+            for scenario_id in unique_scenarios:
+                try:
+                    # --- IMPLICIT STEERING FOR THIS SCENARIO ---
+                    # Compute axis using ONLY implicit variant data
+                    implicit_axis, imp_topic_pole_sim, imp_persona_pole_sim = ie.get_fightin_words_poles(
+                        df,
+                        target_id,
+                        control_id,
+                        variant_type='implicit',
+                        target_topic_id=scenario_id,
+                        default_topic="general_comment"
+                    )
+                    
+                    # Project implicit responses for this scenario onto the implicit axis
+                    implicit_scenario_df = implicit_df[
+                        (implicit_df['scenario_id'] == scenario_id) & (implicit_df['topic'] != 'general_comment')
+                    ]
+                    if not implicit_scenario_df.empty:
+                        imp_target_embs = np.vstack(implicit_scenario_df['embedding'].values)
+                        imp_steer_dict = rep_eval.calculate_semantic_steering(
+                            implicit_target_embeddings=imp_target_embs,
+                            explicit_target_embeddings=imp_target_embs,
+                            axis_v=implicit_axis,
+                            topic_pole_sim=imp_topic_pole_sim,
+                            persona_pole_sim=imp_persona_pole_sim
+                        )
+                        implicit_steerings.append(imp_steer_dict['implicit_steering'])
+                    
+                    # --- EXPLICIT STEERING FOR THIS SCENARIO ---
+                    # Compute axis using ONLY explicit variant data
+                    explicit_axis, exp_topic_pole_sim, exp_persona_pole_sim = ie.get_fightin_words_poles(
+                        df,
+                        target_id,
+                        control_id,
+                        variant_type='explicit',
+                        target_topic_id=scenario_id,
+                        default_topic="general_comment"
+                    )
+                    
+                    # Project explicit responses for this scenario onto the explicit axis
+                    explicit_scenario_df = explicit_df[
+                        (explicit_df['scenario_id'] == scenario_id) & (explicit_df['topic'] != 'general_comment')
+                    ]
+                    if not explicit_scenario_df.empty:
+                        exp_target_embs = np.vstack(explicit_scenario_df['embedding'].values)
+                        exp_steer_dict = rep_eval.calculate_semantic_steering(
+                            implicit_target_embeddings=exp_target_embs,
+                            explicit_target_embeddings=exp_target_embs,
+                            axis_v=explicit_axis,
+                            topic_pole_sim=exp_topic_pole_sim,
+                            persona_pole_sim=exp_persona_pole_sim
+                        )
+                        explicit_steerings.append(exp_steer_dict['explicit_steering'])
+                    
+                except (ValueError, np.linalg.LinAlgError):
+                    # Monroe log-odds failed or insufficient data for this scenario
+                    continue
+        
+        # Average scores across all valid scenarios to get final steering metrics
+        final_imp_steer = np.nanmean(implicit_steerings) if implicit_steerings else np.nan
+        final_exp_steer = np.nanmean(explicit_steerings) if explicit_steerings else np.nan
+        final_delta_steer = final_exp_steer - final_imp_steer if not (np.isnan(final_imp_steer) or np.isnan(final_exp_steer)) else np.nan
+        
+        steering_scores = {
+            'implicit_steering': final_imp_steer,
+            'explicit_steering': final_exp_steer,
+            'delta_steering': final_delta_steer
+        }
 
         # 3. Compile the group's results
         final_results.append({
