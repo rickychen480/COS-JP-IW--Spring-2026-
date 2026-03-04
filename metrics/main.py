@@ -203,9 +203,6 @@ def main(args):
 
     # 4. Save and Report
     os.makedirs(os.path.dirname(args.out) or '.', exist_ok=True)
-    final_results.to_csv(args.out, index=False)
-    print(f"\nResults exported to {args.out}")
-
     results_df = pd.DataFrame(final_results)
     results_df.to_csv(args.out, index=False)
     print("\nEvaluation Complete. Results saved.")
