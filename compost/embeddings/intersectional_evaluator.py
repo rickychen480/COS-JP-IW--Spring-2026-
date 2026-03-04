@@ -9,11 +9,19 @@ import numpy as np
 import pandas as pd
 import math
 import re
+import sys
+import os
 from collections import defaultdict
 from typing import Dict, List, Tuple, Optional
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from scenario_disjoint_cv import ScenarioDisjointValidator
-from axis_metrics import get_seed_words
+
+# Add the project root to the Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from compost.embeddings.scenario_disjoint_cv import ScenarioDisjointValidator
+from compost.embeddings.axis_metrics import get_seed_words
 import logging
 
 logging.basicConfig(level=logging.INFO)
