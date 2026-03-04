@@ -2,7 +2,7 @@
 #
 #SBATCH --job-name=evaluate_bias
 #SBATCH -N 1
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:2
 #SBATCH -c 4                          
 #SBATCH --mem=32G        
 #SBATCH -t 04:00:00                   
