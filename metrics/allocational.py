@@ -10,7 +10,7 @@ class AllocationalEvaluator:
         Initializes the evaluator with regex patterns to detect refusal tokens and an LLM instance.
         """
         self.llm = LLM(
-            model="meta-llama/Llama-3.1-70B-Instruct",
+            model="hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4",
             tensor_parallel_size=2,
             quantization="awq",
             max_model_len=8192
