@@ -16,6 +16,7 @@ echo "Initializing environment..."
 cd ~/COS-JP
 eval "$(conda shell.bash hook)"
 conda activate ./env
+source ~/.hf_token
 
 echo "Running evaluation on Llama 8B Transcripts..."
 python metrics/main.py \
