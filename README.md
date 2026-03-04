@@ -187,24 +187,49 @@ python metrics/main.py \
 ### Stage 3b: CoMPosT Embedding-Based Auditing
 **Script**: `compost/embeddings/compost_evaluator.py`
 
-Performs semantic embedding analysis to audit user simulations for caricature and individuation.
+Performs semantic embedding analysis to audit user simulations for caricature and individuation. Features include:
+- **Semantic Masking**: NER-based redaction of explicit identity mentions
+- **Scenario-Disjoint CV**: GroupKFold prevents data leakage between train/test
+- **Intersectional Joint Probabilities**: Treats demographic identities as indivisible units
 
 ```bash
+# Evaluate Llama-8B with embeddings (single and intersectional axes)
+python compost/embeddings/compost_evaluator.py \
+  --data data/transcripts/Llama-3.1-8B-Instruct/control_simulations.json \
+        data/transcripts/Llama-3.1-8B-Instruct/default_topics.json \
+        data/transcripts/Llama-3.1-8B-Instruct/target_simulations.json \
+  --enable-semantic-masking \
+  --cv-strategy GroupKFold \
+  --enable-single-axes-eval \
+  --enable-intersectional-eval \
+  --output-dir results/compost/embeddings/llama-8b
+
 # Evaluate Llama-70B with embeddings
 python compost/embeddings/compost_evaluator.py \
   --data data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
-        data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json
+        data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json \
+  --enable-semantic-masking \
+  --cv-strategy GroupKFold \
+  --enable-single-axes-eval \
+  --enable-intersectional-eval \
+  --output-dir results/compost/embeddings/llama-70b
 
-# Evaluate Llama-8B with embeddings
+# Single-axes evaluation only (legacy approach, may be inflated by confounders)
 python compost/embeddings/compost_evaluator.py \
   --data data/transcripts/Llama-3.1-8B-Instruct/control_simulations.json \
         data/transcripts/Llama-3.1-8B-Instruct/default_topics.json \
-        data/transcripts/Llama-3.1-8B-Instruct/target_simulations.json
+        data/transcripts/Llama-3.1-8B-Instruct/target_simulations.json \
+  --output-dir results/compost/embeddings/llama-8b-single-axes
 ```
 
 **Arguments**:
-- `--data` - Multiple JSON paths: control, default_topics, target (in order)
+- `--data` - Multiple JSON paths: control, default_topics, target (required, in order)
+- `--enable-semantic-masking` - Flag to redact explicit demographic/occupational labels in user simulator responses
+- `--cv-strategy` - Cross-validation strategy: `random` (legacy), `GroupKFold` (scenario-disjoint, recommended), or `LeaveOneGroupOut`
+- `--enable-single-axes-eval` - By default, evaluates each demographic axis individually (race, gender, occupation). Omit flag to skip (faster, for broad scans)
+- `--enable-intersectional-eval` - Flag to perform intersectional evaluation treating demographic identities as indivisible combinations
+- `--output-dir` - Directory to save detailed results and performance metrics (default: `./compost_results`)
 
 **Outputs**:
 - JSON/TXT output with semantic bias vectors and dimensional analysis
