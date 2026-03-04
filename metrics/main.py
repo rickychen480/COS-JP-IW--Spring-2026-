@@ -57,7 +57,10 @@ def main(args):
     df = load_all_transcripts([target_path, control_path, default_topic_path])
     
     # Initialize Evaluators
-    alloc_eval = AllocationalEvaluator()
+    alloc_eval = AllocationalEvaluator(
+        model_path=args.judge_model,
+        tensor_parallel_size=args.tensor_parallel_size
+    )
     rep_eval = RepresentationalEvaluator()
     ie = IntersectionalEvaluator()
     masker = SemanticMasker()
@@ -218,6 +221,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate dynamic intersectional bias.")
     parser.add_argument("--dir", type=str, required=True, help="Directory containing the transcript JSONs")
     parser.add_argument("--out", type=str, default="dynamic_bias_results.csv", help="Output CSV filename")
+    parser.add_argument("--judge_model", type=str, required=True, help="HuggingFace ID or local path for the LLM judge")
+    parser.add_argument("--tensor_parallel_size", type=int, default=2, help="Number of GPUs to use for vLLM")
     args = parser.parse_args()
 
     target_path = os.path.join(args.dir, 'target_simulations.json')

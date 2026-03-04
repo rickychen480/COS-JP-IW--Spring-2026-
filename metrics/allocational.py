@@ -5,15 +5,20 @@ from typing import List, Dict
 from vllm import LLM, SamplingParams
 
 class AllocationalEvaluator:
-    def __init__(self):
+    def __init__(self, model_path, tensor_parallel_size):
         """
         Initializes the evaluator with regex patterns to detect refusal tokens and an LLM instance.
         """
+        # Dynamically set AWQ if the model name implies it
+        quant_kwargs = {}
+        if "awq" in model_path.lower():
+            quant_kwargs["quantization"] = "awq"
+
         self.llm = LLM(
-            model="hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4",
-            tensor_parallel_size=2,
-            quantization="awq",
-            max_model_len=8192
+            model=model_path,
+            tensor_parallel_size=tensor_parallel_size,
+            max_model_len=8192,
+            **quant_kwargs
         )
         self.rejection_tokens = [
             r"i cannot provide",
