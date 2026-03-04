@@ -29,14 +29,15 @@ def load_all_transcripts(file_paths):
     for path in file_paths:
         with open(path, 'r') as f:
             data.extend(json.load(f))
-    df = pd.json_normalize(data)
+    df = pd.DataFrame(data)
     
     # Extract identity metadata
     df['demographic'] = df['metadata'].apply(lambda x: x['persona'].get('demographic', 'Unmarked'))
     df['gender'] = df['metadata'].apply(lambda x: x['persona'].get('gender', 'Unmarked'))
     df['occupation'] = df['metadata'].apply(lambda x: x['persona'].get('occupation', 'Unmarked'))
     df['topic'] = df['metadata'].apply(lambda x: x.get('task_description', 'general_comment'))
-    df['target_logprobs'] = df['metadata'].apply(lambda x: x.get('target_logprobs',))
+    df['target_logprobs'] = df['metadata'].apply(lambda x: x.get('target_logprobs', []))
+    df['scenario_id'] = df['metadata'].apply(lambda x: x.get('scenario_id', 'unknown'))
     
     return df
 
