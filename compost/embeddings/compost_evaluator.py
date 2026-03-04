@@ -82,7 +82,7 @@ def load_transcripts_to_dataframe(json_paths, semantic_masker=None, apply_maskin
 
             t_str = d["metadata"]["task_description"]
             variant_type = d.get("variant_type", "implicit")
-            scenario_id = d.get("scenario_id", "unknown")
+            scenario_id = d["metadata"].get("scenario_id", "unknown")
             dialogue_id = d.get("dialogue_id", "unknown")
 
             # Flatten all "User" dialogue turns into a single string for analysis
