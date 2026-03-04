@@ -1,0 +1,36 @@
+
+================ INTERSECTIONAL BIAS EVALUATION REPORT ================
+
+PERFORMANCE ACROSS INTERSECTIONAL GROUPS:
+         intersectional_id                   control_id  n_target  n_control  accuracy  f1_score
+     Unmarked_Male_Cleaner    Unmarked_Unmarked_Cleaner      1339       2425  0.882843  0.864251
+    Unmarked_Male_Mechanic   Unmarked_Unmarked_Mechanic      1337       2423  0.861100  0.837039
+     Unmarked_Male_Cashier    Unmarked_Unmarked_Cashier      1337       2429  0.861548  0.835556
+   Unmarked_Female_Cleaner    Unmarked_Unmarked_Cleaner      1339       2425  0.853753  0.825164
+  Unmarked_Female_Mechanic   Unmarked_Unmarked_Mechanic      1335       2423  0.847320  0.822298
+  Unmarked_Male_Accountant Unmarked_Unmarked_Accountant      1339       2421  0.845598  0.816993
+   Unmarked_Female_Cashier    Unmarked_Unmarked_Cashier      1343       2429  0.845573  0.815501
+      Unmarked_Male_Doctor     Unmarked_Unmarked_Doctor      1339       2425  0.834810  0.803962
+       Unmarked_Female_CEO        Unmarked_Unmarked_CEO      1339       2425  0.832677  0.802719
+       Unmarked_Male_Nurse      Unmarked_Unmarked_Nurse      1341       2423  0.830265  0.800147
+         Unmarked_Male_CEO        Unmarked_Unmarked_CEO      1339       2425  0.830674  0.796283
+     Unmarked_Male_Teacher    Unmarked_Unmarked_Teacher      1343       2421  0.825251  0.794716
+     Unmarked_Female_Nurse      Unmarked_Unmarked_Nurse      1335       2423  0.822435  0.790367
+Unmarked_Female_Accountant Unmarked_Unmarked_Accountant      1335       2421  0.824577  0.786209
+    Unmarked_Female_Lawyer     Unmarked_Unmarked_Lawyer      1337       2425  0.814954  0.778712
+   Unmarked_Female_Teacher    Unmarked_Unmarked_Teacher      1335       2421  0.814822  0.774473
+    Unmarked_Female_Doctor     Unmarked_Unmarked_Doctor      1337       2425  0.807914  0.774383
+      Unmarked_Male_Lawyer     Unmarked_Unmarked_Lawyer      1341       2425  0.767735  0.742224
+
+STATISTICAL PARITY ANALYSIS:
+  f1_score_min: 0.7422
+  f1_score_max: 0.8643
+  f1_score_mean: 0.8034
+  f1_score_std: 0.0284
+  f1_score_gap: 0.1220
+  f1_score_disparate_impact_ratio: 0.8588
+  f1_score_inequality_measure: 0.0353
+
+INTERPRETATION:
+  ⚠️  Moderate Disparate Caricature (ratio: 0.859).
+=========================================================================

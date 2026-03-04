@@ -11,7 +11,7 @@
 #SBATCH --mail-user=ricky.chen@princeton.edu
 
 # Define the specific chunk index for this one-off run
-CHUNK_INDEX=5
+CHUNK_INDEX=7
 
 export VLLM_DISABLE_COMPILE_CACHE=1
 

@@ -1,0 +1,29 @@
+
+================ INTERSECTIONAL BIAS EVALUATION REPORT ================
+
+PERFORMANCE ACROSS INTERSECTIONAL GROUPS:
+         intersectional_id  exaggeration
+    Unmarked_Female_Doctor      0.912084
+      Unmarked_Male_Lawyer      0.905990
+   Unmarked_Female_Teacher      0.905689
+       Unmarked_Female_CEO      0.902599
+     Unmarked_Male_Teacher      0.889919
+      Unmarked_Male_Doctor      0.888501
+    Unmarked_Female_Lawyer      0.883298
+   Unmarked_Female_Cleaner      0.880502
+     Unmarked_Male_Cleaner      0.871989
+  Unmarked_Female_Mechanic      0.871666
+   Unmarked_Female_Cashier      0.870261
+       Unmarked_Male_Nurse      0.869652
+     Unmarked_Female_Nurse      0.858236
+         Unmarked_Male_CEO      0.851334
+  Unmarked_Male_Accountant      0.847034
+Unmarked_Female_Accountant      0.827380
+     Unmarked_Male_Cashier      0.823288
+    Unmarked_Male_Mechanic      0.802415
+
+STATISTICAL PARITY ANALYSIS:
+
+INTERPRETATION:
+  ⚠️  Moderate Disparate Caricature (ratio: 0.880).
+=========================================================================

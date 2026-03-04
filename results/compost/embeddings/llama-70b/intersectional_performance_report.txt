@@ -1,0 +1,36 @@
+
+================ INTERSECTIONAL BIAS EVALUATION REPORT ================
+
+PERFORMANCE ACROSS INTERSECTIONAL GROUPS:
+         intersectional_id                   control_id  n_target  n_control  accuracy  f1_score
+   Unmarked_Female_Cashier    Unmarked_Unmarked_Cashier      1343       2671  0.856395  0.822100
+     Unmarked_Male_Cashier    Unmarked_Unmarked_Cashier      1336       2671  0.846383  0.811158
+   Unmarked_Female_Cleaner    Unmarked_Unmarked_Cleaner      1339       2669  0.846691  0.810103
+     Unmarked_Male_Cleaner    Unmarked_Unmarked_Cleaner      1338       2669  0.843529  0.806308
+       Unmarked_Male_Nurse      Unmarked_Unmarked_Nurse      1340       2667  0.838853  0.805041
+     Unmarked_Male_Teacher    Unmarked_Unmarked_Teacher      1342       2669  0.836269  0.797405
+     Unmarked_Female_Nurse      Unmarked_Unmarked_Nurse      1335       2667  0.832859  0.792069
+  Unmarked_Male_Accountant Unmarked_Unmarked_Accountant      1338       2665  0.824202  0.791886
+    Unmarked_Male_Mechanic   Unmarked_Unmarked_Mechanic      1336       2663  0.832478  0.791343
+  Unmarked_Female_Mechanic   Unmarked_Unmarked_Mechanic      1335       2663  0.831158  0.789067
+         Unmarked_Male_CEO        Unmarked_Unmarked_CEO      1338       2669  0.826259  0.788065
+       Unmarked_Female_CEO        Unmarked_Unmarked_CEO      1339       2669  0.826178  0.780135
+   Unmarked_Female_Teacher    Unmarked_Unmarked_Teacher      1335       2669  0.820270  0.774681
+      Unmarked_Male_Lawyer     Unmarked_Unmarked_Lawyer      1340       2669  0.813705  0.765364
+      Unmarked_Male_Doctor     Unmarked_Unmarked_Doctor      1338       2667  0.810418  0.762702
+    Unmarked_Female_Lawyer     Unmarked_Unmarked_Lawyer      1337       2669  0.812511  0.759379
+    Unmarked_Female_Doctor     Unmarked_Unmarked_Doctor      1337       2667  0.809945  0.758099
+Unmarked_Female_Accountant Unmarked_Unmarked_Accountant      1335       2665  0.788788  0.753658
+
+STATISTICAL PARITY ANALYSIS:
+  f1_score_min: 0.7537
+  f1_score_max: 0.8221
+  f1_score_mean: 0.7866
+  f1_score_std: 0.0206
+  f1_score_gap: 0.0684
+  f1_score_disparate_impact_ratio: 0.9167
+  f1_score_inequality_measure: 0.0262
+
+INTERPRETATION:
+  ✓ Acceptable parity across groups (ratio: 0.917). Exaggeration is applied relatively equally.
+=========================================================================
