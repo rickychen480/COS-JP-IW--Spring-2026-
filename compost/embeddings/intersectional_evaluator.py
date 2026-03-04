@@ -151,6 +151,18 @@ class IntersectionalEvaluator:
             y = (sub_df[intersectional_col] == target).astype(int).values
             groups = sub_df.get("scenario_id", sub_df.index).values
 
+            # Safety check
+            num_unique_scenarios = len(np.unique(groups))
+            if num_unique_scenarios < 2 and cv_strategy == 'GroupKFold':
+                self.skipped_groups.append({
+                    'group': target,
+                    'n_target': n_t,
+                    'n_control': n_c,
+                    'reason': f"Not enough unique scenarios for CV (found {num_unique_scenarios})"
+                })
+                logger.warning(f"Skipping '{target}': Only {num_unique_scenarios} unique scenario(s) found, need at least 2 for GroupKFold.")
+                continue
+
             validator = ScenarioDisjointValidator(
                 cv_strategy=cv_strategy,
                 n_splits=min(n_splits, len(np.unique(groups))),
