@@ -214,13 +214,6 @@ python compost/embeddings/compost_evaluator.py \
   --enable-single-axes-eval \
   --enable-intersectional-eval \
   --output-dir results/compost/embeddings/llama-70b
-
-# Single-axes evaluation only (legacy approach, may be inflated by confounders)
-python compost/embeddings/compost_evaluator.py \
-  --data data/transcripts/Llama-3.1-8B-Instruct/control_simulations.json \
-        data/transcripts/Llama-3.1-8B-Instruct/default_topics.json \
-        data/transcripts/Llama-3.1-8B-Instruct/target_simulations.json \
-  --output-dir results/compost/embeddings/llama-8b-single-axes
 ```
 
 **Arguments**:
