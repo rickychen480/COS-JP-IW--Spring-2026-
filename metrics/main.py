@@ -111,16 +111,21 @@ def main(args):
             continue
 
         # --- ALLOCATIONAL METRICS ---
-        implicit_gcr = np.mean([alloc_eval.calculate_gcr_llm_judge(t, md['task_description']) 
-                                for t, md in zip(implicit_df['transcript'], implicit_df['metadata'])])
-        explicit_gcr = np.mean([alloc_eval.calculate_gcr_llm_judge(t, md['task_description']) 
-                                for t, md in zip(explicit_df['transcript'], explicit_df['metadata'])])
+        # 1. Evaluate the success of each transcript individually and store the boolean results
+        imp_success_list = [alloc_eval.calculate_gcr_llm_judge(t, m['task_description']) for t, m in zip(implicit_df['transcript'], implicit_df['metadata'])]
+        exp_success_list = [alloc_eval.calculate_gcr_llm_judge(t, m['task_description']) for t, m in zip(explicit_df['transcript'], explicit_df['metadata'])]
         
+        # 2. Calculate the mean for the final GCR score
+        implicit_gcr = np.mean(imp_success_list)
+        explicit_gcr = np.mean(exp_success_list)
+
         # Calculate Delta GCR (Explicit - Implicit)
         d_gcr = alloc_eval.calculate_d_gcr(implicit_gcr, explicit_gcr)
         
-        implicit_atc = np.mean([alloc_eval.calculate_atc(t) for t in implicit_df['transcript']])
-        explicit_atc = np.mean([alloc_eval.calculate_atc(t) for t in explicit_df['transcript']])
+        # 3. Pass BOTH the transcript 't' and its corresponding success flag 'succ' into calculate_atc
+        implicit_atc = np.mean([alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(implicit_df['transcript'], imp_success_list)])
+        explicit_atc = np.mean([alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(explicit_df['transcript'], exp_success_list)])
+        
         
         # --- REPRESENTATIONAL METRICS (CONFIDENCE) ---
         # Flatten the logprobs arrays for the whole implicit/explicit subset
