@@ -65,6 +65,7 @@ def main(args):
 
     df = load_all_transcripts([target_path, control_path, default_topic_path])
     
+    print("Transcripts loaded. Initializing evaluators")
     # Initialize Evaluators
     alloc_eval = AllocationalEvaluator(
         model_path=args.judge_model,
@@ -74,6 +75,7 @@ def main(args):
     ie = IntersectionalEvaluator()
     masker = SemanticMasker()
     
+    print("Creating intersectional IDs")
     # Create intersectional IDs
     df['intersectional_id'] = df.apply(
         lambda row: ie.create_intersectional_tuple(row.get('demographic', 'Unmarked'), row.get('gender', 'Unmarked'), row.get('occupation', 'Unmarked')), 
