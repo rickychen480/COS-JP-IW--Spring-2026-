@@ -12,6 +12,7 @@
 #SBATCH --mail-user=ricky.chen@princeton.edu       
 
 export VLLM_DISABLE_COMPILE_CACHE=1
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 echo "Initializing environment..."
 

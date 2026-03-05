@@ -18,6 +18,7 @@ class AllocationalEvaluator:
             model=model_path,
             tensor_parallel_size=tensor_parallel_size,
             max_model_len=8192,
+            gpu_memory_utilization=0.85,
             **quant_kwargs
         )
         self.rejection_tokens = [

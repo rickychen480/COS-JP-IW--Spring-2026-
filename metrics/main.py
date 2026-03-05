@@ -1,11 +1,20 @@
+import os
+import sys
+import multiprocessing as mp
+
+# Force 'spawn' start method before any other heavy libraries load.
+# This prevents the "CUDA driver initialization failed" fork-context error.
+try:
+    mp.set_start_method('spawn', force=True)
+except RuntimeError:
+    pass
+
 import argparse
 import json
 import nltk
 import numpy as np
 import pandas as pd
-import os
 import re
-import sys
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
