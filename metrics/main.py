@@ -21,8 +21,6 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from sentence_transformers import SentenceTransformer
-
 nltk.download('punkt')
 from nltk.tokenize import sent_tokenize
 
@@ -58,6 +56,8 @@ def load_all_transcripts(file_paths):
     return df
 
 def main(args):
+    from sentence_transformers import SentenceTransformer
+
     print("Loading data...")
     target_path = os.path.join(args.dir, 'target_simulations.json')
     control_path = os.path.join(args.dir, 'control_simulations.json')
