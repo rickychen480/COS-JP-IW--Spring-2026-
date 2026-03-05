@@ -13,6 +13,7 @@
 
 export VLLM_DISABLE_COMPILE_CACHE=1
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
+export OMP_NUM_THREADS=1
 
 echo "Initializing environment..."
 

@@ -12,7 +12,7 @@ class AllocationalEvaluator:
         # Dynamically set AWQ if the model name implies it
         quant_kwargs = {}
         if "awq" in model_path.lower():
-            quant_kwargs["quantization"] = "awq"
+            quant_kwargs["quantization"] = "awq_marlin"
 
         self.llm = LLM(
             model=model_path,
