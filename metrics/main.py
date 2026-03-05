@@ -75,7 +75,10 @@ def main(args):
     masker = SemanticMasker()
     
     # Create intersectional IDs
-    df['intersectional_id'] = df.apply(ie.create_intersectional_tuple, axis=1)
+    df['intersectional_id'] = df.apply(
+        lambda row: ie.create_intersectional_tuple(row.get('demographic', 'Unmarked'), row.get('gender', 'Unmarked'), row.get('occupation', 'Unmarked')), 
+        axis=1
+    )
     
     # Apply Semantic Masking & Generate Embeddings for Steering
     print("Masking explicit identifiers and generating embeddings...")
