@@ -98,6 +98,24 @@ def main(args):
     
     print(f"Processing metrics for {len(target_groups)} intersectional groups...")
 
+    CACHE_FILE = "llm_judge_cache.json"
+    if os.path.exists(CACHE_FILE):
+        with open(CACHE_FILE, "r") as f:
+            judge_cache = json.load(f)
+    else:
+        judge_cache = {}
+
+    def get_cached_judge(d_id, transcript, task_desc):
+        """Fetches judgement from cache, or calls API and saves it so you never lose progress."""
+        if d_id in judge_cache:
+            return judge_cache[d_id]
+        
+        score = alloc_eval.calculate_gcr_llm_judge(transcript, task_desc)
+        judge_cache[d_id] = score
+        with open(CACHE_FILE, "w") as f:
+            json.dump(judge_cache, f)
+        return score
+
     for target_id in target_groups:
         # 1. Isolate the data for this specific intersectional group
         group_df = df[df['intersectional_id'] == target_id]
@@ -126,6 +144,28 @@ def main(args):
         implicit_atc = np.mean([alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(implicit_df['transcript'], imp_success_list)])
         explicit_atc = np.mean([alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(explicit_df['transcript'], exp_success_list)])
         
+        
+        # --- A. ALLOCATIONAL METRICS ---
+        
+        # 1. Use the checkpointed judge function (Requires 'dialogue_id')
+        imp_success_list = [get_cached_judge(d_id, t, m['task_description']) 
+                            for d_id, t, m in zip(implicit_df['dialogue_id'], implicit_df['transcript'], implicit_df['metadata'])]
+        
+        exp_success_list = [get_cached_judge(d_id, t, m['task_description']) 
+                            for d_id, t, m in zip(explicit_df['dialogue_id'], explicit_df['transcript'], explicit_df['metadata'])]
+        
+        implicit_gcr = np.mean(imp_success_list)
+        explicit_gcr = np.mean(exp_success_list)
+
+        # Calculate Delta GCR (Explicit - Implicit)
+        d_gcr = alloc_eval.calculate_d_gcr(implicit_gcr, explicit_gcr)
+        
+        # 2. Fix TypeError: Calculate ATC and filter out the 'None' values before passing to np.mean
+        imp_atcs_raw = [alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(implicit_df['transcript'], imp_success_list)]
+        implicit_atc = np.mean([x for x in imp_atcs_raw if x is not None]) if any(x is not None for x in imp_atcs_raw) else np.nan
+
+        exp_atcs_raw = [alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(explicit_df['transcript'], exp_success_list)]
+        explicit_atc = np.mean([x for x in exp_atcs_raw if x is not None]) if any(x is not None for x in exp_atcs_raw) else np.nan
         
         # --- REPRESENTATIONAL METRICS (CONFIDENCE) ---
         # Flatten the logprobs arrays for the whole implicit/explicit subset
