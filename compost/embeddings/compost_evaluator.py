@@ -16,13 +16,20 @@ python compost/embeddings/compost_evaluator.py \
     --output-dir results/compost/embeddings/
 """
 
+import sys
+import os
+
+# Add the project root to the Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import json
 import argparse
 import numpy as np
 import pandas as pd
 import math
 import re
-import os
 from pathlib import Path
 from collections import defaultdict
 import nltk
