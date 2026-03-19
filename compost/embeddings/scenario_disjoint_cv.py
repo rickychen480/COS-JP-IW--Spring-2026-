@@ -66,11 +66,29 @@ class ScenarioDisjointValidator:
     def _get_classifier(self) -> Any:
         """Get classifier instance based on type."""
         if self.classifier_type == "RandomForest":
-            return RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+            return RandomForestClassifier(
+                n_estimators=100, 
+                max_depth=10,              # Restricts how deep the trees can grow
+                min_samples_leaf=4,        # Forces leaves to have at least 4 samples (prevents hyperspecific memorization)
+                max_features="sqrt",       # Limits the number of features looked at per split
+                class_weight="balanced",   # Helps if one group has slightly more samples
+                random_state=42, 
+                n_jobs=-1
+            )
         elif self.classifier_type == "GradientBoosting":
-            return GradientBoostingClassifier(n_estimators=100, random_state=42)
+            return GradientBoostingClassifier(
+                n_estimators=100,
+                max_depth=10,
+                min_samples_leaf=4,
+                max_features="sqrt",
+                random_state=42
+            )
         elif self.classifier_type == "LogisticRegression":
-            return LogisticRegression(max_iter=1000, random_state=42, n_jobs=-1)
+            return LogisticRegression(
+                max_iter=1000,
+                random_state=42,
+                n_jobs=-1
+            )
         else:
             raise ValueError(f"Unknown classifier type: {self.classifier_type}")
     
