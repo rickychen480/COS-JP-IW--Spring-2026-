@@ -10,6 +10,7 @@ the model was memorizing prompts rather than learning stylistic patterns.
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import (
+    GridSearchCV,
     GroupKFold, 
     LeaveOneGroupOut, 
     cross_val_score, 
@@ -66,25 +67,36 @@ class ScenarioDisjointValidator:
     def _get_classifier(self) -> Any:
         """Get classifier instance based on type."""
         if self.classifier_type == "RandomForest":
-            return RandomForestClassifier(
-                n_estimators=100, 
-                max_depth=10,              # Restricts how deep the trees can grow
-                min_samples_leaf=4,        # Forces leaves to have at least 4 samples (prevents hyperspecific memorization)
-                max_features="sqrt",       # Limits the number of features looked at per split
-                class_weight="balanced",   # Helps if one group has slightly more samples
-                random_state=42, 
-                n_jobs=-1
+            rf = RandomForestClassifier(random_state=42)
+
+            param_grid = {
+                'n_estimators': [100],
+                'max_depth': [10, 20, None],
+                'min_samples_leaf': [2, 4, 10],
+                'max_features': ['sqrt', 'log2'],
+                'class_weight': ['balanced', None]
+            }
+            
+            grid_clf = GridSearchCV(
+                estimator=rf,
+                param_grid=param_grid,
+                cv=3,                      # 3-fold internal CV for tuning
+                scoring='f1_macro',
+                n_jobs=1                   
             )
+            return grid_clf
+        
         elif self.classifier_type == "GradientBoosting":
             return GradientBoostingClassifier(
                 n_estimators=100,
-                max_depth=10,
+                max_depth=3,
                 min_samples_leaf=4,
                 max_features="sqrt",
                 random_state=42
             )
         elif self.classifier_type == "LogisticRegression":
             return LogisticRegression(
+                C=0.1,
                 max_iter=1000,
                 random_state=42,
                 n_jobs=-1
@@ -241,6 +253,9 @@ class ScenarioDisjointValidator:
             # Train classifier on other scenarios
             clf = self._get_classifier()
             clf.fit(X_train, y_train)
+
+            print("Best parameters found: ", clf.best_params_)
+            print("Best cross-validation score: ", clf.best_score_)
             
             # Evaluate on held-out scenario
             y_pred = clf.predict(X_test)
