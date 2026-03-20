@@ -207,7 +207,6 @@ class IntersectionalEvaluator:
     def measure_exaggeration(
         self,
         df: pd.DataFrame,
-        emb_dict: Dict[str, np.ndarray] = None, 
     ) -> pd.DataFrame:
         """
         Computes the relative semantic distance (caricature/exaggeration) by calculating 

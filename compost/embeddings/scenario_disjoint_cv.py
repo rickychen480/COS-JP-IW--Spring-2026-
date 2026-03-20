@@ -254,8 +254,9 @@ class ScenarioDisjointValidator:
             clf = self._get_classifier()
             clf.fit(X_train, y_train)
 
-            print("Best parameters found: ", clf.best_params_)
-            print("Best cross-validation score: ", clf.best_score_)
+            if hasattr(clf, 'best_params_'):
+                print("Best parameters found: ", clf.best_params_)
+                print("Best cross-validation score: ", clf.best_score_)
             
             # Evaluate on held-out scenario
             y_pred = clf.predict(X_test)
