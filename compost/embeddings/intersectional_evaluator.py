@@ -1,8 +1,8 @@
 """
 Intersectional Joint Probability Evaluation Module
 Treats multidimensional identities as indivisible constructs to capture
-their unique linguistic realities. Evaluates intersectional tuples (e.g.,
-Hispanic_Male_Nurse) against an "Unmarked" baseline using log-odds calculations.
+their unique linguistic realities. Evaluates intersectional tuples using 
+round-robin pairwise comparisons to calculate relative semantic distance.
 """
 
 import numpy as np
@@ -11,6 +11,7 @@ import math
 import re
 import sys
 import os
+import itertools
 from collections import defaultdict
 from typing import Dict, List, Tuple, Optional
 
@@ -99,25 +100,15 @@ def get_seed_words(df1, df2, df0, threshold=1.96):
 
 class IntersectionalEvaluator:
     """
-    Evaluates bias through the lens of intersectional identities rather than
-    isolated demographic dimensions.
+    Evaluates bias through the lens of intersectional identities. 
+    Uses Round-Robin pairwise comparisons to isolate exact axes of variation.
     """
     
-    def __init__(self, baseline_label: str = "Unmarked", min_group_size: int = 10):
-        """
-        Initialize intersectional evaluator.
-        
-        Args:
-            baseline_label: The "unmarked" baseline identity to compare against
-            min_group_size: Minimum number of samples required per group for evaluation.
-                           Groups below this threshold will be skipped with a warning.
-                           Default: 10 (provides reasonable statistical power)
-        """
-        self.baseline_label = baseline_label
+    def __init__(self, min_group_size: int = 10):
         self.min_group_size = min_group_size
         self.intersectional_results = {}
         self.log_odds_cache = {}
-        self.skipped_groups = []  # Track which groups were excluded
+        self.skipped_groups = []
     
     def create_intersectional_tuple(
         self,
@@ -138,9 +129,9 @@ class IntersectionalEvaluator:
         """
         # always preserve every component, even if it is "Unmarked";
         # this makes the control label explicit (e.g. Unmarked_Unmarked_Nurse)
-        parts = [demographic or self.baseline_label,
-                 gender or self.baseline_label,
-                 occupation or self.baseline_label]
+        parts = [demographic or "Unmarked",
+                 gender or "Unmarked",
+                 occupation or "Unmarked"]
         return "_".join(parts)
     
     def add_intersectional_column(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -163,6 +154,39 @@ class IntersectionalEvaluator:
             axis=1
         )
         return df
+
+    def _get_valid_pairs(self, unique_groups: np.ndarray, directed: bool = False) -> List[Tuple[str, str]]:
+        """
+        Generates pairwise comparisons that isolate exactly ONE axis of variation.
+        (e.g., Hispanic_Male_Nurse vs White_Male_Nurse).
+        """
+        pairs = []
+        # Use combinations for undirected (Individuation), permutations for directed (Exaggeration)
+        iterator = itertools.permutations(unique_groups, 2) if directed else itertools.combinations(unique_groups, 2)
+        
+        for g1, g2 in iterator:
+            p1 = g1.split('_')
+            p2 = g2.split('_')
+            
+            # Ensure proper format
+            if len(p1) != 3 or len(p2) != 3: 
+                continue
+                
+            r1, gen1, o1 = p1
+            r2, gen2, o2 = p2
+            
+            # Must share the same occupation to form a valid counterfactual
+            if o1 != o2: 
+                continue
+            
+            # Must differ by exactly ONE demographic axis to isolate the variation
+            diff_race = r1 != r2
+            diff_gen = gen1 != gen2
+            
+            if (diff_race and not diff_gen) or (not diff_race and diff_gen):
+                pairs.append((g1, g2))
+                
+        return pairs
 
     def measure_individuation(
         self,
@@ -197,29 +221,20 @@ class IntersectionalEvaluator:
         self.skipped_groups = []
 
         unique_groups = df[intersectional_col].unique()
-        logger.info(f"Evaluating {len(unique_groups)} intersectional groups with pairing (min_group_size={threshold})")
+        
+        # Get UNDIRECTED pairwise comparisons
+        pairs = self._get_valid_pairs(unique_groups, directed=False)
+        logger.info(f"Evaluating {len(pairs)} pairwise intersectional combinations (min_group_size={threshold})")
 
-        def occupation_of(label: str) -> str:
-            return label.split("_")[-1] if isinstance(label, str) else ""
-
-        # build mapping from each non‑baseline group to its counterfactual label
-        for target in unique_groups:
-            if target == self.baseline_label or target.startswith(self.baseline_label + "_" + self.baseline_label):
-                continue
-            control_label = f"{self.baseline_label}_{self.baseline_label}_{occupation_of(target)}"
-            if control_label not in unique_groups:
-                logger.warning(f"Control '{control_label}' not found for target '{target}'. Skipping.")
-                continue
-
+        for target, control_label in pairs:
             mask = df[intersectional_col].isin([target, control_label])
             sub_df = df[mask]
             n_t = (sub_df[intersectional_col] == target).sum()
             n_c = (sub_df[intersectional_col] == control_label).sum()
             if n_t < threshold or n_c < threshold:
                 self.skipped_groups.append({
-                    'group': target,
-                    'n_target': n_t,
-                    'n_control': n_c,
+                    'target': target,
+                    'control': control_label,
                     'reason': f"Below threshold ({n_t},{n_c} < {threshold})"
                 })
                 continue
@@ -231,9 +246,8 @@ class IntersectionalEvaluator:
             num_unique_scenarios = len(np.unique(groups))
             if num_unique_scenarios < 2 and cv_strategy == 'GroupKFold':
                 self.skipped_groups.append({
-                    'group': target,
-                    'n_target': n_t,
-                    'n_control': n_c,
+                    'target': target,
+                    'control': control_label,
                     'reason': f"Not enough unique scenarios for CV (found {num_unique_scenarios})"
                 })
                 logger.warning(f"Skipping '{target}': Only {num_unique_scenarios} unique scenario(s) found, need at least 2 for GroupKFold.")
@@ -258,42 +272,28 @@ class IntersectionalEvaluator:
         df_results = pd.DataFrame(results)
 
         if self.skipped_groups:
-            logger.warning(f"Skipped {len(self.skipped_groups)} groups due to insufficient data or missing control")
-            for s in self.skipped_groups:
-                logger.warning(f"  - {s}")
+            logger.warning(f"Skipped {len(self.skipped_groups)} pairwise comparisons due to insufficient data")
 
-        logger.info(f"Computed {len(df_results)} paired evaluations out of {len(unique_groups)} groups")
+        logger.info(f"Computed {len(df_results)} pairwise evaluations out of {len(pairs)} possible pairs")
         return df_results
 
     def measure_exaggeration(
         self,
         df: pd.DataFrame,
         emb_dict: Dict[str, np.ndarray],
-        default_persona: str = "Unmarked",
         default_topic: str = "general_comment",
     ) -> pd.DataFrame:
-        """
-        Compute exaggeration scores for each intersectional cohort paired with its
-        occupational counterfactual.  Seed words are extracted using Monroe
-        log-odds between persona pole and topic pole, and exaggeration is the
-        scalar projection described in the specification.
-        """
         exag_scores = []
         unique_groups = df["intersectional_id"].unique()
 
-        def occupation_of(label: str) -> str:
-            return label.split("_")[-1] if isinstance(label, str) else ""
+        # Get DIRECTED pairwise comparisons (A vs B is different from B vs A for exaggeration vectors)
+        pairs = self._get_valid_pairs(unique_groups, directed=True)
 
-        for cohort_id in unique_groups:
-            if cohort_id == default_persona or cohort_id.startswith(default_persona + "_" + default_persona):
-                continue
-            control = f"{default_persona}_{default_persona}_{occupation_of(cohort_id)}"
-            if control not in unique_groups:
-                continue
-
+        for cohort_id, control in pairs:
             sub_df = df[df["intersectional_id"].isin([cohort_id, control])]
+            
             df_persona_pole = sub_df[(sub_df["intersectional_id"] == cohort_id) & (sub_df["topic"] == default_topic)]
-            df_topic_pole = sub_df[sub_df["intersectional_id"] == control]
+            df_topic_pole = sub_df[(sub_df["intersectional_id"] == control) & (sub_df["topic"] == default_topic)]
             df_target = sub_df[(sub_df["intersectional_id"] == cohort_id) & (sub_df["topic"] != default_topic)]
             df_background = sub_df
 
@@ -306,7 +306,6 @@ class IntersectionalEvaluator:
             if not persona_seed_words or not topic_seed_words:
                 continue
 
-            # compute poles
             def get_pole_embedding(target_df, seed_words):
                 patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
                 embs = []
@@ -321,6 +320,7 @@ class IntersectionalEvaluator:
 
             p_pole = get_pole_embedding(df_persona_pole, persona_seed_words)
             t_pole = get_pole_embedding(df_topic_pole, topic_seed_words)
+            
             if p_pole is None or t_pole is None:
                 continue
 
@@ -344,7 +344,12 @@ class IntersectionalEvaluator:
             # add small epsilon to denominator to guard against near-zero values
             denominator = (mean_t_pole - mean_dp) + 1e-6
             exag_score = (mean_target - mean_dp) / denominator
-            exag_scores.append({"intersectional_id": cohort_id, "exaggeration": exag_score})
+            
+            exag_scores.append({
+                "intersectional_id": cohort_id, 
+                "control_id": control, 
+                "exaggeration": exag_score
+            })
 
         return pd.DataFrame(exag_scores)
 
@@ -366,15 +371,19 @@ class IntersectionalEvaluator:
         exp_perf = self.measure_individuation(
             df[exp_mask], embeddings[exp_mask], intersectional_col=intersectional_col
         )
-        merged = imp_perf.merge(exp_perf, on='intersectional_id', suffixes=('_imp','_exp'))
+        
+        # Merge on both target and control to accurately map the pairwise deltas
+        merged = imp_perf.merge(exp_perf, on=['intersectional_id', 'control_id'], suffixes=('_imp','_exp'))
+        
         for metric in ['accuracy','f1_score']:
             merged[f'{metric}_delta'] = merged[f'{metric}_exp'] - merged[f'{metric}_imp']
+            
         return merged
 
     def compute_intersectional_parity(
         self,
         performance_df: pd.DataFrame,
-        metric: str = 'exaggeration_score'
+        metric: str = 'exaggeration'
     ) -> Dict[str, float]:
         """
         Calculate statistical parity metrics across intersectional groups.
@@ -390,7 +399,6 @@ class IntersectionalEvaluator:
             raise ValueError(f"Metric '{metric}' not found in results dataframe")
         
         values = performance_df[metric].dropna()
-        
         if len(values) == 0:
             return {}
         
@@ -417,22 +425,12 @@ class IntersectionalEvaluator:
         self,
         performance_df: pd.DataFrame,
         parity_metrics: Dict[str, float],
-        metric_name: str = 'exaggeration_score'
+        metric_name: str = 'exaggeration'
     ) -> str:
-        """
-        Generate a detailed report on intersectional evaluation results.
-        
-        Args:
-            performance_df: DataFrame from evaluate_intersectional_groups
-            parity_metrics: Dictionary from compute_intersectional_parity
-            
-        Returns:
-            Formatted report string
-        """
-        report = """\n================ INTERSECTIONAL BIAS EVALUATION REPORT ================\n\nPERFORMANCE ACROSS INTERSECTIONAL GROUPS:\n"""
+        report = """\n================ PAIRWISE INTERSECTIONAL BIAS REPORT ================\n\nRELATIVE SEMANTIC DISTANCES ACROSS GROUPS:\n"""
         
         if not performance_df.empty:
-            # Sort by the metric descending so the most exaggerated groups are at the top
+            # Sort to bring the most highly exaggerated pair relationships to the top
             sorted_df = performance_df.sort_values(by=metric_name, ascending=False)
             report += sorted_df.to_string(index=False)
         
@@ -449,7 +447,7 @@ class IntersectionalEvaluator:
             di = parity_metrics[di_key]
             if di < 0.80:
                 report += f"  ⚠️  Strong Disparate Caricature detected (ratio: {di:.3f}).\n"
-                report += f"      The model exaggerates certain intersectional groups significantly more than others.\n"
+                report += f"      The model exaggerates certain demographic swaps significantly more than others.\n"
             elif di < 0.90:
                 report += f"  ⚠️  Moderate Disparate Caricature (ratio: {di:.3f}).\n"
             else:
@@ -457,95 +455,3 @@ class IntersectionalEvaluator:
         
         report += "=" * 73
         return report
-
-    def get_fightin_words_poles(
-        self,
-        df: pd.DataFrame,
-        target_id: str,
-        control_id: str,
-        variant_type: str = 'implicit',
-        target_topic_id: Optional[str] = None,
-        default_topic: str = "general_comment",
-    ) -> Tuple[np.ndarray, float, float]:
-        """
-        Compute CoMPosT statistical poles for a given intersectional pair, optionally
-        restricted to a single scenario (target_topic_id), using a restricted background
-        corpus of a specific variant type (implicit or explicit).
-
-        This method is designed to be called separately for implicit and explicit variants
-        to avoid variant contamination. When target_topic_id is specified, only that
-        scenario's data (plus the general_comment baseline) is used, ensuring the
-        Monroe log-odds algorithm operates on semantically coherent task vocabularies.
-
-        Args:
-            df: Full dataframe with all transcripts.
-            target_id: Target intersectional identity (e.g., "Hispanic_Male_Nurse").
-            control_id: Control intersectional identity (e.g., "Unmarked_Unmarked_Nurse").
-            variant_type: Either 'implicit' or 'explicit' to use only that variant's data.
-            target_topic_id: Specific scenario ID to restrict poles to. If None, uses all scenarios.
-            default_topic: Label for the neutral baseline topic.
-
-        Returns:
-            axis_v: Normalized vector pointing from topic pole to persona pole.
-            topic_pole_sim: Mean cosine similarity of control examples to axis_v.
-            persona_pole_sim: Mean cosine similarity of target examples to axis_v.
-        """
-        # Filter to the specified variant type first
-        df_variant = df[df['variant_type'] == variant_type].copy()
-
-        # Restrict to just the two identity groups
-        sub_df = df_variant[df_variant["intersectional_id"].isin([target_id, control_id])].copy()
-
-        # Further restrict to a specific scenario if provided (per-topic analysis)
-        if target_topic_id is not None:
-            sub_df = sub_df[
-                (sub_df["scenario_id"] == target_topic_id) | (sub_df["topic"] == default_topic)
-            ].copy()
-
-        if "masked_text" in sub_df.columns:
-            sub_df["response"] = sub_df["masked_text"]
-        elif "target_text" in sub_df.columns:
-            sub_df["response"] = sub_df["target_text"]
-        else:
-            raise ValueError("Dataframe must contain 'masked_text' or 'target_text'.")
-
-        df_persona_pole = sub_df[(sub_df["intersectional_id"] == target_id) & (sub_df["topic"] == default_topic)]
-        df_topic_pole = sub_df[(sub_df["intersectional_id"] == control_id) & (sub_df["topic"] == default_topic)]
-
-        if df_persona_pole.empty or df_topic_pole.empty:
-            # Insufficient data for this scenario/variant combination
-            return np.zeros(768), 0.0, 0.0
-
-        persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, sub_df)
-        topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, sub_df)
-
-        if not persona_seed_words or not topic_seed_words:
-            # Monroe log-odds failed to find significant words
-            return np.zeros(768), 0.0, 0.0
-
-        def contains_any(text: str, words: list) -> bool:
-            clean = re.sub(r"[^a-zA-Z\s]", "", text.lower())
-            return any(re.search(rf"\b{re.escape(w)}\b", clean) for w in words)
-
-        p_vecs = [emb for txt, emb in zip(df_persona_pole.get('masked_text', pd.Series()), df_persona_pole['embedding'])
-                  if contains_any(txt, persona_seed_words)]
-        t_vecs = [emb for txt, emb in zip(df_topic_pole.get('masked_text', pd.Series()), df_topic_pole['embedding'])
-                  if contains_any(txt, topic_seed_words)]
-
-        if p_vecs and t_vecs:
-            p_pole = np.mean(p_vecs, axis=0)
-            t_pole = np.mean(t_vecs, axis=0)
-            axis_v = p_pole - t_pole
-            norm = np.linalg.norm(axis_v)
-            axis_v = axis_v / norm if norm > 1e-8 else np.zeros_like(axis_v)
-        else:
-            return np.zeros(768), 0.0, 0.0
-
-        def cos_sim(a: np.ndarray, b: np.ndarray) -> float:
-            denom = np.linalg.norm(a) * np.linalg.norm(b) + 1e-8
-            return float(np.dot(a, b) / denom)
-
-        topic_pole_sim = np.mean([cos_sim(emb, axis_v) for emb in df_persona_pole['embedding']]) if not df_persona_pole.empty else 0.0
-        persona_pole_sim = np.mean([cos_sim(emb, axis_v) for emb in df_topic_pole['embedding']]) if not df_topic_pole.empty else 0.0
-
-        return axis_v, topic_pole_sim, persona_pole_sim
