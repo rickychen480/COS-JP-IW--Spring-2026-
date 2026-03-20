@@ -12,6 +12,7 @@ import itertools
 import sys
 import os
 from typing import Dict, List, Tuple, Optional
+from sklearn.covariance import LedoitWolf
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
@@ -233,15 +234,13 @@ class IntersectionalEvaluator:
             mu_t = np.mean(target_embs, axis=0)
             mu_c = np.mean(control_embs, axis=0)
 
-            # Covariance matrix of the control group (shapes the "expected" variance)
-            cov_c = np.cov(control_embs, rowvar=False)
+            # Use Ledoit-Wolf Shrinkage to estimate a well-conditioned, noise-resistant covariance matrix
+            # and handles the num_dims > num_samples problem mathematically
+            lw = LedoitWolf()
+            cov_c = lw.fit(control_embs).covariance_
             
-            # Ridge regularization (Shrinkage) for 768D stability to prevent singular matrix
-            epsilon = 1e-5
-            cov_c += np.eye(cov_c.shape[0]) * epsilon
-
-            # Pseudo-inverse of the regularized covariance matrix
-            inv_cov_c = np.linalg.pinv(cov_c)
+            # Because Ledoit-Wolf guarantees a positive definite matrix, we can safely use standard inverse
+            inv_cov_c = np.linalg.inv(cov_c)
 
             # Compute Mahalanobis Distance
             delta = mu_t - mu_c
