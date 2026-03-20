@@ -2,17 +2,15 @@
 Intersectional Joint Probability Evaluation Module
 Treats multidimensional identities as indivisible constructs to capture
 their unique linguistic realities. Evaluates intersectional tuples using 
-round-robin pairwise comparisons to calculate relative semantic distance.
+round-robin pairwise comparisons and high-dimensional clustering metrics
+(Mahalanobis Distance) to calculate relative semantic distance.
 """
 
 import numpy as np
 import pandas as pd
-import math
-import re
+import itertools
 import sys
 import os
-import itertools
-from collections import defaultdict
 from typing import Dict, List, Tuple, Optional
 
 # Add the project root to the Python path
@@ -26,88 +24,16 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def clean_text_for_matching(text):
-    return re.sub(r"[^a-zA-Z\s]", "", text.lower())
-
-def get_log_odds(df1, df2, df0):
-    counts1 = defaultdict(
-        int,
-        df1.str.lower()
-        .str.split(expand=True)
-        .stack()
-        .replace(r"[^a-zA-Z\s]", "", regex=True)
-        .value_counts()
-        .to_dict(),
-    )
-    counts2 = defaultdict(
-        int,
-        df2.str.lower()
-        .str.split(expand=True)
-        .stack()
-        .replace(r"[^a-zA-Z\s]", "", regex=True)
-        .value_counts()
-        .to_dict(),
-    )
-    prior = defaultdict(
-        int,
-        df0.str.lower()
-        .str.split(expand=True)
-        .stack()
-        .replace(r"[^a-zA-Z\s]", "", regex=True)
-        .value_counts()
-        .to_dict(),
-    )
-
-    sigma = defaultdict(float)
-    delta = defaultdict(float)
-
-    for word in prior.keys():
-        prior[word] = int(prior[word] + 0.5)
-    for word in counts2.keys():
-        counts1[word] = int(counts1[word] + 0.5)
-        if prior[word] == 0:
-            prior[word] = 1
-    for word in counts1.keys():
-        counts2[word] = int(counts2[word] + 0.5)
-        if prior[word] == 0:
-            prior[word] = 1
-
-    n1 = sum(counts1.values())
-    n2 = sum(counts2.values())
-    nprior = sum(prior.values())
-
-    for word in prior.keys():
-        if prior[word] > 0:
-            l1 = float(counts1[word] + prior[word]) / (
-                (n1 + nprior) - (counts1[word] + prior[word])
-            )
-            l2 = float(counts2[word] + prior[word]) / (
-                (n2 + nprior) - (counts2[word] + prior[word])
-            )
-            sigmasquared = 1 / (float(counts1[word]) + float(prior[word])) + 1 / (
-                float(counts2[word]) + float(prior[word])
-            )
-            sigma[word] = math.sqrt(sigmasquared)
-            delta[word] = (math.log(l1) - math.log(l2)) / sigma[word]
-
-    return delta
-
-def get_seed_words(df1, df2, df0, threshold=1.96):
-    deltas = get_log_odds(df1["response"], df2["response"], df0["response"])
-    top_words = [k for k, v in deltas.items() if v > threshold]
-    return sorted(top_words, key=lambda x: deltas[x], reverse=True)
-
 
 class IntersectionalEvaluator:
     """
     Evaluates bias through the lens of intersectional identities. 
-    Uses Round-Robin pairwise comparisons to isolate exact axes of variation.
+    Uses Round-Robin pairwise comparisons and High-Dimensional distances.
     """
     
     def __init__(self, min_group_size: int = 10):
         self.min_group_size = min_group_size
         self.intersectional_results = {}
-        self.log_odds_cache = {}
         self.skipped_groups = []
     
     def create_intersectional_tuple(
@@ -280,75 +206,51 @@ class IntersectionalEvaluator:
     def measure_exaggeration(
         self,
         df: pd.DataFrame,
-        emb_dict: Dict[str, np.ndarray],
-        default_topic: str = "general_comment",
+        emb_dict: Dict[str, np.ndarray] = None, 
     ) -> pd.DataFrame:
+        """
+        Computes the relative semantic distance (caricature/exaggeration) by calculating 
+        the Mahalanobis Distance between the target and control intersectional clusters 
+        in the high-dimensional embedding space.
+        """
         exag_scores = []
         unique_groups = df["intersectional_id"].unique()
 
-        # Get DIRECTED pairwise comparisons (A vs B is different from B vs A for exaggeration vectors)
+        # DIRECTED pairs: A vs B maps covariance to B (the control shape)
         pairs = self._get_valid_pairs(unique_groups, directed=True)
 
         for cohort_id, control in pairs:
-            sub_df = df[df["intersectional_id"].isin([cohort_id, control])]
+            target_mask = df["intersectional_id"] == cohort_id
+            control_mask = df["intersectional_id"] == control
             
-            df_persona_pole = sub_df[(sub_df["intersectional_id"] == cohort_id) & (sub_df["topic"] == default_topic)]
-            df_topic_pole = sub_df[(sub_df["intersectional_id"] == control) & (sub_df["topic"] == default_topic)]
-            df_target = sub_df[(sub_df["intersectional_id"] == cohort_id) & (sub_df["topic"] != default_topic)]
-            df_background = sub_df
+            target_embs = np.stack(df[target_mask]["embedding"].values)
+            control_embs = np.stack(df[control_mask]["embedding"].values)
 
-            if df_persona_pole.empty or df_topic_pole.empty or df_target.empty:
+            if len(target_embs) < 5 or len(control_embs) < 5:
                 continue
 
-            persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, df_background)
-            topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, df_background)
+            # Centroids of the clusters
+            mu_t = np.mean(target_embs, axis=0)
+            mu_c = np.mean(control_embs, axis=0)
 
-            if not persona_seed_words or not topic_seed_words:
-                continue
-
-            def get_pole_embedding(target_df, seed_words):
-                patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
-                embs = []
-                for sents in target_df["sentences"]:
-                    for s in sents:
-                        clean_s = re.sub(r"[^a-zA-Z\s]", "", s.lower())
-                        if any(p.search(clean_s) for p in patterns):
-                            embs.append(emb_dict[s])
-                if not embs:
-                    return None
-                return np.mean(embs, axis=0)
-
-            p_pole = get_pole_embedding(df_persona_pole, persona_seed_words)
-            t_pole = get_pole_embedding(df_topic_pole, topic_seed_words)
+            # Covariance matrix of the control group (shapes the "expected" variance)
+            cov_c = np.cov(control_embs, rowvar=False)
             
-            if p_pole is None or t_pole is None:
-                continue
+            # Ridge regularization (Shrinkage) for 768D stability to prevent singular matrix
+            epsilon = 1e-5
+            cov_c += np.eye(cov_c.shape[0]) * epsilon
 
-            axis_v = p_pole - t_pole
-            axis_norm = np.linalg.norm(axis_v)
-            if axis_norm < 1e-8:
-                continue
-            axis_v = axis_v / axis_norm
+            # Pseudo-inverse of the regularized covariance matrix
+            inv_cov_c = np.linalg.pinv(cov_c)
 
-            def cos_sim(a, b):
-                denom = np.linalg.norm(a) * np.linalg.norm(b) + 1e-8
-                return np.dot(a, b) / denom
+            # Compute Mahalanobis Distance
+            delta = mu_t - mu_c
+            m_dist = np.sqrt(np.dot(np.dot(delta, inv_cov_c), delta))
 
-            target_sims = [cos_sim(emb_dict[s], axis_v) for s in df_target["sentences"].explode()]
-            mean_target = np.mean(target_sims)
-            default_p_sims = [cos_sim(emb_dict[s], axis_v) for s in df_persona_pole["sentences"].explode()]
-            mean_dp = np.mean(default_p_sims)
-
-            mean_t_pole = np.mean([cos_sim(emb_dict[s], axis_v) for s in df_topic_pole["sentences"].explode()])
-
-            # add small epsilon to denominator to guard against near-zero values
-            denominator = (mean_t_pole - mean_dp) + 1e-6
-            exag_score = (mean_target - mean_dp) / denominator
-            
             exag_scores.append({
                 "intersectional_id": cohort_id, 
                 "control_id": control, 
-                "exaggeration": exag_score
+                "exaggeration": float(m_dist)
             })
 
         return pd.DataFrame(exag_scores)
