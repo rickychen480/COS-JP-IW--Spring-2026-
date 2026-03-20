@@ -24,7 +24,6 @@ python compost/embeddings/compost_evaluator.py \
         data/transcripts/Llama-3.1-8B-Instruct/target_simulations.json \
   --enable-semantic-masking \
   --cv-strategy GroupKFold \
-  --enable-single-axes-eval \
   --enable-intersectional-eval \
   --output-dir results/compost/embeddings/llama-8b
 
@@ -35,7 +34,6 @@ python compost/embeddings/compost_evaluator.py \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json \
   --enable-semantic-masking \
   --cv-strategy GroupKFold \
-  --enable-single-axes-eval \
   --enable-intersectional-eval \
   --output-dir results/compost/embeddings/llama-70b
 
