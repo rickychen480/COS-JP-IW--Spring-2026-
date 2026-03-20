@@ -27,14 +27,14 @@ python compost/embeddings/compost_evaluator.py \
   --enable-intersectional-eval \
   --output-dir results/compost/embeddings/llama-8b
 
-echo "Running CoMPosT on Llama 70B Transcripts..."
-python compost/embeddings/compost_evaluator.py \
-  --data data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
-        data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
-        data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json \
-  --enable-semantic-masking \
-  --cv-strategy GroupKFold \
-  --enable-intersectional-eval \
-  --output-dir results/compost/embeddings/llama-70b
+# echo "Running CoMPosT on Llama 70B Transcripts..."
+# python compost/embeddings/compost_evaluator.py \
+#   --data data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
+#         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
+#         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json \
+#   --enable-semantic-masking \
+#   --cv-strategy GroupKFold \
+#   --enable-intersectional-eval \
+#   --output-dir results/compost/embeddings/llama-70b
 
 echo "CoMPosT complete!"
