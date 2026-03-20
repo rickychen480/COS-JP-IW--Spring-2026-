@@ -11,7 +11,6 @@ python compost/embeddings/compost_evaluator.py \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json \
     --enable-semantic-masking \
     --cv-strategy GroupKFold \
-    --enable-single-axes-eval \
     --enable-intersectional-eval \
     --output-dir results/compost/embeddings/
 """
@@ -28,23 +27,14 @@ import json
 import argparse
 import numpy as np
 import pandas as pd
-import math
-import re
 from pathlib import Path
-from collections import defaultdict
 import nltk
 from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score
-from numpy import dot
-from numpy.linalg import norm
 import logging
 
 from semantic_masking import SemanticMasker, create_semantic_masker
 from intersectional_evaluator import IntersectionalEvaluator
-from axis_metrics import measure_axes
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -76,13 +66,11 @@ def load_transcripts_to_dataframe(json_paths, semantic_masker=None, apply_maskin
         for d in data:
             persona_dict = d["metadata"]["persona"]
 
-            # Keep the old concatenated label for legacy code
             if persona_dict.get("demographic") == "Unmarked":
                 p_str = "Unmarked"
             else:
                 p_str = f"{persona_dict.get('demographic')} {persona_dict.get('gender')} {persona_dict.get('occupation')}"
 
-            # Split axes explicitly
             race = persona_dict.get("demographic", "Unmarked")
             gender = persona_dict.get("gender", "Unmarked")
             occupation = persona_dict.get("occupation", "Unmarked")
@@ -120,13 +108,12 @@ def load_transcripts_to_dataframe(json_paths, semantic_masker=None, apply_maskin
 
     df = pd.DataFrame(rows)
 
-    # sanity checks on scenario_id
     if "scenario_id" in df.columns:
         df["scenario_id"] = df["scenario_id"].astype(str)
         unique_scen = df["scenario_id"].nunique()
         unique_topics = df["topic"].nunique()
         if unique_scen <= 1:
-            logger.warning(f"All scenario_id values in {path} are identical or missing. "
+            logger.warning(f"All scenario_id values are identical or missing. "
                            "Scenario-disjoint CV will collapse to a single fold.")
         else:
             # check whether each scenario maps to only one topic
@@ -157,12 +144,6 @@ if __name__ == "__main__":
         default="GroupKFold",
         choices=["random", "GroupKFold", "LeaveOneGroupOut"],
         help="Cross-validation strategy: 'random' (legacy), 'GroupKFold' (scenario-disjoint), or 'LeaveOneGroupOut'",
-    )
-    parser.add_argument(
-        "--enable-single-axes-eval",
-        action="store_false",
-        help="Enable single axes evaluation (treats each demographic attribute as individual).\n" \
-             "Results may be inflated by occupational confounders; only use for broad scans."
     )
     parser.add_argument(
         "--enable-intersectional-eval",
@@ -245,19 +226,18 @@ if __name__ == "__main__":
 
     df["embedding"] = df["sentences"].apply(get_doc_embedding)
 
-    # perform single-axes evaluations if requested
-    if args.enable_single_axes_eval:
-        measure_axes(df, emb_dict, "GroupKFold", output_dir)
-
     # perform paired intersectional evaluation if requested
     if args.enable_intersectional_eval:
         ie = IntersectionalEvaluator()
         X = np.stack(df["embedding"].values)
+        
+        logger.info("4. Measuring Intersectional Individuation...")
         perf_df = ie.measure_individuation(df, X)
         perf_path = output_dir / "intersectional_performance.csv"
         perf_df.to_csv(perf_path, index=False)
         logger.info(f"Saved paired intersectional performance to {perf_path}")
 
+        logger.info("5. Measuring Intersectional Exaggeration...")
         exag_df = ie.measure_exaggeration(df, emb_dict)
         if not exag_df.empty:
             exag_path = output_dir / "exaggeration_intersectional.csv"

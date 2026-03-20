@@ -13,7 +13,6 @@ import sys
 import os
 from collections import defaultdict
 from typing import Dict, List, Tuple, Optional
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
@@ -21,11 +20,81 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from compost.embeddings.scenario_disjoint_cv import ScenarioDisjointValidator
-from compost.embeddings.axis_metrics import get_seed_words
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def clean_text_for_matching(text):
+    return re.sub(r"[^a-zA-Z\s]", "", text.lower())
+
+def get_log_odds(df1, df2, df0):
+    counts1 = defaultdict(
+        int,
+        df1.str.lower()
+        .str.split(expand=True)
+        .stack()
+        .replace(r"[^a-zA-Z\s]", "", regex=True)
+        .value_counts()
+        .to_dict(),
+    )
+    counts2 = defaultdict(
+        int,
+        df2.str.lower()
+        .str.split(expand=True)
+        .stack()
+        .replace(r"[^a-zA-Z\s]", "", regex=True)
+        .value_counts()
+        .to_dict(),
+    )
+    prior = defaultdict(
+        int,
+        df0.str.lower()
+        .str.split(expand=True)
+        .stack()
+        .replace(r"[^a-zA-Z\s]", "", regex=True)
+        .value_counts()
+        .to_dict(),
+    )
+
+    sigma = defaultdict(float)
+    delta = defaultdict(float)
+
+    for word in prior.keys():
+        prior[word] = int(prior[word] + 0.5)
+    for word in counts2.keys():
+        counts1[word] = int(counts1[word] + 0.5)
+        if prior[word] == 0:
+            prior[word] = 1
+    for word in counts1.keys():
+        counts2[word] = int(counts2[word] + 0.5)
+        if prior[word] == 0:
+            prior[word] = 1
+
+    n1 = sum(counts1.values())
+    n2 = sum(counts2.values())
+    nprior = sum(prior.values())
+
+    for word in prior.keys():
+        if prior[word] > 0:
+            l1 = float(counts1[word] + prior[word]) / (
+                (n1 + nprior) - (counts1[word] + prior[word])
+            )
+            l2 = float(counts2[word] + prior[word]) / (
+                (n2 + nprior) - (counts2[word] + prior[word])
+            )
+            sigmasquared = 1 / (float(counts1[word]) + float(prior[word])) + 1 / (
+                float(counts2[word]) + float(prior[word])
+            )
+            sigma[word] = math.sqrt(sigmasquared)
+            delta[word] = (math.log(l1) - math.log(l2)) / sigma[word]
+
+    return delta
+
+def get_seed_words(df1, df2, df0, threshold=1.96):
+    deltas = get_log_odds(df1["response"], df2["response"], df0["response"])
+    top_words = [k for k, v in deltas.items() if v > threshold]
+    return sorted(top_words, key=lambda x: deltas[x], reverse=True)
 
 
 class IntersectionalEvaluator:
@@ -159,7 +228,6 @@ class IntersectionalEvaluator:
             y = (sub_df[intersectional_col] == target).astype(int).values
             groups = sub_df.get("scenario_id", sub_df.index).values
 
-            # Safety check
             num_unique_scenarios = len(np.unique(groups))
             if num_unique_scenarios < 2 and cv_strategy == 'GroupKFold':
                 self.skipped_groups.append({
@@ -361,11 +429,7 @@ class IntersectionalEvaluator:
         Returns:
             Formatted report string
         """
-        report = """
-================ INTERSECTIONAL BIAS EVALUATION REPORT ================
-
-PERFORMANCE ACROSS INTERSECTIONAL GROUPS:
-"""
+        report = """\n================ INTERSECTIONAL BIAS EVALUATION REPORT ================\n\nPERFORMANCE ACROSS INTERSECTIONAL GROUPS:\n"""
         
         if not performance_df.empty:
             # Sort by the metric descending so the most exaggerated groups are at the top
