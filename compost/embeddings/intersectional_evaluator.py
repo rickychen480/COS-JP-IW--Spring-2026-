@@ -74,7 +74,7 @@ class IntersectionalEvaluator:
         df = df.copy()
         df['intersectional_id'] = df.apply(
             lambda row: self.create_intersectional_tuple(
-                row.get('demographic', ''),
+                row.get('race', row.get('demographic', '')),
                 row.get('gender', ''),
                 row.get('occupation', '')
             ),

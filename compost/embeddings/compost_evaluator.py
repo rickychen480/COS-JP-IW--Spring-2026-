@@ -66,12 +66,13 @@ def load_transcripts_to_dataframe(json_paths, semantic_masker=None, apply_maskin
         for d in data:
             persona_dict = d["metadata"]["persona"]
 
-            if persona_dict.get("demographic") == "Unmarked":
+            demo_val = persona_dict.get("demographic") or persona_dict.get("race") or "Unmarked"
+            if demo_val == "Unmarked":
                 p_str = "Unmarked"
             else:
-                p_str = f"{persona_dict.get('demographic')} {persona_dict.get('gender')} {persona_dict.get('occupation')}"
+                p_str = f"{demo_val} {persona_dict.get('gender')} {persona_dict.get('occupation')}"
 
-            race = persona_dict.get("demographic", "Unmarked")
+            race = demo_val
             gender = persona_dict.get("gender", "Unmarked")
             occupation = persona_dict.get("occupation", "Unmarked")
 
