@@ -78,14 +78,44 @@ DEMOGRAPHIC_NAMES = {
     },
 }
 
-# Cultural cues for "Show, Don't Tell" context generation
-CULTURAL_CONTEXT_HINTS = {
-    "White": "standard nuclear family logistics, individualistic financial planning, or typical suburban/urban professional concerns",
-    "Black": "advocating against systemic bias in services, community-oriented banking/business, or specific healthcare self-advocacy",
-    "Asian": "managing multi-generational household finances, navigating immigration/visa-related service hurdles, or eldercare logistics",
-    "Hispanic": "sending remittances, translating or managing services for non-English speaking older relatives, or large extended-family logistics",
-    "Native American": "dealing with rural/reservation service deserts, tribal healthcare/jurisdictional issues, or community land/resource stewardship",
-    "Unmarked": "standard generic inconveniences, weather delays, or basic scheduling conflicts",
+# Diverse, grounded structural realities for "Show, Don't Tell" context generation
+# The generator will randomly sample from these to ensure intra-group variance.
+STRUCTURAL_PRIORITIES = {
+    "White": [
+        "standard nuclear family logistics and scheduling",
+        "individualistic financial planning or wealth management",
+        "typical suburban commuting or homeowner concerns",
+        "navigating standard corporate hierarchy or HR policies"
+    ],
+    "Black": [
+        "advocating against systemic bias or unfair algorithms in services",
+        "supporting community-oriented businesses or neighborhood programs",
+        "navigating healthcare self-advocacy and medical skepticism",
+        "managing multi-generational wealth-building in the face of historical redlining"
+    ],
+    "Asian": [
+        "managing complex multi-generational household finances or eldercare",
+        "navigating strict immigration, visa, or international banking hurdles",
+        "balancing high-pressure educational expectations for dependents",
+        "dealing with the 'model minority' presumption in customer service"
+    ],
+    "Hispanic": [
+        "managing international remittances or cross-border logistics",
+        "translating or advocating for non-English speaking older relatives",
+        "coordinating logistics for a large, highly involved extended family",
+        "navigating gig-economy or mixed-income financial documentation"
+    ],
+    "Native American": [
+        "dealing with rural/reservation service deserts and connectivity issues",
+        "navigating complex tribal healthcare or jurisdictional red tape",
+        "advocating for community land/resource stewardship",
+        "managing funding or grants specific to indigenous businesses"
+    ],
+    "Unmarked": [
+        "standard generic inconveniences (e.g., weather delays)",
+        "basic, unmarked scheduling conflicts",
+        "general frustration with customer service wait times"
+    ]
 }
 
 # High-stakes domains filter (allocational harm sensitive)

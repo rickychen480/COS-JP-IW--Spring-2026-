@@ -102,8 +102,17 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
     )
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     
-    sampling_params_u = SamplingParams(temperature=0.7, max_tokens=512)
-    sampling_params_t = SamplingParams(temperature=0.7, max_tokens=512, logprobs=1)
+    sampling_params_u = SamplingParams(
+        temperature=0.9,
+        top_p=0.95,
+        repetition_penalty=1.15,
+        max_tokens=512
+    )
+    sampling_params_t = SamplingParams(
+        temperature=0.7, 
+        max_tokens=512, 
+        logprobs=1
+    )
 
     # INITIALIZE STATE
     active_dialogues = []
