@@ -67,24 +67,15 @@ class ScenarioDisjointValidator:
     def _get_classifier(self) -> Any:
         """Get classifier instance based on type."""
         if self.classifier_type == "RandomForest":
-            rf = RandomForestClassifier(random_state=42)
-
-            param_grid = {
-                'n_estimators': [100],
-                'max_depth': [10, 20, None],
-                'min_samples_leaf': [2, 4, 10],
-                'max_features': ['sqrt', 'log2'],
-                'class_weight': ['balanced', None]
-            }
-            
-            grid_clf = GridSearchCV(
-                estimator=rf,
-                param_grid=param_grid,
-                cv=3,                      # 3-fold internal CV for tuning
-                scoring='f1_macro',
-                n_jobs=1                   
+            return RandomForestClassifier(
+                n_estimators=200,
+                max_depth=5,
+                min_samples_leaf=10,
+                max_features="sqrt",
+                class_weight="balanced",
+                random_state=42,
+                n_jobs=-1
             )
-            return grid_clf
         
         elif self.classifier_type == "GradientBoosting":
             return GradientBoostingClassifier(
