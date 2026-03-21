@@ -5,7 +5,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH -c 4                          
 #SBATCH --mem=32G        
-#SBATCH -t 04:00:00                   
+#SBATCH -t 12:00:00                   
 #SBATCH --output=logs/slurm-compost-%j.out         
 #SBATCH --error=logs/slurm-compost-%j.err   
 #SBATCH --mail-type=end
