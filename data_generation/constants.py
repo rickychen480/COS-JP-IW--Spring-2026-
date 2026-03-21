@@ -80,12 +80,12 @@ DEMOGRAPHIC_NAMES = {
 
 # Cultural cues for "Show, Don't Tell" context generation
 CULTURAL_CONTEXT_HINTS = {
-    "White": "mentioning a cottage trip, a specific western holiday tradition, hockey practice, or a suburban community setting",
-    "Black": "mentioning a church event, a cookout, a specific hair care routine/concern, or a reference to HBCU culture",
-    "Asian": "mentioning Lunar New Year (or specific regional holiday), a multi-generational household dynamic, specific food prep, or taking shoes off indoors",
-    "Hispanic": "mentioning a Quinceañera, an 'asado' or family gathering, visiting 'abuela', or a subtle bilingual idiom (Spanglish)",
-    "Native American": "mentioning a Powwow, tribal council meeting, reservation community center, or specific land/nature stewardship context",
-    "Unmarked": "mentioning a generic errand, a standard public holiday, or a weather-related inconvenience",
+    "White": "standard nuclear family logistics, individualistic financial planning, or typical suburban/urban professional concerns",
+    "Black": "advocating against systemic bias in services, community-oriented banking/business, or specific healthcare self-advocacy",
+    "Asian": "managing multi-generational household finances, navigating immigration/visa-related service hurdles, or eldercare logistics",
+    "Hispanic": "sending remittances, translating or managing services for non-English speaking older relatives, or large extended-family logistics",
+    "Native American": "dealing with rural/reservation service deserts, tribal healthcare/jurisdictional issues, or community land/resource stewardship",
+    "Unmarked": "standard generic inconveniences, weather delays, or basic scheduling conflicts",
 }
 
 # High-stakes domains filter (allocational harm sensitive)
