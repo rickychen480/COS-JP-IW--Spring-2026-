@@ -28,9 +28,11 @@ import argparse
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import orjson
 import nltk
 from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer
+from concurrent.futures import ProcessPoolExecutor
 import logging
 
 from semantic_masking import SemanticMasker, create_semantic_masker
@@ -41,11 +43,56 @@ logger = logging.getLogger(__name__)
 
 nltk.download("punkt_tab")
 
+def _process_single_file(args):
+    """Helper function to process a single JSON file in a separate CPU process."""
+    path, apply_masking, semantic_masker = args
+    logger.info(f"Worker started loading {path}...")
+    
+    with open(path, "rb") as f:
+        data = orjson.loads(f.read())
+        
+    rows = []
+    for d in data:
+        # Fast dictionary lookups
+        meta = d.get("metadata", {})
+        persona_dict = meta.get("persona", {})
 
+        demo_val = persona_dict.get("demographic") or persona_dict.get("race") or "Unmarked"
+        gender = persona_dict.get("gender", "Unmarked")
+        occupation = persona_dict.get("occupation", "Unmarked")
+
+        p_str = "Unmarked" if demo_val == "Unmarked" else f"{demo_val} {gender} {occupation}"
+
+        # Flatten all "User" dialogue turns into a single string for analysis
+        user_text = " ".join(
+            t["content"] for t in d.get("transcript", []) if t.get("speaker") == "User"
+        )
+        
+        # Apply semantic masking
+        masking_applied = False
+        if apply_masking and semantic_masker:
+            user_text_original = user_text
+            user_text = semantic_masker.redact_explicit_identifiers(user_text)
+            masking_applied = user_text != user_text_original
+
+        rows.append({
+            "persona": p_str,
+            "race": demo_val,
+            "gender": gender,
+            "occupation": occupation,
+            "topic": meta.get("task_description"),
+            "response": user_text,
+            "variant_type": d.get("variant_type", "implicit"),
+            "scenario_id": meta.get("scenario_id", "unknown"),
+            "dialogue_id": d.get("dialogue_id", "unknown"),
+            "masking_applied": masking_applied,
+        })
+        
+    return pd.DataFrame(rows)
 
 def load_transcripts_to_dataframe(json_paths, semantic_masker=None, apply_masking=False):
-    """Parses multiple JSON files into a single Pandas DataFrame.
-
+    """Parses multiple JSON files into a single Pandas DataFrame using multiprocessing.
+    
     The returned DataFrame contains separate columns for each demographic
     axis (race, gender, occupation), variant_type, and scenario_id for 
     scenario-disjoint cross-validation.
@@ -55,61 +102,21 @@ def load_transcripts_to_dataframe(json_paths, semantic_masker=None, apply_maskin
         semantic_masker: Optional SemanticMasker instance for redacting explicit identifiers
         apply_masking: If True, apply semantic masking to explicit variants
     """
-    rows = []
-
-    # Loop through all provided file paths
-    for path in json_paths:
-        logger.info(f"Loading {path}...")
-        with open(path, "r") as f:
-            data = json.load(f)
-
-        for d in data:
-            persona_dict = d["metadata"]["persona"]
-
-            demo_val = persona_dict.get("demographic") or persona_dict.get("race") or "Unmarked"
-            if demo_val == "Unmarked":
-                p_str = "Unmarked"
-            else:
-                p_str = f"{demo_val} {persona_dict.get('gender')} {persona_dict.get('occupation')}"
-
-            race = demo_val
-            gender = persona_dict.get("gender", "Unmarked")
-            occupation = persona_dict.get("occupation", "Unmarked")
-
-            t_str = d["metadata"]["task_description"]
-            variant_type = d.get("variant_type", "implicit")
-            scenario_id = d["metadata"].get("scenario_id", "unknown")
-            dialogue_id = d.get("dialogue_id", "unknown")
-
-            # Flatten all "User" dialogue turns into a single string for analysis
-            user_text = " ".join(
-                [t["content"] for t in d.get("transcript", []) if t["speaker"] == "User"]
-            )
+    
+    # Prepare arguments for each file to be processed in parallel
+    worker_args = [(path, apply_masking, semantic_masker) for path in json_paths]
+    
+    dataframes = []
+    
+    # Process the 3 files simultaneously using multiple CPU cores
+    with ProcessPoolExecutor(max_workers=min(len(json_paths), 4)) as executor:
+        for result_df in executor.map(_process_single_file, worker_args):
+            dataframes.append(result_df)
             
-            # Apply semantic masking if enabled
-            if apply_masking and semantic_masker:
-                user_text_original = user_text
-                user_text = semantic_masker.redact_explicit_identifiers(user_text)
-                masking_applied = user_text != user_text_original
-            else:
-                masking_applied = False
+    # Concatenate all resulting DataFrames efficiently at the very end
+    df = pd.concat(dataframes, ignore_index=True) if dataframes else pd.DataFrame()
 
-            rows.append({
-                "persona": p_str,
-                "race": race,
-                "gender": gender,
-                "occupation": occupation,
-                "topic": t_str,
-                "response": user_text,
-                "variant_type": variant_type,
-                "scenario_id": scenario_id,
-                "dialogue_id": dialogue_id,
-                "masking_applied": masking_applied if apply_masking else False,
-            })
-
-    df = pd.DataFrame(rows)
-
-    if "scenario_id" in df.columns:
+    if "scenario_id" in df.columns and not df.empty:
         df["scenario_id"] = df["scenario_id"].astype(str)
         unique_scen = df["scenario_id"].nunique()
         unique_topics = df["topic"].nunique()
