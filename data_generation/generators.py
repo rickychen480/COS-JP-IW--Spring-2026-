@@ -314,7 +314,7 @@ def generate_default_topic_scenarios(samples_per_identity: int = 30) -> list[dic
         for demographic, gender, occupation in product(const.RACES, const.GENDERS, const.OCCUPATIONS_GRID):
             user_name = get_demographic_name(demographic, gender)
             occ_class = const.STATUS_MAPPING.get(occupation, "Mid")
-            voice_traits = const.PERSONA_CONTEXT[occ_class]["voice"]
+            voice_traits = const.PERSONA_CONTEXT[occ_class]["voice_base"]
 
             # Ensure intra-group variance to combat Homogeneity Bias
             practical_priority = random.choice(const.PRACTICAL_PRIORITIES.get(demographic, const.PRACTICAL_PRIORITIES["Unmarked"]))
