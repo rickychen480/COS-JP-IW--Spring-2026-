@@ -1,2 +1,2 @@
 CoMPosT Evaluation Complete at /n/fs/dynamicbias/COS-JP/results/compost/embeddings/llama-8b
-Timestamp: 2026-03-21 12:24:26.512957
+Timestamp: 2026-03-22 12:54:54.647034
