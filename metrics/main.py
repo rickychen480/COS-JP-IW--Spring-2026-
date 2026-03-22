@@ -28,7 +28,6 @@ from allocational import AllocationalEvaluator
 from representational import RepresentationalEvaluator
 from compost.embeddings.intersectional_evaluator import IntersectionalEvaluator
 from compost.embeddings.semantic_masking import SemanticMasker
-from compost.embeddings.axis_metrics import get_seed_words
 
 
 def get_document_embedding(text, model):
