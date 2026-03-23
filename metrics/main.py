@@ -126,23 +126,6 @@ def main(args):
         if implicit_df.empty or explicit_df.empty:
             print(f"Skipping {target_id}: Missing implicit or explicit data.")
             continue
-
-        # --- ALLOCATIONAL METRICS ---
-        # 1. Evaluate the success of each transcript individually and store the boolean results
-        imp_success_list = [alloc_eval.calculate_gcr_llm_judge(t, m['task_description']) for t, m in zip(implicit_df['transcript'], implicit_df['metadata'])]
-        exp_success_list = [alloc_eval.calculate_gcr_llm_judge(t, m['task_description']) for t, m in zip(explicit_df['transcript'], explicit_df['metadata'])]
-        
-        # 2. Calculate the mean for the final GCR score
-        implicit_gcr = np.mean(imp_success_list)
-        explicit_gcr = np.mean(exp_success_list)
-
-        # Calculate Delta GCR (Explicit - Implicit)
-        d_gcr = alloc_eval.calculate_d_gcr(implicit_gcr, explicit_gcr)
-        
-        # 3. Pass BOTH the transcript 't' and its corresponding success flag 'succ' into calculate_atc
-        implicit_atc = np.mean([alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(implicit_df['transcript'], imp_success_list)])
-        explicit_atc = np.mean([alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(explicit_df['transcript'], exp_success_list)])
-        
         
         # --- A. ALLOCATIONAL METRICS ---
         
@@ -182,7 +165,8 @@ def main(args):
         implicit_steerings = []
         explicit_steerings = []
         
-        if control_id in df['intersectional_id'].values:
+        # TODO: SKIP FOR NOW UNTIL FIXED
+        if False and control_id in df['intersectional_id'].values:
             # Get unique scenarios (topics) for this group, excluding the general_comment baseline
             unique_scenarios = group_df[group_df['topic'] != 'general_comment']['scenario_id'].unique()
             
