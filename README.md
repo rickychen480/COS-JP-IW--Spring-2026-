@@ -257,7 +257,7 @@ Refer to `SIMULATION_JOB_ARRAY.md` for detailed instructions on using SLURM for 
 1.  **Generate Scenarios**: `sbatch data_generation/generate_sims_llama-8b.slurm`
 2.  **Run Simulations**: The `controller.py` script is run via a job array.
 3.  **Merge Transcripts**: `python merge_simulations.py --model <70b|8b>`
-4.  **Semantic Masking**: `sbatch data_generation/semantic_masking/run_smenatic_masking.slurm`
+4.  **Semantic Masking**: `sbatch data_generation/semantic_masking/run_semantic_masking.slurm`
 5.  **Evaluate Bias**: `sbatch metrics/evaluate_bias.slurm`
 
 ## Quick Start (Local Testing)
