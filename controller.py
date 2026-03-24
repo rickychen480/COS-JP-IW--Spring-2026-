@@ -103,9 +103,9 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     
     sampling_params_u = SamplingParams(
-        temperature=0.9,
-        top_p=0.95,
-        repetition_penalty=1.15,
+        temperature=0.65,
+        top_p=0.90,
+        repetition_penalty=1.0,
         max_tokens=512
     )
     sampling_params_t = SamplingParams(
