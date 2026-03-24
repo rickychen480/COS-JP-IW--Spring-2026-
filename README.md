@@ -5,7 +5,7 @@ A comprehensive framework for evaluating dynamic intersectional bias in large la
 ## Overview
 
 We test LLMs for allocational and representational bias across demographic dimensions using:
-- **Identity Grid**: 5 races × 2 genders × 12 occupations (120 demographic combinations)
+- **Identity Grid**: 5 races × 2 genders × 9 occupations (90 demographic combinations)
 - **Task Variants**: Implicit and explicit bias scenarios from high-stakes domains (banking, healthcare, legal, etc.)
 - **Multiple Evaluation Methods**: Allocational metrics, representational bias, and semantic embedding analysis
 - **Multi-Model Support**: Tested with Llama-3.1-8B-Instruct and Llama-3.1-70B-Instruct-AWQ-INT4
@@ -30,14 +30,10 @@ We test LLMs for allocational and representational bias across demographic dimen
 │   ├── representational.py         # Representational bias metrics
 │   └── evaluate_bias.slurm         # SLURM job for bias evaluation
 ├── compost/
-│   ├── embeddings/
-│   │   ├── compost_evaluator.py    # CoMPosT framework to validate our user simulator
-│   │   ├── axis_metrics.py         # Dimensional axis metrics
-│   │   ├── intersectional_evaluator.py # Intersectional semantic evaluation
-│   │   └── semantic_masking.py     # Semantic masking utilities
-│   └── judge-llm/
-│       ├── compost_evaluator.py    # LLM judge evaluation (outdated)
-│       └── compost_eval.slurm      # SLURM job for LLM judge (outdated)
+│   ├── compost_evaluator.py        # CoMPosT framework to validate our user simulator
+│   ├── axis_metrics.py             # Dimensional axis metrics
+│   ├── intersectional_evaluator.py # Intersectional semantic evaluation
+│   └── semantic_masking.py         # Semantic masking utilities
 ├── data/
 │   ├── prompts/                    # Generated simulation scenarios (input)
 │   └── transcripts/                # Generated dialogue transcripts (output)
@@ -185,7 +181,7 @@ python metrics/main.py \
 - **Representational Bias**: How demographics are talked about in responses
 
 ### Stage 3b: CoMPosT Embedding-Based Auditing
-**Script**: `compost/embeddings/compost_evaluator.py`
+**Script**: `compost/compost_evaluator.py`
 
 Performs semantic embedding analysis to audit user simulations for caricature and individuation. Features include:
 - **Semantic Masking**: NER-based redaction of explicit identity mentions
@@ -194,24 +190,24 @@ Performs semantic embedding analysis to audit user simulations for caricature an
 
 ```bash
 # Evaluate Llama-8B with embeddings (single and intersectional axes)
-python compost/embeddings/compost_evaluator.py \
+python compost/compost_evaluator.py \
   --data data/transcripts/Llama-3.1-8B-Instruct/control_simulations.json \
         data/transcripts/Llama-3.1-8B-Instruct/default_topics.json \
         data/transcripts/Llama-3.1-8B-Instruct/target_simulations.json \
   --enable-semantic-masking \
   --cv-strategy GroupKFold \
   --enable-single-axes-eval \
-  --output-dir results/compost/embeddings/llama-8b
+  --output-dir results/compost/llama-8b
 
 # Evaluate Llama-70B with embeddings
-python compost/embeddings/compost_evaluator.py \
+python compost/compost_evaluator.py \
   --data data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json \
   --enable-semantic-masking \
   --cv-strategy GroupKFold \
   --enable-intersectional-eval \
-  --output-dir results/compost/embeddings/llama-70b
+  --output-dir results/compost/llama-70b
 ```
 
 **Arguments**:
