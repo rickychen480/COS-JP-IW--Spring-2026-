@@ -26,8 +26,8 @@ from nltk.tokenize import sent_tokenize
 
 from allocational import AllocationalEvaluator
 from representational import RepresentationalEvaluator
-from compost.embeddings.intersectional_evaluator import IntersectionalEvaluator
-from compost.embeddings.semantic_masking import SemanticMasker
+from compost.intersectional_evaluator import IntersectionalEvaluator
+from compost.semantic_masking import SemanticMasker
 
 
 def get_document_embedding(text, model):
