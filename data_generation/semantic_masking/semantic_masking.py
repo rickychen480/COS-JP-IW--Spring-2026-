@@ -51,9 +51,6 @@ def process_file(input_path: str, output_path: str, model_name: str):
     logger.info(f"Initializing vLLM engine for {model_name}...")
     llm = LLM(
         model=model_name, 
-        tensor_parallel_size=2,
-        quantization="awq_marlin",
-        gpu_memory_utilization=0.9,
         max_model_len=8192
     )
     tokenizer = AutoTokenizer.from_pretrained(model_name)

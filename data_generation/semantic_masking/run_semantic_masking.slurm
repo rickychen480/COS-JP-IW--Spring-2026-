@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=semantic_masking
 #SBATCH -N 1                          ## Request 1 node 
-#SBATCH --gres=gpu:2                  ## Request 2 GPUs
-#SBATCH -c 8                          ## Request 8 CPUs
-#SBATCH --mem=64G                     ## Request 64GB RAM
-#SBATCH -t 04:00:00                   ## Request 2 hours of walltime
+#SBATCH --gres=gpu:1                  ## Request 1 GPU
+#SBATCH -c 4                          ## Request 4 CPUs
+#SBATCH --mem=32G                     ## Request 32GB RAM
+#SBATCH -t 04:00:00                   ## Request 4 hours of walltime
 #SBATCH --output=logs/masking_%j.out
 #SBATCH --error=logs/masking_%j.err
 #SBATCH --mail-type=end
