@@ -1,6 +1,6 @@
 """
 CoMPosT Evaluator with:
-1. Semantic Masking - NER-based redaction of explicit identifiers
+1. Pre-Processed Semantic Masking
 2. Scenario-Disjoint CV - GroupKFold to prevent data leakage
 3. Intersectional Joint Probabilities - Treating identities as indivisible
 
@@ -8,8 +8,7 @@ Usage:
 python compost/compost_evaluator.py \
     --data data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
-        data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations.json \
-    --enable-semantic-masking \
+        data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_masked.json \
     --cv-strategy GroupKFold \
     --enable-intersectional-eval \
     --output-dir results/compost/
@@ -35,17 +34,15 @@ from sentence_transformers import SentenceTransformer
 from concurrent.futures import ProcessPoolExecutor
 import logging
 
-from semantic_masking import SemanticMasker, create_semantic_masker
 from intersectional_evaluator import IntersectionalEvaluator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-nltk.download("punkt_tab")
+nltk.download("punkt_tab", quiet=True)
 
-def _process_single_file(args):
+def _process_single_file(path):
     """Helper function to process a single JSON file in a separate CPU process."""
-    path, apply_masking, semantic_masker = args
     logger.info(f"Worker started loading {path}...")
     
     with open(path, "rb") as f:
@@ -64,16 +61,9 @@ def _process_single_file(args):
         p_str = "Unmarked" if demo_val == "Unmarked" else f"{demo_val} {gender} {occupation}"
 
         # Flatten all "User" dialogue turns into a single string for analysis
-        user_text = " ".join(
-            t["content"] for t in d.get("transcript", []) if t.get("speaker") == "User"
-        )
-        
-        # Apply semantic masking
-        masking_applied = False
-        if apply_masking and semantic_masker:
-            user_text_original = user_text
-            user_text = semantic_masker.redact_explicit_identifiers(user_text)
-            masking_applied = user_text != user_text_original
+        user_turns = [t for t in d.get("transcript", []) if t.get("speaker") == "User"]
+        user_text = " ".join(t.get("content", "") for t in user_turns)
+        masking_applied = any(t.get("masking_applied", False) for t in user_turns)
 
         rows.append({
             "persona": p_str,
@@ -103,14 +93,11 @@ def load_transcripts_to_dataframe(json_paths, semantic_masker=None, apply_maskin
         apply_masking: If True, apply semantic masking to explicit variants
     """
     
-    # Prepare arguments for each file to be processed in parallel
-    worker_args = [(path, apply_masking, semantic_masker) for path in json_paths]
-    
     dataframes = []
     
-    # Process the 3 files simultaneously using multiple CPU cores
+    # Process the files simultaneously using multiple CPU cores
     with ProcessPoolExecutor(max_workers=min(len(json_paths), 4)) as executor:
-        for result_df in executor.map(_process_single_file, worker_args):
+        for result_df in executor.map(_process_single_file, json_paths):
             dataframes.append(result_df)
             
     # Concatenate all resulting DataFrames efficiently at the very end
@@ -142,11 +129,6 @@ if __name__ == "__main__":
         help="Paths to the transcript JSONs (control, default_topics, target)",
     )
     parser.add_argument(
-        "--enable-semantic-masking",
-        action="store_true",
-        help="Enable semantic masking for explicit variants (redacts demographic/occupational labels)",
-    )
-    parser.add_argument(
         "--cv-strategy",
         type=str,
         default="GroupKFold",
@@ -175,23 +157,12 @@ if __name__ == "__main__":
     logger.info("=" * 80)
     logger.info("CoMPosT EVALUATOR")
     logger.info("=" * 80)
-    logger.info(f"Semantic Masking: {args.enable_semantic_masking}")
     logger.info(f"CV Strategy: {args.cv_strategy}")
     logger.info(f"Intersectional Evaluation: {args.enable_intersectional_eval}")
     logger.info("=" * 80)
 
-    # Initialize semantic masker if enabled
-    semantic_masker = None
-    if args.enable_semantic_masking:
-        logger.info("Initializing semantic masker...")
-        semantic_masker = create_semantic_masker()
-
     logger.info("1. Loading Data...")
-    df = load_transcripts_to_dataframe(
-        args.data, 
-        semantic_masker=semantic_masker,
-        apply_masking=args.enable_semantic_masking
-    )
+    df = load_transcripts_to_dataframe(args.data)
     logger.info(f"Loaded {len(df)} total transcripts.")
     
     # Create intersectional IDs if evaluating intersectionally
@@ -206,9 +177,6 @@ if __name__ == "__main__":
         if len(sparse_groups) > 0:
             logger.warning(f"\n!!! WARNING: {len(sparse_groups)} intersectional groups have < 30 samples !!!")
             logger.warning("This may lead to noisy results in scenario-disjoint CV folds.")
-            logger.warning("Sparse groups:")
-            for cohort_id, count in sparse_groups.items():
-                logger.warning(f"  - {cohort_id}: {count} samples")
 
     logger.info("2. Tokenizing sentences...")
     df["sentences"] = df["response"].apply(sent_tokenize)

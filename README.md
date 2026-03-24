@@ -22,6 +22,8 @@ We test LLMs for allocational and representational bias across demographic dimen
 │   ├── constants.py                # Identity grid definitions
 │   ├── generators.py               # Scenario generation utilities
 │   ├── metalwoz/                   # MetaLWOz dialogue dataset
+│   ├── semantic_masking/
+│   │   └── semantic_masking.py     # Semantic masking preprocessing tool
 │   ├── generate_sims_llama-8b.slurm   # SLURM job for Llama-8B simulations
 │   └── generate_sims_llama-70b.slurm  # SLURM job for Llama-70B simulations
 ├── metrics/
@@ -32,8 +34,7 @@ We test LLMs for allocational and representational bias across demographic dimen
 ├── compost/
 │   ├── compost_evaluator.py        # CoMPosT framework to validate our user simulator
 │   ├── axis_metrics.py             # Dimensional axis metrics
-│   ├── intersectional_evaluator.py # Intersectional semantic evaluation
-│   └── semantic_masking.py         # Semantic masking utilities
+│   └── intersectional_evaluator.py # Intersectional semantic evaluation
 ├── data/
 │   ├── prompts/                    # Generated simulation scenarios (input)
 │   └── transcripts/                # Generated dialogue transcripts (output)
@@ -153,6 +154,34 @@ python merge_simulations.py --model 70b
 python merge_simulations.py --model 8b
 ```
 
+### Stage 2c: Semantic Masking (Preprocessing)
+**Script**: `data_generation/semantic_masking/semantic_masking.py`
+
+Preprocesses transcripts by semantically redacting explicit demographic, gender, and occupational mentions before embedding generation. This forces the classifier to rely on deep stylistic variations rather than explicit textual announcements of identity.
+
+```bash
+# Mask Llama-8B transcripts
+python data_generation/semantic_masking/semantic_masking.py \
+  --input data/transcripts/Llama-3.1-8B-Instruct/target_simulations.json \
+  --output data/transcripts/Llama-3.1-8B-Instruct/target_simulations_masked.json \
+  --model ./models/Llama-3.1-8B-Instruct
+```
+
+**Arguments**:
+- `--input` - Path to input transcript JSON
+- `--output` - Path to output masked transcript JSON
+- `--model` - Path or ID of the LLM model (used for chat template formatting)
+
+**Outputs**:
+- Masked transcript JSON with identity mentions replaced by `[MASKED]` tokens
+- Original unmasked content preserved in `content_unmasked` field for reference
+- Boolean `masking_applied` flag indicating whether redaction occurred
+
+**Key Features**:
+- Preserves syntax, emotion, and pragmatic structure of responses
+- Uses LLM-based redaction for semantic understanding
+- Prevents data leakage between embeddings and demographic analysis
+
 ### Stage 3a: Evaluate Bias Metrics
 **Script**: `metrics/main.py`
 
@@ -228,7 +257,8 @@ Refer to `SIMULATION_JOB_ARRAY.md` for detailed instructions on using SLURM for 
 1.  **Generate Scenarios**: `sbatch data_generation/generate_sims_llama-8b.slurm`
 2.  **Run Simulations**: The `controller.py` script is run via a job array.
 3.  **Merge Transcripts**: `python merge_simulations.py --model <70b|8b>`
-4.  **Evaluate Bias**: `sbatch metrics/evaluate_bias.slurm`
+4.  **Semantic Masking**: `sbatch data_generation/semantic_masking/run_smenatic_masking.slurm`
+5.  **Evaluate Bias**: `sbatch metrics/evaluate_bias.slurm`
 
 ## Quick Start (Local Testing)
 
@@ -245,7 +275,13 @@ python controller.py \
   --model meta-llama/Llama-3.1-8B-Instruct \
   --limit 100
 
-# 3. Evaluate (assuming you have control and default_topics transcripts)
+# 3. Semantic masking
+python data_generation/semantic_masking/semantic_masking.py \
+  --input data/transcripts/test_output.json \
+  --output data/transcripts/test_output_masked.json \
+  --model meta-llama/Llama-3.1-8B-Instruct
+
+# 4. Evaluate (assuming you have control and default_topics transcripts)
 # Note: For a real evaluation, you need all three transcript types.
 python metrics/main.py \
   --dir data/transcripts/ \

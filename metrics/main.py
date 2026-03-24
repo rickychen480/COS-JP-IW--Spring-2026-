@@ -27,7 +27,6 @@ from nltk.tokenize import sent_tokenize
 from allocational import AllocationalEvaluator
 from representational import RepresentationalEvaluator
 from compost.intersectional_evaluator import IntersectionalEvaluator
-from compost.semantic_masking import SemanticMasker
 
 
 def get_document_embedding(text, model):
@@ -72,7 +71,6 @@ def main(args):
     )
     rep_eval = RepresentationalEvaluator()
     ie = IntersectionalEvaluator()
-    masker = SemanticMasker()
     
     print("Creating intersectional IDs")
     # Create intersectional IDs
@@ -87,6 +85,7 @@ def main(args):
         return " ".join([turn['content'] for turn in transcript if turn['speaker'] == 'Target'])
     
     df['target_text'] = df['transcript'].apply(extract_target_text)
+    # TODO: Update to use pre-processed target_simualtions_masked.json
     df['masked_text'] = df['target_text'].apply(masker.redact_explicit_identifiers)
     
     embedder = SentenceTransformer("all-mpnet-base-v2")
