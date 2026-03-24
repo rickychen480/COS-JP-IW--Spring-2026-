@@ -85,8 +85,23 @@ def main(args):
         return " ".join([turn['content'] for turn in transcript if turn['speaker'] == 'Target'])
     
     df['target_text'] = df['transcript'].apply(extract_target_text)
-    # TODO: Update to use pre-processed target_simualtions_masked.json
-    df['masked_text'] = df['target_text'].apply(masker.redact_explicit_identifiers)
+    
+    if args.masked_path:
+        print(f"Loading masked data from {args.masked_path}...")
+        with open(args.masked_path, 'r') as f:
+            masked_data = json.load(f)
+        
+        masked_df = pd.DataFrame(masked_data)
+        masked_df['masked_text'] = masked_df['transcript'].apply(extract_target_text)
+        
+        # Merge the masked text into the main dataframe
+        df = pd.merge(df, masked_df[['dialogue_id', 'masked_text']], on='dialogue_id', how='left', suffixes=('', '_masked'))
+        # Control simulations and other non-target simulations will have NaN in 'masked_text', so fill them
+        df['masked_text'] = df['masked_text'].fillna(df['target_text'])
+    else:
+        print("Warning: No masked data file provided. Using unmasked text for all embeddings.")
+        df['masked_text'] = df['target_text']
+
     
     embedder = SentenceTransformer("all-mpnet-base-v2")
     df['embedding'] = df['masked_text'].apply(lambda x: get_document_embedding(x, embedder))
@@ -94,9 +109,16 @@ def main(args):
     final_results = []
     target_groups = [g for g in df['intersectional_id'].unique() if "Unmarked_Unmarked" not in g]
     
+    # Slice the target_groups based on the chunk index and total chunks
+    if args.total_chunks > 1:
+        chunk_size = len(target_groups) // args.total_chunks
+        start_index = args.chunk_index * chunk_size
+        end_index = None if args.chunk_index == args.total_chunks - 1 else start_index + chunk_size
+        target_groups = target_groups[start_index:end_index]
+
     print(f"Processing metrics for {len(target_groups)} intersectional groups...")
 
-    CACHE_FILE = "llm_judge_cache.json"
+    CACHE_FILE = f"llm_judge_cache_chunk_{args.chunk_index}.json"
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, "r") as f:
             judge_cache = json.load(f)
@@ -164,8 +186,7 @@ def main(args):
         implicit_steerings = []
         explicit_steerings = []
         
-        # TODO: SKIP FOR NOW UNTIL FIXED
-        if False and control_id in df['intersectional_id'].values:
+        if control_id in df['intersectional_id'].values:
             # Get unique scenarios (topics) for this group, excluding the general_comment baseline
             unique_scenarios = group_df[group_df['topic'] != 'general_comment']['scenario_id'].unique()
             
@@ -264,6 +285,9 @@ if __name__ == "__main__":
     parser.add_argument("--out", type=str, default="dynamic_bias_results.csv", help="Output CSV filename")
     parser.add_argument("--judge_model", type=str, required=True, help="HuggingFace ID or local path for the LLM judge")
     parser.add_argument("--tensor_parallel_size", type=int, default=2, help="Number of GPUs to use for vLLM")
+    parser.add_argument("--chunk_index", type=int, default=0, help="Index of the current chunk")
+    parser.add_argument("--total_chunks", type=int, default=1, help="Total number of chunks")
+    parser.add_argument("--masked_path", type=str, default=None, help="Path to the masked simulations file")
     args = parser.parse_args()
 
     target_path = os.path.join(args.dir, 'target_simulations.json')
