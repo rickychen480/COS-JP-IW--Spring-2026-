@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:6                 
 #SBATCH -c 16
 #SBATCH --mem=128G
-#SBATCH -t 12:00:00
+#SBATCH -t 16:00:00
 #SBATCH --output=logs/sim_70b_%A_%a.out
 #SBATCH --error=logs/sim_70b_%A_%a.err
 #SBATCH --array=0-11
