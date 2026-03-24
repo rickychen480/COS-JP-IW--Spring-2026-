@@ -131,7 +131,7 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
 
     # DUAL AGENT LOOP
     for turn in range(max_turns):
-        print(f"--- Turn {turn + 1}/{max_turns} ---")
+        print(f"--- {output_file}: Turn {turn + 1}/{max_turns} ---")
 
         # --- AGENT U (User Simulator) MOVES ---
         batch_u = [d for d in active_dialogues if not d["done"]]
