@@ -1,0 +1,2 @@
+CoMPosT Evaluation Complete at /n/fs/dynamicbias/COS-JP/results/compost/llama-70b/logistic-regression
+Timestamp: 2026-03-25 17:01:46.834047
