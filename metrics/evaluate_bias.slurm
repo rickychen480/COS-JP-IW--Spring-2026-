@@ -40,7 +40,7 @@ CUDA_VISIBLE_DEVICES=0,1 python metrics/main.py \
   --tensor_parallel_size 2 \
   --chunk_index $SLURM_ARRAY_TASK_ID \
   --total_chunks 12 \
-  --masked_path data/transcripts/Llama-3.1-70B-Instruct/target_simulations_masked.json
+  --masked_path data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_masked.json
 
 wait
 echo "Chunk $SLURM_ARRAY_TASK_ID complete!"
