@@ -8,10 +8,13 @@ round-robin pairwise comparisons and high-dimensional clustering metrics
 
 import numpy as np
 import pandas as pd
+import math
+import re
 import itertools
 import sys
 import os
 from typing import Dict, List, Tuple, Optional
+from collections import defaultdict
 from sklearn.covariance import LedoitWolf
 
 # Add the project root to the Python path
@@ -24,6 +27,77 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def clean_text_for_matching(text):
+    return re.sub(r"[^a-zA-Z\s]", "", text.lower())
+
+def get_log_odds(df1, df2, df0):
+    counts1 = defaultdict(
+        int,
+        df1.str.lower()
+        .str.split(expand=True)
+        .stack()
+        .replace(r"[^a-zA-Z\s]", "", regex=True)
+        .value_counts()
+        .to_dict(),
+    )
+    counts2 = defaultdict(
+        int,
+        df2.str.lower()
+        .str.split(expand=True)
+        .stack()
+        .replace(r"[^a-zA-Z\s]", "", regex=True)
+        .value_counts()
+        .to_dict(),
+    )
+    prior = defaultdict(
+        int,
+        df0.str.lower()
+        .str.split(expand=True)
+        .stack()
+        .replace(r"[^a-zA-Z\s]", "", regex=True)
+        .value_counts()
+        .to_dict(),
+    )
+
+    sigma = defaultdict(float)
+    delta = defaultdict(float)
+
+    for word in prior.keys():
+        prior[word] = int(prior[word] + 0.5)
+    for word in counts2.keys():
+        counts1[word] = int(counts1[word] + 0.5)
+        if prior[word] == 0:
+            prior[word] = 1
+    for word in counts1.keys():
+        counts2[word] = int(counts2[word] + 0.5)
+        if prior[word] == 0:
+            prior[word] = 1
+
+    n1 = sum(counts1.values())
+    n2 = sum(counts2.values())
+    nprior = sum(prior.values())
+
+    for word in prior.keys():
+        if prior[word] > 0:
+            l1 = float(counts1[word] + prior[word]) / (
+                (n1 + nprior) - (counts1[word] + prior[word])
+            )
+            l2 = float(counts2[word] + prior[word]) / (
+                (n2 + nprior) - (counts2[word] + prior[word])
+            )
+            sigmasquared = 1 / (float(counts1[word]) + float(prior[word])) + 1 / (
+                float(counts2[word]) + float(prior[word])
+            )
+            sigma[word] = math.sqrt(sigmasquared)
+            delta[word] = (math.log(l1) - math.log(l2)) / sigma[word]
+
+    return delta
+
+def get_seed_words(df1, df2, df0, threshold=1.96):
+    deltas = get_log_odds(df1["response"], df2["response"], df0["response"])
+    top_words = [k for k, v in deltas.items() if v > threshold]
+    return sorted(top_words, key=lambda x: deltas[x], reverse=True)
 
 
 class IntersectionalEvaluator:
@@ -355,3 +429,95 @@ class IntersectionalEvaluator:
         
         report += "=" * 73
         return report
+
+    def get_fightin_words_poles(
+        self,
+        df: pd.DataFrame,
+        target_id: str,
+        control_id: str,
+        variant_type: str = 'implicit',
+        target_topic_id: Optional[str] = None,
+        default_topic: str = "general_comment",
+    ) -> Tuple[np.ndarray, float, float]:
+        """
+        Compute CoMPosT statistical poles for a given intersectional pair, optionally
+        restricted to a single scenario (target_topic_id), using a restricted background
+        corpus of a specific variant type (implicit or explicit).
+
+        This method is designed to be called separately for implicit and explicit variants
+        to avoid variant contamination. When target_topic_id is specified, only that
+        scenario's data (plus the general_comment baseline) is used, ensuring the
+        Monroe log-odds algorithm operates on semantically coherent task vocabularies.
+
+        Args:
+            df: Full dataframe with all transcripts.
+            target_id: Target intersectional identity (e.g., "Hispanic_Male_Nurse").
+            control_id: Control intersectional identity (e.g., "Unmarked_Unmarked_Nurse").
+            variant_type: Either 'implicit' or 'explicit' to use only that variant's data.
+            target_topic_id: Specific scenario ID to restrict poles to. If None, uses all scenarios.
+            default_topic: Label for the neutral baseline topic.
+
+        Returns:
+            axis_v: Normalized vector pointing from topic pole to persona pole.
+            topic_pole_sim: Mean cosine similarity of control examples to axis_v.
+            persona_pole_sim: Mean cosine similarity of target examples to axis_v.
+        """
+        # Filter to the specified variant type first
+        df_variant = df[df['variant_type'] == variant_type].copy()
+
+        # Restrict to just the two identity groups
+        sub_df = df_variant[df_variant["intersectional_id"].isin([target_id, control_id])].copy()
+
+        # Further restrict to a specific scenario if provided (per-topic analysis)
+        if target_topic_id is not None:
+            sub_df = sub_df[
+                (sub_df["scenario_id"] == target_topic_id) | (sub_df["topic"] == default_topic)
+            ].copy()
+
+        if "masked_text" in sub_df.columns:
+            sub_df["response"] = sub_df["masked_text"]
+        elif "target_text" in sub_df.columns:
+            sub_df["response"] = sub_df["target_text"]
+        else:
+            raise ValueError("Dataframe must contain 'masked_text' or 'target_text'.")
+
+        df_persona_pole = sub_df[(sub_df["intersectional_id"] == target_id) & (sub_df["topic"] == default_topic)]
+        df_topic_pole = sub_df[(sub_df["intersectional_id"] == control_id) & (sub_df["topic"] == default_topic)]
+
+        if df_persona_pole.empty or df_topic_pole.empty:
+            # Insufficient data for this scenario/variant combination
+            return np.zeros(768), 0.0, 0.0
+
+        persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, sub_df)
+        topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, sub_df)
+
+        if not persona_seed_words or not topic_seed_words:
+            # Monroe log-odds failed to find significant words
+            return np.zeros(768), 0.0, 0.0
+
+        def contains_any(text: str, words: list) -> bool:
+            clean = re.sub(r"[^a-zA-Z\s]", "", text.lower())
+            return any(re.search(rf"\b{re.escape(w)}\b", clean) for w in words)
+
+        p_vecs = [emb for txt, emb in zip(df_persona_pole.get('masked_text', pd.Series()), df_persona_pole['embedding'])
+                  if contains_any(txt, persona_seed_words)]
+        t_vecs = [emb for txt, emb in zip(df_topic_pole.get('masked_text', pd.Series()), df_topic_pole['embedding'])
+                  if contains_any(txt, topic_seed_words)]
+
+        if p_vecs and t_vecs:
+            p_pole = np.mean(p_vecs, axis=0)
+            t_pole = np.mean(t_vecs, axis=0)
+            axis_v = p_pole - t_pole
+            norm = np.linalg.norm(axis_v)
+            axis_v = axis_v / norm if norm > 1e-8 else np.zeros_like(axis_v)
+        else:
+            return np.zeros(768), 0.0, 0.0
+
+        def cos_sim(a: np.ndarray, b: np.ndarray) -> float:
+            denom = np.linalg.norm(a) * np.linalg.norm(b) + 1e-8
+            return float(np.dot(a, b) / denom)
+
+        topic_pole_sim = np.mean([cos_sim(emb, axis_v) for emb in df_persona_pole['embedding']]) if not df_persona_pole.empty else 0.0
+        persona_pole_sim = np.mean([cos_sim(emb, axis_v) for emb in df_topic_pole['embedding']]) if not df_topic_pole.empty else 0.0
+
+        return axis_v, topic_pole_sim, persona_pole_sim
