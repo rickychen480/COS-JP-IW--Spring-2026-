@@ -5,7 +5,7 @@
 #SBATCH --gres=gpu:2
 #SBATCH -c 12
 #SBATCH --mem=96G
-#SBATCH -t 12:00:00
+#SBATCH -t 16:00:00
 #SBATCH --output=logs/bias_eval_%A_%a.out
 #SBATCH --error=logs/bias_eval_%A_%a.err
 #SBATCH --array=0-11
