@@ -3,467 +3,384 @@
 
 RELATIVE SEMANTIC DISTANCES ACROSS GROUPS:
                 intersectional_id                        control_id  exaggeration
-            Hispanic_Male_Cleaner                White_Male_Cleaner      9.195506
-         Native American_Male_CEO                    White_Male_CEO      8.999068
-      Native American_Male_Lawyer                 White_Male_Lawyer      8.873609
-      Native American_Male_Lawyer              Hispanic_Male_Lawyer      8.676007
-       Native American_Female_CEO                  White_Female_CEO      8.650775
-          Hispanic_Female_Cleaner              White_Female_Cleaner      8.532895
-          Hispanic_Female_Cashier              White_Female_Cashier      8.041683
-            Hispanic_Female_Nurse                White_Female_Nurse      7.833235
-         Hispanic_Male_Accountant             White_Male_Accountant      7.708232
-           Hispanic_Male_Mechanic               White_Male_Mechanic      7.669779
-       Native American_Female_CEO                  Asian_Female_CEO      7.576727
-      Native American_Male_Lawyer                 Asian_Male_Lawyer      7.535857
-      Native American_Male_Lawyer                 Black_Male_Lawyer      7.460701
-         Hispanic_Female_Mechanic             White_Female_Mechanic      7.429637
-      Native American_Male_Doctor                 Asian_Male_Doctor      7.391001
-      Native American_Male_Doctor                 White_Male_Doctor      7.363914
-    Native American_Female_Lawyer               White_Female_Lawyer      7.317393
-            Hispanic_Male_Cashier                White_Male_Cashier      7.317323
-         Native American_Male_CEO                    Asian_Male_CEO      7.282286
-         Native American_Male_CEO                    Black_Male_CEO      7.267668
-    Native American_Female_Doctor               White_Female_Doctor      7.248930
-            White_Female_Mechanic          Hispanic_Female_Mechanic      7.230139
-         Native American_Male_CEO                 Hispanic_Male_CEO      7.190649
-       Native American_Female_CEO                  Black_Female_CEO      7.048122
-          Hispanic_Female_Cleaner              Black_Female_Cleaner      7.044623
-                   White_Male_CEO                    Asian_Male_CEO      7.040194
-       Native American_Female_CEO               Hispanic_Female_CEO      7.017604
-              Hispanic_Male_Nurse                  White_Male_Nurse      6.986421
-    Native American_Female_Lawyer            Hispanic_Female_Lawyer      6.959258
-      Native American_Male_Doctor              Hispanic_Male_Doctor      6.917471
-       Hispanic_Female_Accountant           White_Female_Accountant      6.895009
-  Native American_Male_Accountant             White_Male_Accountant      6.852369
-              Hispanic_Female_CEO                  White_Female_CEO      6.802656
-           Hispanic_Female_Doctor               White_Female_Doctor      6.795038
-            White_Male_Accountant          Hispanic_Male_Accountant      6.778832
-                   White_Male_CEO          Native American_Male_CEO      6.777288
-          Hispanic_Female_Cleaner    Native American_Female_Cleaner      6.659109
-Native American_Female_Accountant           White_Female_Accountant      6.626091
-                White_Male_Lawyer                 Asian_Male_Lawyer      6.622736
-          Hispanic_Female_Cashier              Black_Female_Cashier      6.622345
-                   White_Male_CEO                 Hispanic_Male_CEO      6.621305
-              White_Male_Mechanic               Asian_Male_Mechanic      6.619491
-     Native American_Female_Nurse                White_Female_Nurse      6.616194
-            White_Female_Mechanic   Native American_Female_Mechanic      6.585028
-  Native American_Female_Mechanic             White_Female_Mechanic      6.575732
-    Native American_Female_Lawyer               Black_Female_Lawyer      6.541734
-              White_Female_Doctor     Native American_Female_Doctor      6.521510
-               White_Male_Cleaner             Hispanic_Male_Cleaner      6.521265
-          Hispanic_Female_Teacher              White_Female_Teacher      6.518425
-              White_Male_Mechanic            Hispanic_Male_Mechanic      6.492600
-            White_Female_Mechanic             Asian_Female_Mechanic      6.491995
-            Hispanic_Male_Teacher                White_Male_Teacher      6.490892
-            Hispanic_Male_Cleaner                Black_Male_Cleaner      6.431923
-    Native American_Female_Doctor               Asian_Female_Doctor      6.428528
-   Native American_Female_Cleaner              White_Female_Cleaner      6.423935
-               White_Male_Cleaner                Asian_Male_Cleaner      6.419351
-      Native American_Male_Doctor                 Black_Male_Doctor      6.409423
-                White_Male_Doctor                 Asian_Male_Doctor      6.404588
-            Hispanic_Male_Cleaner      Native American_Male_Cleaner      6.398517
-             Hispanic_Male_Lawyer                 White_Male_Lawyer      6.393168
-           Hispanic_Female_Lawyer               White_Female_Lawyer      6.378786
-   Native American_Female_Cashier              White_Female_Cashier      6.351143
-    Native American_Male_Mechanic               White_Male_Mechanic      6.337813
-             White_Female_Cleaner           Hispanic_Female_Cleaner      6.334001
-            White_Male_Accountant             Asian_Male_Accountant      6.317859
-               Asian_Male_Cleaner                White_Male_Cleaner      6.312107
-                White_Male_Lawyer              Hispanic_Male_Lawyer      6.306587
-              White_Female_Lawyer            Hispanic_Female_Lawyer      6.293929
-     Native American_Male_Cleaner                White_Male_Cleaner      6.282448
-    Native American_Female_Doctor            Hispanic_Female_Doctor      6.267256
-                Hispanic_Male_CEO                    White_Male_CEO      6.231836
-             Asian_Female_Cleaner              White_Female_Cleaner      6.210540
-            Hispanic_Male_Cashier                Asian_Male_Cashier      6.206927
-       Native American_Male_Nurse                  White_Male_Nurse      6.198423
-     Native American_Male_Teacher                White_Male_Teacher      6.192569
-          White_Female_Accountant           Asian_Female_Accountant      6.187418
-             White_Female_Teacher           Hispanic_Female_Teacher      6.181682
-            Hispanic_Male_Cleaner                Asian_Male_Cleaner      6.173576
-         Hispanic_Female_Mechanic             Black_Female_Mechanic      6.168172
-               White_Female_Nurse             Hispanic_Female_Nurse      6.167644
-           Hispanic_Male_Mechanic               Asian_Male_Mechanic      6.162379
-  Native American_Male_Accountant          Hispanic_Male_Accountant      6.137755
-                 White_Female_CEO        Native American_Female_CEO      6.128741
-               White_Male_Teacher                Asian_Male_Teacher      6.123657
-             White_Female_Cashier           Hispanic_Female_Cashier      6.102408
-    Native American_Female_Doctor               Black_Female_Doctor      6.101675
-               Asian_Female_Nurse                White_Female_Nurse      6.083066
-                 White_Male_Nurse                  Asian_Male_Nurse      6.080841
-             White_Female_Cleaner              Black_Female_Cleaner      6.058204
-                White_Male_Doctor              Hispanic_Male_Doctor      6.045446
-            Hispanic_Male_Cashier                Black_Male_Cashier      6.016107
-            Asian_Female_Mechanic             White_Female_Mechanic      6.004148
-               White_Male_Cashier                Asian_Male_Cashier      5.990392
-           Hispanic_Male_Mechanic               Black_Male_Mechanic      5.969999
-           Hispanic_Male_Mechanic     Native American_Male_Mechanic      5.963103
-                 White_Female_CEO               Hispanic_Female_CEO      5.961595
-         Hispanic_Female_Mechanic   Native American_Female_Mechanic      5.950799
-            Hispanic_Male_Cashier      Native American_Male_Cashier      5.938353
-             White_Female_Cleaner              Asian_Female_Cleaner      5.927977
-   Native American_Female_Teacher           Hispanic_Female_Teacher      5.907242
-       Native American_Male_Nurse                  Black_Male_Nurse      5.877057
-          Asian_Female_Accountant           White_Female_Accountant      5.874568
-             White_Female_Cashier    Native American_Female_Cashier      5.870931
-                 White_Male_Nurse               Hispanic_Male_Nurse      5.863215
-              White_Female_Doctor            Hispanic_Female_Doctor      5.856286
-          White_Female_Accountant           Black_Female_Accountant      5.851036
-                White_Male_Lawyer       Native American_Male_Lawyer      5.848491
-               White_Male_Cashier      Native American_Male_Cashier      5.816757
-  Native American_Male_Accountant             Black_Male_Accountant      5.813869
-    Native American_Male_Mechanic               Asian_Male_Mechanic      5.811211
-               White_Male_Teacher             Hispanic_Male_Teacher      5.799149
-            White_Female_Mechanic             Black_Female_Mechanic      5.785967
-          Hispanic_Female_Cleaner              Asian_Female_Cleaner      5.774914
-              White_Male_Mechanic               Black_Male_Mechanic      5.763144
-                   Asian_Male_CEO                    White_Male_CEO      5.761971
-               White_Male_Cashier             Hispanic_Male_Cashier      5.754739
-               White_Female_Nurse                Asian_Female_Nurse      5.753229
-             Asian_Female_Cashier              White_Female_Cashier      5.748103
-          White_Female_Accountant        Hispanic_Female_Accountant      5.741131
-   Native American_Female_Teacher              White_Female_Teacher      5.739581
-              Hispanic_Male_Nurse                  Black_Male_Nurse      5.735453
-             White_Female_Cleaner    Native American_Female_Cleaner      5.716986
-                White_Male_Lawyer                 Black_Male_Lawyer      5.706035
-     Native American_Male_Teacher                Asian_Male_Teacher      5.681830
-Native American_Female_Accountant           Asian_Female_Accountant      5.676754
-                Asian_Male_Lawyer                 White_Male_Lawyer      5.673084
-                   White_Male_CEO                    Black_Male_CEO      5.667521
-Native American_Female_Accountant        Hispanic_Female_Accountant      5.663748
-             Asian_Female_Teacher              White_Female_Teacher      5.638012
-               Black_Male_Cleaner                White_Male_Cleaner      5.636194
-    Native American_Female_Lawyer               Asian_Female_Lawyer      5.625804
-              White_Female_Lawyer               Asian_Female_Lawyer      5.619105
-            Asian_Male_Accountant             White_Male_Accountant      5.613904
-               White_Male_Cleaner      Native American_Male_Cleaner      5.607646
-          Hispanic_Female_Cashier    Native American_Female_Cashier      5.601423
-              White_Male_Mechanic     Native American_Male_Mechanic      5.600089
-     Native American_Male_Teacher                Black_Male_Teacher      5.593873
-          Hispanic_Female_Cashier              Asian_Female_Cashier      5.583114
-              Hispanic_Male_Nurse        Native American_Male_Nurse      5.565695
-         Hispanic_Male_Accountant             Asian_Male_Accountant      5.562352
-             Hispanic_Male_Doctor                 White_Male_Doctor      5.561357
-             White_Female_Cashier              Asian_Female_Cashier      5.556516
-                 Asian_Female_CEO                  White_Female_CEO      5.553528
-              Asian_Male_Mechanic               White_Male_Mechanic      5.550472
-            White_Male_Accountant             Black_Male_Accountant      5.541327
-                 White_Male_Nurse                  Black_Male_Nurse      5.520264
-                 White_Female_CEO                  Asian_Female_CEO      5.505214
-              White_Female_Lawyer     Native American_Female_Lawyer      5.493189
-               White_Male_Cleaner                Black_Male_Cleaner      5.473140
-             White_Female_Teacher    Native American_Female_Teacher      5.472110
-         Hispanic_Male_Accountant   Native American_Male_Accountant      5.471025
-                 Asian_Male_Nurse                  White_Male_Nurse      5.468992
-              White_Female_Doctor               Asian_Female_Doctor      5.456615
-            White_Male_Accountant   Native American_Male_Accountant      5.456167
-               Asian_Male_Teacher                White_Male_Teacher      5.454698
-                White_Male_Doctor       Native American_Male_Doctor      5.433475
-            Hispanic_Female_Nurse                Black_Female_Nurse      5.430772
-                 White_Male_Nurse        Native American_Male_Nurse      5.414097
-           Hispanic_Female_Doctor     Native American_Female_Doctor      5.410882
-Native American_Female_Accountant           Black_Female_Accountant      5.402619
-  Native American_Male_Accountant             Asian_Male_Accountant      5.398675
-              White_Female_Lawyer               Black_Female_Lawyer      5.398365
-     Native American_Female_Nurse             Hispanic_Female_Nurse      5.392480
-             White_Female_Cashier              Black_Female_Cashier      5.371541
-              Asian_Female_Doctor               White_Female_Doctor      5.369646
-                Hispanic_Male_CEO                    Asian_Male_CEO      5.368742
-            Hispanic_Male_Teacher                Asian_Male_Teacher      5.368742
-             Black_Female_Cleaner              White_Female_Cleaner      5.368362
-       Native American_Male_Nurse               Hispanic_Male_Nurse      5.352304
-                Asian_Male_Doctor              Hispanic_Male_Doctor      5.351282
-              Asian_Female_Lawyer               White_Female_Lawyer      5.348180
-              White_Female_Doctor               Black_Female_Doctor      5.344961
-           Hispanic_Female_Lawyer               Asian_Female_Lawyer      5.336619
-           Hispanic_Female_Doctor               Black_Female_Doctor      5.307751
-           Hispanic_Female_Doctor               Asian_Female_Doctor      5.306325
-               White_Female_Nurse                Black_Female_Nurse      5.293245
-         Hispanic_Female_Mechanic             Asian_Female_Mechanic      5.288766
-               White_Male_Cashier                Black_Male_Cashier      5.287750
-            Asian_Male_Accountant          Hispanic_Male_Accountant      5.251875
-                White_Male_Doctor                 Black_Male_Doctor      5.249461
-       Native American_Male_Nurse                  Asian_Male_Nurse      5.236703
-             Hispanic_Male_Lawyer                 Asian_Male_Lawyer      5.236273
-            Black_Female_Mechanic             White_Female_Mechanic      5.231297
-               White_Female_Nurse      Native American_Female_Nurse      5.224264
-     Native American_Male_Teacher             Hispanic_Male_Teacher      5.219519
-            Hispanic_Male_Teacher                Black_Male_Teacher      5.204677
-     Native American_Male_Cashier                White_Male_Cashier      5.202663
-         Hispanic_Male_Accountant             Black_Male_Accountant      5.196513
-       Hispanic_Female_Accountant Native American_Female_Accountant      5.194616
-                Black_Male_Lawyer                 White_Male_Lawyer      5.185602
-               Asian_Male_Cashier                White_Male_Cashier      5.182702
-                   Asian_Male_CEO                 Hispanic_Male_CEO      5.180274
-             Hispanic_Male_Doctor       Native American_Male_Doctor      5.178846
-    Native American_Male_Mechanic            Hispanic_Male_Mechanic      5.176813
-              Hispanic_Male_Nurse                  Asian_Male_Nurse      5.172864
-              Hispanic_Female_CEO        Native American_Female_CEO      5.168607
-   Native American_Female_Cashier              Black_Female_Cashier      5.164086
-  Native American_Female_Mechanic          Hispanic_Female_Mechanic      5.149303
-               Black_Female_Nurse                White_Female_Nurse      5.140865
-             Hispanic_Male_Doctor                 Asian_Male_Doctor      5.130480
-            Hispanic_Male_Teacher      Native American_Male_Teacher      5.124116
-              Hispanic_Female_CEO                  Asian_Female_CEO      5.123044
-             White_Female_Teacher              Asian_Female_Teacher      5.118604
-                Hispanic_Male_CEO          Native American_Male_CEO      5.109687
-             White_Female_Teacher              Black_Female_Teacher      5.096140
-               Asian_Male_Cleaner             Hispanic_Male_Cleaner      5.079735
-             Hispanic_Male_Lawyer       Native American_Male_Lawyer      5.074539
-            Hispanic_Female_Nurse      Native American_Female_Nurse      5.070474
-     Native American_Male_Cleaner             Hispanic_Male_Cleaner      5.064303
-               White_Male_Teacher                Black_Male_Teacher      5.052604
-            Black_Male_Accountant             White_Male_Accountant      5.045425
-               White_Male_Teacher      Native American_Male_Teacher      5.040542
-       Hispanic_Female_Accountant           Black_Female_Accountant      5.034918
-                Asian_Male_Doctor                 White_Male_Doctor      5.002385
-             Black_Female_Teacher              White_Female_Teacher      4.950995
-          White_Female_Accountant Native American_Female_Accountant      4.950796
-              Black_Male_Mechanic               White_Male_Mechanic      4.940877
-          Hispanic_Female_Teacher    Native American_Female_Teacher      4.909922
-     Native American_Female_Nurse                Black_Female_Nurse      4.905244
-     Native American_Male_Cleaner                Asian_Male_Cleaner      4.881892
-                 White_Female_CEO                  Black_Female_CEO      4.870087
-   Native American_Female_Cashier              Asian_Female_Cashier      4.869124
-                 Asian_Female_CEO               Hispanic_Female_CEO      4.869111
-                   Black_Male_CEO                    White_Male_CEO      4.849850
-   Native American_Female_Teacher              Asian_Female_Teacher      4.844659
-            Asian_Female_Mechanic          Hispanic_Female_Mechanic      4.842594
-                Asian_Male_Lawyer              Hispanic_Male_Lawyer      4.836889
-              Black_Female_Lawyer               White_Female_Lawyer      4.833212
-             Asian_Female_Teacher           Hispanic_Female_Teacher      4.829664
-             Black_Female_Cashier              White_Female_Cashier      4.821642
-               Asian_Female_Nurse             Hispanic_Female_Nurse      4.808257
-    Native American_Male_Mechanic               Black_Male_Mechanic      4.806225
-                Hispanic_Male_CEO                    Black_Male_CEO      4.804414
-             Hispanic_Male_Doctor                 Black_Male_Doctor      4.800253
-              Asian_Male_Mechanic            Hispanic_Male_Mechanic      4.797476
-           Hispanic_Female_Lawyer     Native American_Female_Lawyer      4.789008
-               Black_Male_Cashier                White_Male_Cashier      4.785295
-          Asian_Female_Accountant        Hispanic_Female_Accountant      4.769707
-                 Black_Male_Nurse                  White_Male_Nurse      4.768461
-                 Asian_Female_CEO        Native American_Female_CEO      4.756827
-               Asian_Male_Cashier             Hispanic_Male_Cashier      4.734504
-              Asian_Female_Doctor            Hispanic_Female_Doctor      4.724630
-               Asian_Male_Teacher             Hispanic_Male_Teacher      4.714140
-          Hispanic_Female_Teacher              Asian_Female_Teacher      4.688004
-   Native American_Female_Teacher              Black_Female_Teacher      4.677170
-  Native American_Female_Mechanic             Black_Female_Mechanic      4.674942
-                 Black_Female_CEO                  White_Female_CEO      4.669003
-       Hispanic_Female_Accountant           Asian_Female_Accountant      4.667054
-  Native American_Female_Mechanic             Asian_Female_Mechanic      4.667033
-              Asian_Male_Mechanic     Native American_Male_Mechanic      4.664994
-              Asian_Female_Doctor     Native American_Female_Doctor      4.660871
-   Native American_Female_Cleaner           Hispanic_Female_Cleaner      4.653033
-             Asian_Female_Cleaner    Native American_Female_Cleaner      4.652065
-          Black_Female_Accountant           White_Female_Accountant      4.645154
-             Hispanic_Male_Lawyer                 Black_Male_Lawyer      4.630680
-              Black_Female_Doctor               White_Female_Doctor      4.604552
-     Native American_Male_Cashier                Asian_Male_Cashier      4.594490
-            Hispanic_Female_Nurse                Asian_Female_Nurse      4.591741
-     Native American_Female_Nurse                Asian_Female_Nurse      4.588478
-             Asian_Female_Cleaner              Black_Female_Cleaner      4.576838
-                Asian_Male_Doctor       Native American_Male_Doctor      4.573002
-                   Asian_Male_CEO          Native American_Male_CEO      4.560664
-   Native American_Female_Cleaner              Black_Female_Cleaner      4.557940
-           Hispanic_Female_Lawyer               Black_Female_Lawyer      4.542731
-                 Asian_Male_Nurse               Hispanic_Male_Nurse      4.533153
-   Native American_Female_Cleaner              Asian_Female_Cleaner      4.520995
-          Asian_Female_Accountant Native American_Female_Accountant      4.514712
-     Native American_Male_Cashier             Hispanic_Male_Cashier      4.505422
-             Asian_Female_Teacher    Native American_Female_Teacher      4.497765
-   Native American_Female_Cashier           Hispanic_Female_Cashier      4.496871
-                Asian_Male_Lawyer       Native American_Male_Lawyer      4.496367
-               Asian_Male_Cleaner      Native American_Male_Cleaner      4.474976
-             Asian_Female_Cashier              Black_Female_Cashier      4.456977
-              Asian_Female_Lawyer            Hispanic_Female_Lawyer      4.437949
-             Asian_Female_Cleaner           Hispanic_Female_Cleaner      4.429402
-                 Asian_Male_Nurse        Native American_Male_Nurse      4.350093
-     Native American_Male_Cleaner                Black_Male_Cleaner      4.345825
-              Hispanic_Female_CEO                  Black_Female_CEO      4.290191
-            Asian_Male_Accountant   Native American_Male_Accountant      4.270207
-              Black_Male_Mechanic               Asian_Male_Mechanic      4.253480
-               Asian_Male_Cleaner                Black_Male_Cleaner      4.225809
-            Asian_Female_Mechanic   Native American_Female_Mechanic      4.214861
-                Black_Male_Doctor                 White_Male_Doctor      4.210339
-             Asian_Female_Cleaner                Asian_Male_Cleaner      4.200922
-               Asian_Male_Teacher      Native American_Male_Teacher      4.200719
-             Asian_Female_Cashier    Native American_Female_Cashier      4.190272
-                   Black_Male_CEO          Native American_Male_CEO      4.177035
-                   Black_Male_CEO                 Hispanic_Male_CEO      4.175173
-               Black_Male_Teacher                White_Male_Teacher      4.168794
-     Native American_Male_Cashier                Black_Male_Cashier      4.142878
-               Asian_Male_Cashier      Native American_Male_Cashier      4.142420
-            Asian_Female_Mechanic             Black_Female_Mechanic      4.138435
-              Asian_Male_Mechanic               Black_Male_Mechanic      4.136539
-                Black_Male_Lawyer              Hispanic_Male_Lawyer      4.125845
-          Hispanic_Female_Teacher              Black_Female_Teacher      4.122899
-            Black_Male_Accountant          Hispanic_Male_Accountant      4.120675
-             Black_Female_Cleaner                Black_Male_Cleaner      4.114757
-                Black_Male_Doctor              Hispanic_Male_Doctor      4.104341
-               Black_Male_Cleaner                Asian_Male_Cleaner      4.093405
-             Black_Female_Teacher           Hispanic_Female_Teacher      4.083531
-               Black_Male_Cashier                Asian_Male_Cashier      4.060907
-            Black_Female_Mechanic          Hispanic_Female_Mechanic      4.055699
-                 Black_Male_Nurse               Hispanic_Male_Nurse      3.975660
-               Asian_Male_Cashier                Black_Male_Cashier      3.970805
-             Black_Female_Cleaner           Hispanic_Female_Cleaner      3.961730
-          Black_Female_Accountant Native American_Female_Accountant      3.959223
-               Black_Male_Cleaner             Hispanic_Male_Cleaner      3.957458
-             Asian_Female_Cashier           Hispanic_Female_Cashier      3.943864
-               Asian_Female_Nurse                Black_Female_Nurse      3.925972
-                 Black_Male_Nurse        Native American_Male_Nurse      3.915694
-                Black_Male_Doctor       Native American_Male_Doctor      3.905132
-           Hispanic_Male_Mechanic          Hispanic_Female_Mechanic      3.898885
-               Black_Female_Nurse             Hispanic_Female_Nurse      3.894186
-                 Black_Female_CEO        Native American_Female_CEO      3.890801
-                Black_Male_Lawyer       Native American_Male_Lawyer      3.887456
-                   Black_Male_CEO                    Asian_Male_CEO      3.875674
-               Black_Male_Teacher             Hispanic_Male_Teacher      3.868935
-                 Black_Female_CEO               Hispanic_Female_CEO      3.860250
-             Black_Female_Cleaner              Asian_Female_Cleaner      3.858931
-               Black_Male_Cleaner              Black_Female_Cleaner      3.850326
-             Black_Female_Teacher    Native American_Female_Teacher      3.849204
-              Black_Male_Mechanic            Hispanic_Male_Mechanic      3.846571
-          Hispanic_Female_Cleaner             Hispanic_Male_Cleaner      3.838624
-               Black_Male_Cashier             Hispanic_Male_Cashier      3.835201
-           Hispanic_Female_Doctor              Hispanic_Male_Doctor      3.824550
-              Black_Male_Mechanic             Black_Female_Mechanic      3.824534
-              Asian_Female_Lawyer     Native American_Female_Lawyer      3.822567
-               Asian_Female_Nurse      Native American_Female_Nurse      3.821309
-          Hispanic_Female_Cashier             Hispanic_Male_Cashier      3.819781
-          Asian_Female_Accountant             Asian_Male_Accountant      3.816424
-              Black_Female_Doctor     Native American_Female_Doctor      3.811407
-            Black_Male_Accountant   Native American_Male_Accountant      3.801956
-              Black_Female_Doctor            Hispanic_Female_Doctor      3.785428
-              Black_Female_Lawyer            Hispanic_Female_Lawyer      3.762188
-                 Asian_Female_CEO                  Black_Female_CEO      3.752196
-                 Asian_Female_CEO                    Asian_Male_CEO      3.750465
-              Black_Male_Mechanic     Native American_Male_Mechanic      3.741692
-          Black_Female_Accountant        Hispanic_Female_Accountant      3.739282
-             White_Female_Cleaner                White_Male_Cleaner      3.732768
-              Asian_Female_Doctor                 Asian_Male_Doctor      3.731274
-               Black_Male_Cashier              Black_Female_Cashier      3.712621
-     Native American_Male_Cashier    Native American_Female_Cashier      3.701456
-             Black_Female_Teacher                Black_Male_Teacher      3.699193
-               Asian_Male_Teacher                Black_Male_Teacher      3.674083
-             Black_Female_Cashier              Asian_Female_Cashier      3.661960
-          Asian_Female_Accountant           Black_Female_Accountant      3.634670
-               Black_Male_Teacher                Asian_Male_Teacher      3.630831
-             Black_Female_Cashier           Hispanic_Female_Cashier      3.625217
-               Black_Female_Nurse                Asian_Female_Nurse      3.625063
-                 Black_Female_CEO                  Asian_Female_CEO      3.624242
-    Native American_Male_Mechanic   Native American_Female_Mechanic      3.621636
-            Asian_Male_Accountant             Black_Male_Accountant      3.616856
-             Asian_Female_Cashier                Asian_Male_Cashier      3.605116
-            Black_Male_Accountant             Asian_Male_Accountant      3.604507
-               Asian_Male_Cashier              Asian_Female_Cashier      3.594950
-               Black_Male_Cleaner      Native American_Male_Cleaner      3.591275
-              Black_Female_Lawyer     Native American_Female_Lawyer      3.587165
-            Asian_Female_Mechanic               Asian_Male_Mechanic      3.583119
-             Hispanic_Male_Lawyer            Hispanic_Female_Lawyer      3.565452
-                   Asian_Male_CEO                    Black_Male_CEO      3.564904
-                 Black_Male_Nurse                  Asian_Male_Nurse      3.564538
-             Asian_Female_Teacher                Asian_Male_Teacher      3.559771
-            Black_Female_Mechanic             Asian_Female_Mechanic      3.557873
-            Asian_Male_Accountant           Asian_Female_Accountant      3.548193
-              Asian_Female_Lawyer                 Asian_Male_Lawyer      3.545291
-               Asian_Male_Cleaner              Asian_Female_Cleaner      3.543362
-             Black_Female_Teacher              Asian_Female_Teacher      3.542773
-               White_Male_Cashier              White_Female_Cashier      3.519134
-               Black_Male_Teacher      Native American_Male_Teacher      3.515395
-      Native American_Male_Doctor     Native American_Female_Doctor      3.514455
-             Black_Female_Cleaner    Native American_Female_Cleaner      3.512952
-                 Asian_Male_Nurse                  Black_Male_Nurse      3.509611
-             Black_Female_Cashier                Black_Male_Cashier      3.499629
-             Asian_Female_Teacher              Black_Female_Teacher      3.496992
-           Hispanic_Female_Lawyer              Hispanic_Male_Lawyer      3.484293
-            Black_Female_Mechanic               Black_Male_Mechanic      3.471600
-            Hispanic_Male_Cleaner           Hispanic_Female_Cleaner      3.468748
-                Black_Male_Doctor                 Asian_Male_Doctor      3.466040
-     Native American_Male_Cleaner    Native American_Female_Cleaner      3.461143
-            Black_Female_Mechanic   Native American_Female_Mechanic      3.446458
-     Native American_Female_Nurse        Native American_Male_Nurse      3.445716
-            Black_Male_Accountant           Black_Female_Accountant      3.444518
-                Asian_Male_Doctor               Asian_Female_Doctor      3.429207
-               Black_Female_Nurse                  Black_Male_Nurse      3.427313
-                   White_Male_CEO                  White_Female_CEO      3.416200
-                White_Male_Lawyer               White_Female_Lawyer      3.415598
-          Black_Female_Accountant           Asian_Female_Accountant      3.409092
-  Native American_Female_Mechanic     Native American_Male_Mechanic      3.386338
-             Hispanic_Male_Doctor            Hispanic_Female_Doctor      3.385164
-               White_Male_Cleaner              White_Female_Cleaner      3.384759
-          Black_Female_Accountant             Black_Male_Accountant      3.379667
-                Hispanic_Male_CEO               Hispanic_Female_CEO      3.375322
-             Black_Female_Cashier    Native American_Female_Cashier      3.370122
-               Asian_Female_Nurse                  Asian_Male_Nurse      3.369607
-              Black_Female_Lawyer               Asian_Female_Lawyer      3.369373
-               Black_Male_Cashier      Native American_Male_Cashier      3.366227
-              Asian_Female_Doctor               Black_Female_Doctor      3.356322
-            Hispanic_Male_Cashier           Hispanic_Female_Cashier      3.353304
-              Hispanic_Female_CEO                 Hispanic_Male_CEO      3.351656
-               Black_Female_Nurse      Native American_Female_Nurse      3.348263
-       Hispanic_Female_Accountant          Hispanic_Male_Accountant      3.344027
-    Native American_Female_Doctor       Native American_Male_Doctor      3.341494
-                 Black_Female_CEO                    Black_Male_CEO      3.340481
-              Black_Female_Lawyer                 Black_Male_Lawyer      3.334392
-                 White_Female_CEO                    White_Male_CEO      3.332917
-              White_Female_Lawyer                 White_Male_Lawyer      3.331599
-                 Black_Male_Nurse                Black_Female_Nurse      3.326769
-              White_Male_Mechanic             White_Female_Mechanic      3.326687
-               Asian_Male_Teacher              Asian_Female_Teacher      3.316503
-                Black_Male_Lawyer                 Asian_Male_Lawyer      3.311846
-                   Asian_Male_CEO                  Asian_Female_CEO      3.302796
-              Black_Female_Doctor               Asian_Female_Doctor      3.298819
-         Hispanic_Female_Mechanic            Hispanic_Male_Mechanic      3.298711
-            Hispanic_Male_Teacher           Hispanic_Female_Teacher      3.294676
-              Asian_Male_Mechanic             Asian_Female_Mechanic      3.286662
-       Native American_Male_Nurse      Native American_Female_Nurse      3.280700
-         Native American_Male_CEO        Native American_Female_CEO      3.278642
-         Hispanic_Male_Accountant        Hispanic_Female_Accountant      3.274029
-                Asian_Male_Lawyer                 Black_Male_Lawyer      3.265949
-              Asian_Female_Lawyer               Black_Female_Lawyer      3.262818
-             White_Female_Cashier                White_Male_Cashier      3.253827
-   Native American_Female_Cashier      Native American_Male_Cashier      3.244658
-            White_Female_Mechanic               White_Male_Mechanic      3.243532
-                 Asian_Male_Nurse                Asian_Female_Nurse      3.242592
-               White_Male_Teacher              White_Female_Teacher      3.221802
-Native American_Female_Accountant   Native American_Male_Accountant      3.221223
-                Asian_Male_Lawyer               Asian_Female_Lawyer      3.221214
-       Native American_Female_CEO          Native American_Male_CEO      3.216035
-   Native American_Female_Cleaner      Native American_Male_Cleaner      3.214034
-                Black_Male_Lawyer               Black_Female_Lawyer      3.211725
-            White_Male_Accountant           White_Female_Accountant      3.209184
-              Hispanic_Male_Nurse             Hispanic_Female_Nurse      3.196742
-                 White_Male_Nurse                White_Female_Nurse      3.177033
-          Hispanic_Female_Teacher             Hispanic_Male_Teacher      3.165134
-     Native American_Male_Teacher    Native American_Female_Teacher      3.163259
-                White_Male_Doctor               White_Female_Doctor      3.140592
-                Black_Male_Doctor               Black_Female_Doctor      3.135774
-          White_Female_Accountant             White_Male_Accountant      3.124934
-              Black_Female_Doctor                 Black_Male_Doctor      3.123985
-                   Black_Male_CEO                  Black_Female_CEO      3.120975
-               Black_Male_Teacher              Black_Female_Teacher      3.120731
-                Asian_Male_Doctor                 Black_Male_Doctor      3.116516
-    Native American_Female_Lawyer       Native American_Male_Lawyer      3.102833
-               White_Female_Nurse                  White_Male_Nurse      3.090938
-             White_Female_Teacher                White_Male_Teacher      3.061031
-            Hispanic_Female_Nurse               Hispanic_Male_Nurse      3.056911
-  Native American_Male_Accountant Native American_Female_Accountant      3.050688
-   Native American_Female_Teacher      Native American_Male_Teacher      3.012208
-      Native American_Male_Lawyer     Native American_Female_Lawyer      2.976499
-              White_Female_Doctor                 White_Male_Doctor      2.878016
+     Native American_Male_Cleaner    Native American_Female_Cleaner      3.977144
+          Hispanic_Female_Teacher             Hispanic_Male_Teacher      3.561655
+    Native American_Female_Doctor       Native American_Male_Doctor      3.259145
+              White_Female_Doctor               Black_Female_Doctor      2.905484
+             Black_Female_Teacher           Hispanic_Female_Teacher      2.362129
+             White_Female_Teacher              Black_Female_Teacher      2.353449
+                Asian_Male_Doctor                 Black_Male_Doctor      2.207630
+                 White_Female_CEO               Hispanic_Female_CEO      2.139803
+                 Black_Female_CEO               Hispanic_Female_CEO      2.080981
+                White_Male_Doctor                 Black_Male_Doctor      2.026942
+                 White_Male_Nurse                White_Female_Nurse      1.988776
+   Native American_Female_Teacher      Native American_Male_Teacher      1.962578
+                 White_Male_Nurse               Hispanic_Male_Nurse      1.907522
+                 Black_Female_CEO                    Black_Male_CEO      1.850589
+                 Black_Female_CEO                  Asian_Female_CEO      1.837573
+            Asian_Female_Mechanic          Hispanic_Female_Mechanic      1.809990
+            Hispanic_Female_Nurse               Hispanic_Male_Nurse      1.779396
+             White_Female_Teacher              Asian_Female_Teacher      1.771622
+            White_Female_Mechanic             Black_Female_Mechanic      1.761531
+                 White_Female_CEO                  Asian_Female_CEO      1.729411
+               Asian_Male_Teacher                Black_Male_Teacher      1.628354
+             White_Female_Teacher           Hispanic_Female_Teacher      1.624517
+              White_Female_Doctor            Hispanic_Female_Doctor      1.573090
+          Black_Female_Accountant        Hispanic_Female_Accountant      1.571032
+             Hispanic_Male_Doctor                 Black_Male_Doctor      1.538816
+           Hispanic_Female_Lawyer               Asian_Female_Lawyer      1.513470
+   Native American_Female_Teacher              Black_Female_Teacher      1.509308
+             Black_Female_Teacher              Asian_Female_Teacher      1.508534
+               Black_Male_Teacher             Hispanic_Male_Teacher      1.507227
+             White_Female_Teacher                White_Male_Teacher      1.495520
+                 Asian_Female_CEO                    Asian_Male_CEO      1.487656
+               Black_Male_Cashier                White_Male_Cashier      1.479626
+             Asian_Female_Cashier    Native American_Female_Cashier      1.477609
+               Asian_Male_Cashier                White_Male_Cashier      1.424208
+               White_Male_Teacher                Black_Male_Teacher      1.417992
+              Hispanic_Female_CEO                  Asian_Female_CEO      1.415295
+       Native American_Male_Nurse               Hispanic_Male_Nurse      1.407392
+               Asian_Male_Teacher             Hispanic_Male_Teacher      1.399750
+                   White_Male_CEO                 Hispanic_Male_CEO      1.363966
+                 White_Female_CEO                    White_Male_CEO      1.348607
+                 White_Male_Nurse                  Asian_Male_Nurse      1.339759
+                 Asian_Male_Nurse                  Black_Male_Nurse      1.336915
+              White_Female_Doctor               Asian_Female_Doctor      1.327858
+               White_Male_Cashier      Native American_Male_Cashier      1.319981
+             Black_Female_Cashier    Native American_Female_Cashier      1.294482
+   Native American_Female_Teacher              Asian_Female_Teacher      1.281088
+            Black_Female_Mechanic          Hispanic_Female_Mechanic      1.268681
+            Hispanic_Female_Nurse                Asian_Female_Nurse      1.263955
+       Native American_Male_Nurse                  Black_Male_Nurse      1.256875
+               White_Male_Teacher             Hispanic_Male_Teacher      1.253765
+                Asian_Male_Doctor              Hispanic_Male_Doctor      1.247328
+   Native American_Female_Teacher           Hispanic_Female_Teacher      1.243644
+                 Black_Male_Nurse                Black_Female_Nurse      1.219861
+              Asian_Male_Mechanic            Hispanic_Male_Mechanic      1.213908
+              Asian_Female_Doctor               Black_Female_Doctor      1.207298
+         Hispanic_Female_Mechanic             White_Female_Mechanic      1.200754
+             Asian_Female_Cleaner                Asian_Male_Cleaner      1.200190
+  Native American_Female_Mechanic          Hispanic_Female_Mechanic      1.198223
+                   White_Male_CEO                    Black_Male_CEO      1.193476
+               Asian_Female_Nurse                  Asian_Male_Nurse      1.187314
+             White_Female_Cleaner           Hispanic_Female_Cleaner      1.185616
+              White_Female_Doctor                 White_Male_Doctor      1.183772
+               Black_Male_Cashier      Native American_Male_Cashier      1.182401
+      Native American_Male_Lawyer     Native American_Female_Lawyer      1.124421
+              Asian_Female_Doctor                 Asian_Male_Doctor      1.120466
+       Native American_Female_CEO                  Asian_Female_CEO      1.117269
+                 Asian_Male_Nurse               Hispanic_Male_Nurse      1.090470
+             Black_Female_Cashier              Asian_Female_Cashier      1.089661
+       Hispanic_Female_Accountant          Hispanic_Male_Accountant      1.055170
+    Native American_Female_Doctor               Black_Female_Doctor      1.052613
+               Asian_Male_Cashier      Native American_Male_Cashier      1.052277
+               White_Male_Teacher                Asian_Male_Teacher      1.032544
+    Native American_Female_Lawyer               White_Female_Lawyer      1.029754
+           Hispanic_Female_Lawyer              Hispanic_Male_Lawyer      1.018735
+     Native American_Female_Nurse             Hispanic_Female_Nurse      0.992205
+                 Black_Male_Nurse               Hispanic_Male_Nurse      0.977530
+              Black_Female_Doctor                 Black_Male_Doctor      0.977116
+             Asian_Female_Teacher           Hispanic_Female_Teacher      0.975678
+    Native American_Female_Doctor            Hispanic_Female_Doctor      0.972253
+     Native American_Male_Teacher                Asian_Male_Teacher      0.967390
+    Native American_Female_Doctor               Asian_Female_Doctor      0.957690
+          Hispanic_Female_Cashier    Native American_Female_Cashier      0.957181
+       Native American_Male_Nurse                  Asian_Male_Nurse      0.948577
+            Asian_Male_Accountant          Hispanic_Male_Accountant      0.946772
+    Native American_Female_Lawyer               Asian_Female_Lawyer      0.946085
+            White_Male_Accountant          Hispanic_Male_Accountant      0.944366
+                White_Male_Lawyer                 Asian_Male_Lawyer      0.930668
+Native American_Female_Accountant           Asian_Female_Accountant      0.928149
+          Hispanic_Female_Cashier             Hispanic_Male_Cashier      0.924690
+       Native American_Female_CEO               Hispanic_Female_CEO      0.921428
+               White_Male_Cleaner             Hispanic_Male_Cleaner      0.915789
+  Native American_Male_Accountant Native American_Female_Accountant      0.907281
+          White_Female_Accountant           Black_Female_Accountant      0.906365
+             Asian_Female_Cleaner           Hispanic_Female_Cleaner      0.894515
+               Black_Male_Cashier             Hispanic_Male_Cashier      0.893253
+    Native American_Male_Mechanic            Hispanic_Male_Mechanic      0.892845
+      Native American_Male_Lawyer                 Asian_Male_Lawyer      0.889216
+      Native American_Male_Doctor                 Black_Male_Doctor      0.887784
+               Black_Male_Teacher              Black_Female_Teacher      0.876540
+    Native American_Female_Lawyer            Hispanic_Female_Lawyer      0.850601
+              White_Female_Lawyer               Asian_Female_Lawyer      0.837702
+                White_Male_Doctor              Hispanic_Male_Doctor      0.837543
+                Black_Male_Lawyer              Hispanic_Male_Lawyer      0.831271
+               Asian_Male_Cashier             Hispanic_Male_Cashier      0.821620
+           Hispanic_Female_Lawyer               Black_Female_Lawyer      0.819030
+      Native American_Male_Lawyer              Hispanic_Male_Lawyer      0.817493
+               White_Female_Nurse                Black_Female_Nurse      0.816871
+          Black_Female_Accountant           Asian_Female_Accountant      0.816015
+      Native American_Male_Doctor                 White_Male_Doctor      0.815045
+      Native American_Male_Lawyer                 White_Male_Lawyer      0.811569
+                White_Male_Lawyer              Hispanic_Male_Lawyer      0.810750
+      Native American_Male_Lawyer                 Black_Male_Lawyer      0.807558
+                 White_Male_Nurse                  Black_Male_Nurse      0.799499
+              Black_Female_Doctor            Hispanic_Female_Doctor      0.796492
+   Native American_Female_Cleaner           Hispanic_Female_Cleaner      0.791218
+              Black_Female_Lawyer               Asian_Female_Lawyer      0.780221
+  Native American_Female_Mechanic             White_Female_Mechanic      0.774705
+    Native American_Female_Lawyer               Black_Female_Lawyer      0.769611
+  Native American_Male_Accountant             Black_Male_Accountant      0.766518
+                White_Male_Lawyer               White_Female_Lawyer      0.761744
+                   White_Male_CEO                    Asian_Male_CEO      0.761603
+                Black_Male_Lawyer                 Asian_Male_Lawyer      0.758599
+     Native American_Male_Teacher                Black_Male_Teacher      0.754554
+         Native American_Male_CEO                    Asian_Male_CEO      0.748741
+          Hispanic_Female_Cashier              Black_Female_Cashier      0.746285
+            White_Female_Mechanic             Asian_Female_Mechanic      0.741612
+                 White_Male_Nurse        Native American_Male_Nurse      0.739969
+       Native American_Male_Nurse      Native American_Female_Nurse      0.733674
+     Native American_Female_Nurse                Asian_Female_Nurse      0.733337
+            Asian_Female_Mechanic             Black_Female_Mechanic      0.729817
+         Native American_Male_CEO                    Black_Male_CEO      0.727640
+              Black_Female_Lawyer               White_Female_Lawyer      0.723705
+          Asian_Female_Accountant           White_Female_Accountant      0.710425
+           Hispanic_Female_Lawyer               White_Female_Lawyer      0.709127
+              Asian_Female_Doctor            Hispanic_Female_Doctor      0.700225
+      Native American_Male_Doctor              Hispanic_Male_Doctor      0.696199
+Native American_Female_Accountant        Hispanic_Female_Accountant      0.674819
+     Native American_Male_Teacher             Hispanic_Male_Teacher      0.674170
+      Native American_Male_Doctor                 Asian_Male_Doctor      0.669124
+               White_Male_Cleaner      Native American_Male_Cleaner      0.666165
+           Hispanic_Female_Doctor              Hispanic_Male_Doctor      0.660239
+  Native American_Male_Accountant             Asian_Male_Accountant      0.656387
+  Native American_Male_Accountant          Hispanic_Male_Accountant      0.655940
+                Asian_Male_Lawyer              Hispanic_Male_Lawyer      0.651762
+             White_Female_Teacher    Native American_Female_Teacher      0.650165
+       Native American_Female_CEO                  White_Female_CEO      0.643896
+       Native American_Female_CEO                  Black_Female_CEO      0.636340
+         Native American_Male_CEO                 Hispanic_Male_CEO      0.630989
+                Asian_Male_Doctor                 White_Male_Doctor      0.628186
+             Asian_Female_Cleaner    Native American_Female_Cleaner      0.626199
+Native American_Female_Accountant           Black_Female_Accountant      0.618273
+              Black_Female_Lawyer                 Black_Male_Lawyer      0.607475
+       Native American_Female_CEO          Native American_Male_CEO      0.604721
+            Hispanic_Female_Nurse                Black_Female_Nurse      0.597292
+              Asian_Female_Lawyer                 Asian_Male_Lawyer      0.588443
+                Hispanic_Male_CEO               Hispanic_Female_CEO      0.580185
+            Hispanic_Male_Cashier                White_Male_Cashier      0.577030
+     Native American_Female_Nurse                Black_Female_Nurse      0.575885
+              Asian_Male_Mechanic     Native American_Male_Mechanic      0.572144
+    Native American_Female_Doctor               White_Female_Doctor      0.570706
+             Black_Female_Cashier           Hispanic_Female_Cashier      0.565985
+                White_Male_Lawyer                 Black_Male_Lawyer      0.558525
+               White_Female_Nurse             Hispanic_Female_Nurse      0.556622
+            White_Male_Accountant             Asian_Male_Accountant      0.556268
+                 White_Female_CEO                  Black_Female_CEO      0.555602
+            Asian_Female_Mechanic               Asian_Male_Mechanic      0.550005
+               Asian_Female_Nurse                White_Female_Nurse      0.546165
+             Asian_Female_Teacher                Asian_Male_Teacher      0.532990
+          White_Female_Accountant             White_Male_Accountant      0.528904
+   Native American_Female_Cleaner              White_Female_Cleaner      0.525117
+            White_Male_Accountant           White_Female_Accountant      0.520138
+                   Black_Male_CEO                 Hispanic_Male_CEO      0.517850
+         Native American_Male_CEO                    White_Male_CEO      0.515441
+            Asian_Female_Mechanic   Native American_Female_Mechanic      0.510906
+            Hispanic_Male_Cashier      Native American_Male_Cashier      0.501659
+                Black_Male_Lawyer                 White_Male_Lawyer      0.495381
+            Asian_Male_Accountant             Black_Male_Accountant      0.490273
+Native American_Female_Accountant           White_Female_Accountant      0.481426
+            Black_Female_Mechanic   Native American_Female_Mechanic      0.466736
+              Hispanic_Female_CEO                 Hispanic_Male_CEO      0.466012
+  Native American_Male_Accountant             White_Male_Accountant      0.456111
+               White_Female_Nurse      Native American_Female_Nurse      0.453963
+               White_Male_Teacher      Native American_Male_Teacher      0.450731
+               Asian_Female_Nurse                Black_Female_Nurse      0.449993
+               Asian_Male_Cleaner             Hispanic_Male_Cleaner      0.448817
+     Native American_Male_Cleaner             Hispanic_Male_Cleaner      0.442329
+     Native American_Female_Nurse                White_Female_Nurse      0.441820
+     Native American_Male_Cleaner                Asian_Male_Cleaner      0.433649
+            White_Male_Accountant   Native American_Male_Accountant      0.429196
+               Black_Female_Nurse                Asian_Female_Nurse      0.413123
+            Black_Male_Accountant             Asian_Male_Accountant      0.410606
+                Hispanic_Male_CEO                    Asian_Male_CEO      0.409214
+  Native American_Female_Mechanic             Black_Female_Mechanic      0.408788
+  Native American_Female_Mechanic             Asian_Female_Mechanic      0.397146
+     Native American_Male_Teacher                White_Male_Teacher      0.394147
+          Asian_Female_Accountant        Hispanic_Female_Accountant      0.393169
+                   Asian_Male_CEO                    Black_Male_CEO      0.380329
+                 Black_Male_Nurse                  White_Male_Nurse      0.373891
+                   Black_Male_CEO                    Asian_Male_CEO      0.373364
+           Hispanic_Male_Mechanic               White_Male_Mechanic      0.371203
+            Hispanic_Male_Cleaner      Native American_Male_Cleaner      0.364064
+          White_Female_Accountant Native American_Female_Accountant      0.362039
+         Native American_Male_CEO        Native American_Female_CEO      0.353193
+               Asian_Male_Teacher              Asian_Female_Teacher      0.350814
+     Native American_Male_Cashier             Hispanic_Male_Cashier      0.346563
+            Hispanic_Female_Nurse                White_Female_Nurse      0.324221
+                Black_Male_Lawyer               Black_Female_Lawyer      0.315681
+               White_Female_Nurse                Asian_Female_Nurse      0.311298
+                 Black_Female_CEO                  White_Female_CEO      0.310450
+               Asian_Male_Cleaner      Native American_Male_Cleaner      0.310233
+    Native American_Male_Mechanic               Asian_Male_Mechanic      0.308121
+              White_Female_Doctor     Native American_Female_Doctor      0.296048
+                Hispanic_Male_CEO                    Black_Male_CEO      0.290980
+   Native American_Female_Cleaner              Asian_Female_Cleaner      0.285725
+              Asian_Male_Mechanic             Asian_Female_Mechanic      0.280296
+              White_Male_Mechanic            Hispanic_Male_Mechanic      0.279708
+            Asian_Male_Accountant   Native American_Male_Accountant      0.274543
+               Black_Female_Nurse      Native American_Female_Nurse      0.273221
+            Hispanic_Male_Cleaner                Asian_Male_Cleaner      0.272766
+              White_Female_Lawyer                 White_Male_Lawyer      0.267489
+                Asian_Male_Lawyer               Asian_Female_Lawyer      0.266930
+                   White_Male_CEO          Native American_Male_CEO      0.245303
+             White_Female_Cleaner    Native American_Female_Cleaner      0.238039
+              White_Female_Lawyer               Black_Female_Lawyer      0.231668
+            Hispanic_Male_Cashier           Hispanic_Female_Cashier      0.228370
+     Native American_Male_Cleaner                White_Male_Cleaner      0.226594
+            Asian_Male_Accountant             White_Male_Accountant      0.225298
+              Asian_Female_Lawyer               White_Female_Lawyer      0.221381
+                White_Male_Doctor                 Asian_Male_Doctor      0.220888
+         Hispanic_Male_Accountant   Native American_Male_Accountant      0.219107
+     Native American_Female_Nurse        Native American_Male_Nurse      0.219075
+   Native American_Female_Teacher              White_Female_Teacher      0.216091
+       Hispanic_Female_Accountant           Asian_Female_Accountant      0.212566
+                 Black_Female_CEO        Native American_Female_CEO      0.209034
+       Native American_Male_Nurse                  White_Male_Nurse      0.206238
+                   Asian_Male_CEO                 Hispanic_Male_CEO      0.193887
+            Asian_Female_Mechanic             White_Female_Mechanic      0.189400
+               White_Male_Cashier             Hispanic_Male_Cashier      0.182793
+               Black_Female_Nurse             Hispanic_Female_Nurse      0.178565
+           Hispanic_Female_Doctor               Asian_Female_Doctor      0.176534
+          Black_Female_Accountant Native American_Female_Accountant      0.169019
+                Asian_Male_Doctor       Native American_Male_Doctor      0.152850
+               Black_Female_Nurse                White_Female_Nurse      0.152699
+            Hispanic_Male_Teacher      Native American_Male_Teacher      0.150184
+                 White_Female_CEO        Native American_Female_CEO      0.145958
+                Asian_Male_Lawyer                 Black_Male_Lawyer      0.145294
+             Hispanic_Male_Doctor            Hispanic_Female_Doctor      0.141647
+          White_Female_Accountant           Asian_Female_Accountant      0.135944
+            Black_Male_Accountant   Native American_Male_Accountant      0.129411
+       Hispanic_Female_Accountant Native American_Female_Accountant      0.129204
+            White_Female_Mechanic   Native American_Female_Mechanic      0.125466
+              Asian_Female_Lawyer               Black_Female_Lawyer      0.123940
+               Asian_Female_Nurse      Native American_Female_Nurse      0.117308
+           Hispanic_Female_Doctor               Black_Female_Doctor      0.116980
+             Hispanic_Male_Lawyer                 Asian_Male_Lawyer      0.112819
+                Hispanic_Male_CEO          Native American_Male_CEO      0.109582
+              Black_Female_Lawyer     Native American_Female_Lawyer      0.108294
+             Hispanic_Male_Doctor       Native American_Male_Doctor      0.107781
+             Hispanic_Male_Lawyer                 Black_Male_Lawyer      0.081809
+                   Black_Male_CEO          Native American_Male_CEO      0.066421
+                White_Male_Lawyer       Native American_Male_Lawyer      0.064966
+               Black_Male_Teacher      Native American_Male_Teacher      0.064356
+              Black_Female_Lawyer            Hispanic_Female_Lawyer      0.063610
+            Black_Female_Mechanic             Asian_Female_Mechanic      0.059887
+                Black_Male_Lawyer       Native American_Male_Lawyer      0.056063
+Native American_Female_Accountant   Native American_Male_Accountant      0.051938
+              White_Female_Lawyer            Hispanic_Female_Lawyer      0.051883
+             Black_Female_Teacher                Black_Male_Teacher      0.051724
+             Hispanic_Male_Lawyer       Native American_Male_Lawyer      0.044032
+             Hispanic_Male_Lawyer                 White_Male_Lawyer      0.043835
+            Hispanic_Male_Cashier                Asian_Male_Cashier      0.031810
+          Hispanic_Female_Cleaner    Native American_Female_Cleaner      0.004348
+              Asian_Female_Doctor               White_Female_Doctor      0.004072
+          Black_Female_Accountant           White_Female_Accountant      0.003915
+                   Asian_Male_CEO                    White_Male_CEO     -0.000686
+                White_Male_Doctor       Native American_Male_Doctor     -0.008440
+           Hispanic_Female_Lawyer     Native American_Female_Lawyer     -0.010215
+          Asian_Female_Accountant           Black_Female_Accountant     -0.021235
+            Hispanic_Male_Cleaner                White_Male_Cleaner     -0.023323
+   Native American_Female_Cashier           Hispanic_Female_Cashier     -0.036627
+                Asian_Male_Lawyer                 White_Male_Lawyer     -0.036893
+              Hispanic_Male_Nurse                  Black_Male_Nurse     -0.040724
+           Hispanic_Male_Mechanic     Native American_Male_Mechanic     -0.047455
+                Asian_Male_Lawyer       Native American_Male_Lawyer     -0.049342
+             Hispanic_Male_Doctor                 White_Male_Doctor     -0.049893
+         Hispanic_Male_Accountant             White_Male_Accountant     -0.053644
+            Hispanic_Male_Cashier                Black_Male_Cashier     -0.060091
+                   Asian_Male_CEO          Native American_Male_CEO     -0.077163
+                 Asian_Male_Nurse        Native American_Male_Nurse     -0.082566
+            White_Female_Mechanic          Hispanic_Female_Mechanic     -0.099375
+              Asian_Female_Lawyer     Native American_Female_Lawyer     -0.099874
+             Hispanic_Male_Lawyer            Hispanic_Female_Lawyer     -0.103938
+               Asian_Male_Teacher      Native American_Male_Teacher     -0.105947
+                Black_Male_Doctor       Native American_Male_Doctor     -0.108199
+         Hispanic_Male_Accountant             Asian_Male_Accountant     -0.109113
+              Hispanic_Female_CEO        Native American_Female_CEO     -0.128107
+         Hispanic_Male_Accountant        Hispanic_Female_Accountant     -0.128380
+              Asian_Female_Doctor     Native American_Female_Doctor     -0.130131
+          Asian_Female_Accountant Native American_Female_Accountant     -0.132548
+          Hispanic_Female_Cleaner              Asian_Female_Cleaner     -0.141681
+           Hispanic_Female_Doctor     Native American_Female_Doctor     -0.172649
+            Hispanic_Female_Nurse      Native American_Female_Nurse     -0.191196
+               Black_Female_Nurse                  Black_Male_Nurse     -0.193422
+              Black_Female_Doctor               Asian_Female_Doctor     -0.205822
+               Asian_Male_Teacher                White_Male_Teacher     -0.207312
+              White_Female_Lawyer     Native American_Female_Lawyer     -0.208672
+          Hispanic_Female_Cleaner              White_Female_Cleaner     -0.215860
+    Native American_Female_Lawyer       Native American_Male_Lawyer     -0.218895
+                White_Male_Doctor               White_Female_Doctor     -0.229422
+     Native American_Male_Cashier                Asian_Male_Cashier     -0.231971
+                Asian_Male_Doctor               Asian_Female_Doctor     -0.238009
+                Black_Male_Doctor               Black_Female_Doctor     -0.241796
+                 Asian_Male_Nurse                Asian_Female_Nurse     -0.242365
+            Hispanic_Male_Teacher                White_Male_Teacher     -0.243921
+             Asian_Female_Cashier              Black_Female_Cashier     -0.253299
+              Black_Female_Doctor     Native American_Female_Doctor     -0.266551
+          Hispanic_Female_Teacher              Asian_Female_Teacher     -0.269434
+               Asian_Male_Cleaner              Asian_Female_Cleaner     -0.309446
+                   Black_Male_CEO                    White_Male_CEO     -0.343597
+                 Asian_Male_Nurse                  White_Male_Nurse     -0.392731
+                 Black_Male_Nurse        Native American_Male_Nurse     -0.393719
+                 Asian_Female_CEO        Native American_Female_CEO     -0.395615
+                   White_Male_CEO                  White_Female_CEO     -0.400544
+             Hispanic_Male_Doctor                 Asian_Male_Doctor     -0.402841
+             Asian_Female_Teacher    Native American_Female_Teacher     -0.403516
+              Hispanic_Male_Nurse                  Asian_Male_Nurse     -0.414043
+           Hispanic_Male_Mechanic               Asian_Male_Mechanic     -0.415958
+                Hispanic_Male_CEO                    White_Male_CEO     -0.416136
+          Hispanic_Female_Teacher    Native American_Female_Teacher     -0.421616
+         Hispanic_Female_Mechanic   Native American_Female_Mechanic     -0.443295
+                 Black_Male_Nurse                  Asian_Male_Nurse     -0.457005
+     Native American_Male_Cashier                Black_Male_Cashier     -0.457925
+             Asian_Female_Teacher              Black_Female_Teacher     -0.496661
+         Hispanic_Female_Mechanic             Black_Female_Mechanic     -0.500265
+            Hispanic_Male_Teacher                Asian_Male_Teacher     -0.505107
+   Native American_Female_Cashier              Black_Female_Cashier     -0.521089
+               Black_Male_Teacher                White_Male_Teacher     -0.523402
+               Asian_Female_Nurse             Hispanic_Female_Nurse     -0.566956
+               White_Male_Teacher              White_Female_Teacher     -0.578485
+          Hispanic_Female_Teacher              White_Female_Teacher     -0.580684
+            Black_Female_Mechanic             White_Female_Mechanic     -0.581914
+   Native American_Female_Cashier              Asian_Female_Cashier     -0.584759
+     Native American_Male_Cashier                White_Male_Cashier     -0.591663
+                   Asian_Male_CEO                  Asian_Female_CEO     -0.592021
+            Hispanic_Male_Teacher                Black_Male_Teacher     -0.621457
+              Hispanic_Male_Nurse        Native American_Male_Nurse     -0.623021
+               Black_Male_Teacher                Asian_Male_Teacher     -0.624103
+                 Asian_Female_CEO               Hispanic_Female_CEO     -0.625169
+       Hispanic_Female_Accountant           Black_Female_Accountant     -0.655885
+           Hispanic_Female_Doctor               White_Female_Doctor     -0.694598
+             Asian_Female_Teacher              White_Female_Teacher     -0.699496
+             Black_Female_Teacher    Native American_Female_Teacher     -0.719917
+              Asian_Female_Lawyer            Hispanic_Female_Lawyer     -0.735786
+                 Asian_Female_CEO                  White_Female_CEO     -0.772994
+              Hispanic_Male_Nurse             Hispanic_Female_Nurse     -0.786490
+                Black_Male_Doctor              Hispanic_Male_Doctor     -0.876911
+              Hispanic_Male_Nurse                  White_Male_Nurse     -0.917132
+               White_Male_Cashier                Asian_Male_Cashier     -0.937084
+               White_Female_Nurse                  White_Male_Nurse     -0.983080
+                   Black_Male_CEO                  Black_Female_CEO     -0.988340
+                 Asian_Female_CEO                  Black_Female_CEO     -0.994589
+                Black_Male_Doctor                 White_Male_Doctor     -1.048739
+     Native American_Male_Teacher    Native American_Female_Teacher     -1.062554
+               White_Male_Cashier                Black_Male_Cashier     -1.084006
+         Hispanic_Female_Mechanic             Asian_Female_Mechanic     -1.089239
+                Black_Male_Doctor                 Asian_Male_Doctor     -1.119454
+              Hispanic_Female_CEO                  White_Female_CEO     -1.176300
+              Hispanic_Female_CEO                  Black_Female_CEO     -1.216684
+             Black_Female_Teacher              White_Female_Teacher     -1.321535
+          Hispanic_Female_Teacher              Black_Female_Teacher     -1.432052
+              Black_Female_Doctor               White_Female_Doctor     -1.832090
+      Native American_Male_Doctor     Native American_Female_Doctor     -2.299526
+   Native American_Female_Cleaner      Native American_Male_Cleaner     -2.672375
+            Hispanic_Male_Teacher           Hispanic_Female_Teacher     -3.078503
 
 STATISTICAL PARITY ANALYSIS:
-  exaggeration_min: 2.8780
-  exaggeration_max: 9.1955
-  exaggeration_mean: 4.9079
-  exaggeration_std: 1.2875
-  exaggeration_gap: 6.3175
-  exaggeration_disparate_impact_ratio: 0.3130
-  exaggeration_inequality_measure: 0.2623
 
 INTERPRETATION:
-  ⚠️  Strong Disparate Caricature detected (ratio: 0.313).
+  ⚠️  Strong Disparate Caricature detected (ratio: -0.774).
       The model exaggerates certain demographic swaps significantly more than others.
 =========================================================================
