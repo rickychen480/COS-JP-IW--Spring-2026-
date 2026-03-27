@@ -214,7 +214,7 @@ if __name__ == "__main__":
         logger.info(f"Saved paired intersectional performance to {perf_path}")
 
         logger.info("5. Measuring Intersectional Exaggeration...")
-        exag_df = ie.measure_exaggeration(df)
+        exag_df = ie.measure_exaggeration(df, emb_dict, metric="fighting_words")
         if not exag_df.empty:
             exag_path = output_dir / "exaggeration_intersectional.csv"
             exag_df.to_csv(exag_path, index=False)

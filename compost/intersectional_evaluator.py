@@ -281,6 +281,103 @@ class IntersectionalEvaluator:
     def measure_exaggeration(
         self,
         df: pd.DataFrame,
+        emb_dict: Dict[str, np.ndarray],
+        metric: str = "mahalanobis"
+    ) -> pd.DataFrame:
+        
+        if metric == "mahalanobis":
+            return self.measure_exaggeration_mahalanobis(df)
+        elif metric == "fighting_words":
+            return self.measure_exaggeration_fighting_words(df, emb_dict)
+        else:
+            logger.warning(f"Metric strategy {metric} not recognized! Using Mahalanobis Distance")
+            return self.measure_exaggeration_mahalanobis(df)
+
+
+    def measure_exaggeration_fighting_words(
+        self,
+        df: pd.DataFrame,
+        emb_dict: Dict[str, np.ndarray],
+        default_topic: str = "general_comment",
+    ) -> pd.DataFrame:
+        exag_scores = []
+        unique_groups = df["intersectional_id"].unique()
+
+        # Get DIRECTED pairwise comparisons (A vs B is different from B vs A for exaggeration vectors)
+        pairs = self._get_valid_pairs(unique_groups, directed=True)
+
+        for cohort_id, control in pairs:
+            sub_df = df[df["intersectional_id"].isin([cohort_id, control])]
+            
+            df_persona_pole = sub_df[(sub_df["intersectional_id"] == cohort_id) & (sub_df["topic"] == default_topic)]
+            df_topic_pole = sub_df[(sub_df["intersectional_id"] == control) & (sub_df["topic"] == default_topic)]
+            df_target = sub_df[(sub_df["intersectional_id"] == cohort_id) & (sub_df["topic"] != default_topic)]
+            df_background = sub_df
+
+            if df_persona_pole.empty or df_topic_pole.empty or df_target.empty:
+                continue
+
+            persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, df_background)
+            topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, df_background)
+
+            # Print the top 20 seed words
+            logger.info(f"Target Cohort ({cohort_id}) Seed Words: {persona_seed_words[:20]}")
+            logger.info(f"Control Cohort ({control}) Seed Words: {topic_seed_words[:20]}")
+
+            if not persona_seed_words or not topic_seed_words:
+                continue
+
+            def get_pole_embedding(target_df, seed_words):
+                patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
+                embs = []
+                for sents in target_df["sentences"]:
+                    for s in sents:
+                        clean_s = re.sub(r"[^a-zA-Z\s]", "", s.lower())
+                        if any(p.search(clean_s) for p in patterns):
+                            embs.append(emb_dict[s])
+                if not embs:
+                    return None
+                return np.mean(embs, axis=0)
+
+            p_pole = get_pole_embedding(df_persona_pole, persona_seed_words)
+            t_pole = get_pole_embedding(df_topic_pole, topic_seed_words)
+            
+            if p_pole is None or t_pole is None:
+                continue
+
+            axis_v = p_pole - t_pole
+            axis_norm = np.linalg.norm(axis_v)
+            if axis_norm < 1e-8:
+                continue
+            axis_v = axis_v / axis_norm
+
+            def cos_sim(a, b):
+                denom = np.linalg.norm(a) * np.linalg.norm(b) + 1e-8
+                return np.dot(a, b) / denom
+
+            target_sims = [cos_sim(emb_dict[s], axis_v) for s in df_target["sentences"].explode()]
+            mean_target = np.mean(target_sims)
+            default_p_sims = [cos_sim(emb_dict[s], axis_v) for s in df_persona_pole["sentences"].explode()]
+            mean_dp = np.mean(default_p_sims)
+
+            mean_t_pole = np.mean([cos_sim(emb_dict[s], axis_v) for s in df_topic_pole["sentences"].explode()])
+
+            # add small epsilon to denominator to guard against near-zero values
+            denominator = (mean_t_pole - mean_dp) + 1e-6
+            exag_score = (mean_target - mean_dp) / denominator
+            
+            exag_scores.append({
+                "intersectional_id": cohort_id, 
+                "control_id": control, 
+                "exaggeration": exag_score
+            })
+
+        return pd.DataFrame(exag_scores)
+
+
+    def measure_exaggeration_mahalanobis(
+        self,
+        df: pd.DataFrame,
     ) -> pd.DataFrame:
         """
         Computes the relative semantic distance (caricature/exaggeration) by calculating 
