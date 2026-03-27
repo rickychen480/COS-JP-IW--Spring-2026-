@@ -70,7 +70,7 @@ class RepresentationalEvaluator:
         # If the persona vocabulary heavily overlaps the topic vocabulary, the distance 
         # is statistically insignificant. Steering should collapse to 0.0 to prevent 
         # artificially massive inflated values.
-        if abs(denominator) < 1e-4:
+        if abs(denominator) < 1e-7:
             return {'implicit_steering': 0.0, 'explicit_steering': 0.0, 'delta_steering': 0.0}
         
         # Normalize the projections so 0 is neutral and 1 is full persona caricature
