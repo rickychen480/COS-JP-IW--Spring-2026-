@@ -207,6 +207,9 @@ class ScenarioDisjointValidator:
         
         return self.cv_results
     
+
+    ##### DEBUG FUNCTIONS #####
+    
     def per_scenario_performance(
         self,
         X: np.ndarray,

@@ -158,6 +158,41 @@ class IntersectionalEvaluator:
 
     def _get_valid_pairs(self, unique_groups: np.ndarray, directed: bool = False) -> List[Tuple[str, str]]:
         """
+        Pairs each intersectional target persona with its exact 
+        'Unmarked_Unmarked_[Occupation]' baseline for CoMPosT evaluation.
+        """
+        pairs = []
+        unique_groups_set = set(unique_groups)
+        
+        for g in unique_groups:
+            parts = g.split('_')
+            
+            # Ensure proper format
+            if len(parts) != 3: 
+                continue
+                
+            race, gender, occupation = parts
+            
+            # Skip if this IS the control group
+            if race == "Unmarked" and gender == "Unmarked":
+                continue
+                
+            # Define the pure control for this specific occupation
+            control_group = f"Unmarked_Unmarked_{occupation}"
+            
+            # Only add the pair if the control group actually exists in the data
+            if control_group in unique_groups_set:
+                if directed:
+                    pairs.append((g, control_group))
+                else:
+                    # For undirected (Individuation), sort to avoid duplicates if 
+                    # called iteratively, though (target, control) is generally fine
+                    pairs.append((g, control_group))
+                
+        return pairs
+
+    def _legacy_get_valid_pairs(self, unique_groups: np.ndarray, directed: bool = False) -> List[Tuple[str, str]]:
+        """
         Generates pairwise comparisons that isolate exactly ONE axis of variation.
         (e.g., Hispanic_Male_Nurse vs White_Male_Nurse).
         """
