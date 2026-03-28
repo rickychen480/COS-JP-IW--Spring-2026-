@@ -88,7 +88,7 @@ Black_Male_Doctor,Black_Female_Doctor,296,296,0.5739224137931034,0.5566893329993
 Black_Male_Doctor,Asian_Male_Doctor,296,298,0.6086133839859732,0.6053961686335578
 Black_Male_Doctor,Hispanic_Male_Doctor,296,298,0.6762201627192861,0.6712380430541411
 Black_Male_Doctor,Native American_Male_Doctor,296,296,0.6638469827586208,0.6603932440364326
-Black_Male_Lawyer,Black_Female_Lawyer,296,296,0.6179418103448275,0.6153218105213994
+Black_Male_Lawyer,Black_Female_Lawyer,296,296,0.6162176724137931,0.6134815398618343
 Black_Male_Lawyer,Asian_Male_Lawyer,296,298,0.6012816231109627,0.5947239387367989
 Black_Male_Lawyer,Hispanic_Male_Lawyer,296,296,0.7180470902563247,0.7152765922951956
 Black_Male_Lawyer,Native American_Male_Lawyer,296,298,0.6561149610828162,0.6486486021484528
@@ -139,7 +139,7 @@ Black_Female_Cleaner,Hispanic_Female_Cleaner,296,298,0.692529953243717,0.6910175
 Black_Female_Cleaner,Native American_Female_Cleaner,296,296,0.5972521551724139,0.5913743074653961
 Black_Female_Mechanic,Asian_Female_Mechanic,296,296,0.6460201497314297,0.6382393063981201
 Black_Female_Mechanic,Hispanic_Female_Mechanic,296,298,0.7071851256575102,0.7052744380659505
-Black_Female_Mechanic,Native American_Female_Mechanic,296,298,0.6168503520636776,0.6119983346034793
+Black_Female_Mechanic,Native American_Female_Mechanic,296,298,0.6134020762016087,0.608688970859607
 Black_Female_Cashier,Asian_Female_Cashier,298,296,0.6485242548217417,0.6438684285737303
 Black_Female_Cashier,Hispanic_Female_Cashier,298,296,0.680108170289351,0.672910369082815
 Black_Female_Cashier,Native American_Female_Cashier,298,298,0.6223681326709526,0.6172237937840702
@@ -161,7 +161,7 @@ Asian_Male_Teacher,Native American_Male_Teacher,296,298,0.6603777030976037,0.654
 Asian_Male_Accountant,Asian_Female_Accountant,296,296,0.5939295687103987,0.5810695229041618
 Asian_Male_Accountant,Hispanic_Male_Accountant,296,296,0.6804956896551724,0.6717997504208362
 Asian_Male_Accountant,Native American_Male_Accountant,296,298,0.6519725306838107,0.6485627049251677
-Asian_Male_Cleaner,Asian_Female_Cleaner,298,296,0.6682285578609,0.6612883024544629
+Asian_Male_Cleaner,Asian_Female_Cleaner,298,296,0.6699526957919345,0.6630790879473273
 Asian_Male_Cleaner,Hispanic_Male_Cleaner,298,298,0.7472293249561661,0.7456766453191468
 Asian_Male_Cleaner,Native American_Male_Cleaner,298,298,0.6805678331385154,0.6752527566982842
 Asian_Male_Mechanic,Asian_Female_Mechanic,296,296,0.5990301724137932,0.5951592895980267

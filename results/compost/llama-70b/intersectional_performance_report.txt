@@ -130,8 +130,8 @@ RELATIVE SEMANTIC DISTANCES ACROSS GROUPS:
        Hispanic_Female_Mechanic   Native American_Female_Mechanic       298        298  0.673806  0.668107
          Hispanic_Male_Mechanic     Native American_Male_Mechanic       296        298  0.666298  0.665257
           Hispanic_Female_Nurse      Native American_Female_Nurse       296        296  0.673114  0.663729
+             Asian_Male_Cleaner              Asian_Female_Cleaner       298        296  0.669953  0.663079
                Black_Female_CEO        Native American_Female_CEO       298        296  0.664511  0.662367
-             Asian_Male_Cleaner              Asian_Female_Cleaner       298        296  0.668229  0.661288
            Asian_Female_Cleaner    Native American_Female_Cleaner       296        296  0.667942  0.660846
             White_Female_Doctor               Black_Female_Doctor       296        296  0.668043  0.660735
               Black_Male_Doctor       Native American_Male_Doctor       296        296  0.663847  0.660393
@@ -174,12 +174,12 @@ RELATIVE SEMANTIC DISTANCES ACROSS GROUPS:
            Black_Female_Cashier    Native American_Female_Cashier       298        298  0.622368  0.617224
            Black_Female_Teacher           Hispanic_Female_Teacher       296        298  0.622981  0.615543
                  Black_Male_CEO                    Asian_Male_CEO       296        296  0.625960  0.615439
-              Black_Male_Lawyer               Black_Female_Lawyer       296        296  0.617942  0.615322
             White_Male_Mechanic             White_Female_Mechanic       296        296  0.616433  0.613753
+              Black_Male_Lawyer               Black_Female_Lawyer       296        296  0.616218  0.613482
    Native American_Male_Teacher    Native American_Female_Teacher       298        298  0.615869  0.612912
            Asian_Female_Teacher    Native American_Female_Teacher       296        298  0.616621  0.612227
-          Black_Female_Mechanic   Native American_Female_Mechanic       296        298  0.616850  0.611998
              White_Male_Cleaner              White_Female_Cleaner       298        296  0.623381  0.609271
+          Black_Female_Mechanic   Native American_Female_Mechanic       296        298  0.613402  0.608689
              Black_Female_Nurse      Native American_Female_Nurse       296        296  0.617026  0.608372
             Black_Male_Mechanic     Native American_Male_Mechanic       296        298  0.615339  0.607648
              Black_Male_Teacher              Black_Female_Teacher       296        296  0.617745  0.607423
