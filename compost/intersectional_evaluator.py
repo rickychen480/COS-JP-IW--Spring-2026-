@@ -317,7 +317,7 @@ class IntersectionalEvaluator:
         self,
         df: pd.DataFrame,
         emb_dict: Dict[str, np.ndarray],
-        metric: str = "mahalanobis"
+        metric: str = "fighting_words"
     ) -> pd.DataFrame:
         
         if metric == "mahalanobis":
