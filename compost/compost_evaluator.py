@@ -39,7 +39,7 @@ from sentence_transformers import SentenceTransformer
 from concurrent.futures import ProcessPoolExecutor
 import logging
 
-from compost.intersectional_evaluator import IntersectionalEvaluator
+from intersectional_evaluator import IntersectionalEvaluator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
