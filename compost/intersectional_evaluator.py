@@ -188,7 +188,23 @@ class IntersectionalEvaluator:
         )
         return df
 
-    def _get_valid_pairs(self, unique_groups: np.ndarray, directed: bool = False) -> List[Tuple[str, str]]:
+    def _get_valid_pairs(
+        self, 
+        unique_groups: np.ndarray, 
+        directed: bool = False, 
+        baseline: str = "unmarked",
+    ) -> List[Tuple[str, str]]:
+        """Pairs each intersectional target persona with its control baseline. """
+
+        if baseline == "unmarked":
+            return self._get_valid_unmarked_pairs(unique_groups, directed)
+        elif baseline == "pairwise":
+            return self._get_valid_pairwise_pairs(unique_groups, directed)
+        else:
+            logger.warning(f"Baseline {baseline} does not exist. Using 'Unmarked' baseline.")
+            return self._get_valid_unmarked_pairs(unique_groups, directed)
+
+    def _get_valid_unmarked_pairs(self, unique_groups: np.ndarray, directed: bool = False) -> List[Tuple[str, str]]:
         """
         Pairs each intersectional target persona with its exact 
         'Unmarked_Unmarked_[Occupation]' baseline for CoMPosT evaluation.
@@ -223,7 +239,7 @@ class IntersectionalEvaluator:
                 
         return pairs
 
-    def _legacy_get_valid_pairs(self, unique_groups: np.ndarray, directed: bool = False) -> List[Tuple[str, str]]:
+    def _get_valid_pairwise_pairs(self, unique_groups: np.ndarray, directed: bool = False) -> List[Tuple[str, str]]:
         """
         Generates pairwise comparisons that isolate exactly ONE axis of variation.
         (e.g., Hispanic_Male_Nurse vs White_Male_Nurse).
