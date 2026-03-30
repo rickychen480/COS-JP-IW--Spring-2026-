@@ -22,9 +22,6 @@ conda activate ./env
 #   --data data/transcripts/Llama-3.1-8B-Instruct/control_simulations.json \
 #         data/transcripts/Llama-3.1-8B-Instruct/default_topics.json \
 #         data/transcripts/Llama-3.1-8B-Instruct/target_simulations_masked.json \
-#   --enable-semantic-masking \
-#   --cv-strategy GroupKFold \
-#   --enable-intersectional-eval \
 #   --output-dir results/compost/llama-8b
 
 echo "Running CoMPosT on Llama 70B Transcripts..."
@@ -32,8 +29,6 @@ python compost/compost_evaluator.py \
   --data data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations.json \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_masked.json \
-  --cv-strategy GroupKFold \
-  --enable-intersectional-eval \
   --output-dir results/compost/llama-70b
 
 echo "CoMPosT complete!"

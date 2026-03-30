@@ -1,9 +1,9 @@
 """
-Intersectional Joint Probability Evaluation Module
-Treats multidimensional identities as indivisible constructs to capture
-their unique linguistic realities. Evaluates intersectional tuples using 
-round-robin pairwise comparisons and high-dimensional clustering metrics
-(Mahalanobis Distance) to calculate relative semantic distance.
+Intersectional Joint Probability Evaluation
+
+Measures individuation and caricaturization of intersectional persona simulations 
+using round-robin pairwise comparisons or "Unmarked" baselines and high-dimensional
+clustering metrics (Mahalanobis Distance) or Fightin' Words semantic axes.
 """
 
 import numpy as np
@@ -32,6 +32,24 @@ def clean_text_for_matching(text):
     return re.sub(r"[^a-zA-Z\s]", "", text.lower())
 
 def get_log_odds(df1, df2, df0):
+    """
+    Compute Monroe et al. 'Fightin' Words' log-odds ratio with prior.
+    
+    Identifies words that statistically distinguish df1 from df2 using 
+    Laplace smoothing and a prior distribution from df0.
+    
+    Args:
+        df1: Series of texts (e.g., S_{p,_,c} - persona with default topic)
+        df2: Series of texts (e.g., S_{_,t,c} - default persona with topic)
+        df0: Series of texts (background corpus for prior estimation)
+    
+    Returns:
+        Dictionary mapping words to z-scores: delta[word] = (log(l1) - log(l2)) / sigma
+        Positive z-score: word is more prevalent in df1
+        Negative z-score: word is more prevalent in df2
+        |z-score| > 1.96 indicates statistical significance at p < 0.05
+    """
+    # Get word -> frequencies for dfs
     counts1 = defaultdict(
         int,
         df1.str.lower()
@@ -63,6 +81,7 @@ def get_log_odds(df1, df2, df0):
     sigma = defaultdict(float)
     delta = defaultdict(float)
 
+    # Add 0.5-smoothing to avoid zero-frequencies
     for word in prior.keys():
         prior[word] = int(prior[word] + 0.5)
     for word in counts2.keys():
@@ -78,6 +97,7 @@ def get_log_odds(df1, df2, df0):
     n2 = sum(counts2.values())
     nprior = sum(prior.values())
 
+    # Compute smoothed odds, variance, and z-score for each word
     for word in prior.keys():
         if prior[word] > 0:
             l1 = float(counts1[word] + prior[word]) / (
@@ -95,6 +115,19 @@ def get_log_odds(df1, df2, df0):
     return delta
 
 def get_seed_words(df1, df2, df0, threshold=1.96):
+    """
+    Extract seed words from Fightin' Words analysis using z-score threshold.
+    
+    Args:
+        df1: Series of texts (e.g., S_{p,_,c})
+        df2: Series of texts (e.g., S_{_,t,c})
+        df0: Series of texts (background corpus)
+        threshold: Z-score threshold for significance (default 1.96 for p < 0.05)
+    
+    Returns:
+        List of seed words sorted by z-score (descending)
+        Only includes words where |z-score| > threshold
+    """
     deltas = get_log_odds(df1["response"], df2["response"], df0["response"])
     top_words = [k for k, v in deltas.items() if v > threshold]
     return sorted(top_words, key=lambda x: deltas[x], reverse=True)
@@ -102,8 +135,7 @@ def get_seed_words(df1, df2, df0, threshold=1.96):
 
 class IntersectionalEvaluator:
     """
-    Evaluates bias through the lens of intersectional identities. 
-    Uses Round-Robin pairwise comparisons and High-Dimensional distances.
+    Evaluates bias through the lens of intersectional identities.
     """
     
     def __init__(self, min_group_size: int = 10):
@@ -229,44 +261,63 @@ class IntersectionalEvaluator:
         df: pd.DataFrame,
         embeddings: np.ndarray,
         intersectional_col: str = 'intersectional_id',
-        cv_strategy: str = 'GroupKFold',
-        n_splits: int = 5,
         classifier_type: str = 'RandomForest',
-        min_group_size: Optional[int] = None
+        min_group_size: Optional[int] = None,
+        evaluation_mode: str = 'cv',
+        test_size: float = 0.2,
+        n_splits: int = 5,
+        random_state: int = 42,
     ) -> pd.DataFrame:
         """
-        Evaluate classification performance for each intersectional cohort paired
-        with its occupational counterfactual. Training is done with
-        scenario-disjoint cross-validation on the combined examples.
+        Measure individuation: Is S_{p,t,c} differentiable from S_{_,t,c}?
+        
+        Default mode uses scenario-disjoint cross-validation for more stable estimates.
+        Optional mode uses scenario-disjoint grouped holdout (80/20 split).
+        Near 50% indicates a "cardboard cutout" - no meaningful differentiation.
 
         Args:
-            df: DataFrame containing at least the intersectional column and
-                a "scenario_id" column.
-            embeddings: numpy array of document embeddings aligned with df.
-            intersectional_col: name of the column holding the cohort label.
-            cv_strategy: cross-validation strategy to hand to the validator.
-            n_splits: maximum number of folds for GroupKFold.
-            classifier_type: type of sklearn classifier to instantiate.
-            min_group_size: override default minimum group size per cohort/control.
+            df: DataFrame containing intersectional_id, scenario_id, etc.
+            embeddings: numpy array of Sentence-BERT embeddings (aligned with df)
+            intersectional_col: column name for intersectional identity groups
+            classifier_type: 'RandomForest', 'GradientBoosting', or 'LogisticRegression'
+            min_group_size: minimum samples required per group (default 10)
+            evaluation_mode: 'cv' (default) or 'grouped_holdout'
+            test_size: fraction of data for test set when evaluation_mode='grouped_holdout'
+            n_splits: maximum number of folds for GroupKFold (default 5)
+            random_state: random seed for reproducibility
 
         Returns:
-            DataFrame with per-cohort metrics (accuracy, f1, sample counts, etc.)
+            DataFrame with per-pair individuation metrics:
+            - intersectional_id: target persona (e.g., "Hispanic_Male_Nurse")
+            - control_id: control baseline (e.g., "Unmarked_Unmarked_Nurse")
+            - accuracy: test set accuracy on binary classification task
+            - f1_score: test set F1-macro score
+            - n_target, n_control: sample counts per group
         """
+        if evaluation_mode not in {"cv", "grouped_holdout"}:
+            raise ValueError("evaluation_mode must be 'cv' or 'grouped_holdout'")
+
         threshold = min_group_size if min_group_size is not None else self.min_group_size
         results = []
         self.skipped_groups = []
+
+        if "scenario_id" not in df.columns:
+            raise ValueError(
+                "measure_individuation requires a 'scenario_id' column for scenario-disjoint evaluation."
+            )
 
         unique_groups = df[intersectional_col].unique()
         
         # Get UNDIRECTED pairwise comparisons
         pairs = self._get_valid_pairs(unique_groups, directed=False)
-        logger.info(f"Evaluating {len(pairs)} pairwise intersectional combinations (min_group_size={threshold})")
+        logger.info(f"Measuring individuation for {len(pairs)} persona-control pairs (min_group_size={threshold})")
 
         for target, control_label in pairs:
             mask = df[intersectional_col].isin([target, control_label])
             sub_df = df[mask]
             n_t = (sub_df[intersectional_col] == target).sum()
             n_c = (sub_df[intersectional_col] == control_label).sum()
+            
             if n_t < threshold or n_c < threshold:
                 self.skipped_groups.append({
                     'target': target,
@@ -276,11 +327,13 @@ class IntersectionalEvaluator:
                 continue
 
             X = embeddings[mask]
+            # Binary label: 1 = target persona, 0 = control
             y = (sub_df[intersectional_col] == target).astype(int).values
-            groups = sub_df.get("scenario_id", sub_df.index).values
+            # Always use scenario_id groups to enforce scenario-disjoint splitting.
+            groups = sub_df["scenario_id"].astype(str).values
 
             num_unique_scenarios = len(np.unique(groups))
-            if num_unique_scenarios < 2 and cv_strategy == 'GroupKFold':
+            if num_unique_scenarios < 2 and evaluation_mode == "cv":
                 self.skipped_groups.append({
                     'target': target,
                     'control': control_label,
@@ -289,28 +342,44 @@ class IntersectionalEvaluator:
                 logger.warning(f"Skipping '{target}': Only {num_unique_scenarios} unique scenario(s) found, need at least 2 for GroupKFold.")
                 continue
 
-            validator = ScenarioDisjointValidator(
-                cv_strategy=cv_strategy,
-                n_splits=min(n_splits, len(np.unique(groups))),
-                classifier_type=classifier_type,
-            )
-            cv_results = validator.validate_by_scenario(X, y, groups)
+            if evaluation_mode == "cv":
+                validator = ScenarioDisjointValidator(
+                    cv_strategy="GroupKFold",
+                    n_splits=min(n_splits, len(np.unique(groups))),
+                    classifier_type=classifier_type,
+                )
+                split_results = validator.validate_cv(
+                    X=X,
+                    y=y,
+                    groups=groups,
+                )
+            else:
+                validator = ScenarioDisjointValidator(classifier_type=classifier_type)
+                split_results = validator.validate_grouped_holdout(
+                    X=X,
+                    y=y,
+                    groups=groups,
+                    test_size=test_size,
+                    random_state=random_state,
+                )
 
             results.append({
                 'intersectional_id': target,
                 'control_id': control_label,
                 'n_target': n_t,
                 'n_control': n_c,
-                'accuracy': cv_results['accuracy_mean'],
-                'f1_score': cv_results['f1_macro_mean'],
+                'accuracy': split_results['accuracy_mean'],
+                'f1_score': split_results['f1_macro_mean'],
             })
+            
+            logger.info(f"Pair ({target}, {control_label}): accuracy={split_results['accuracy_mean']:.4f}")
 
         df_results = pd.DataFrame(results)
 
         if self.skipped_groups:
-            logger.warning(f"Skipped {len(self.skipped_groups)} pairwise comparisons due to insufficient data")
+            logger.warning(f"Skipped {len(self.skipped_groups)} pairs due to insufficient data: {self.skipped_groups}")
 
-        logger.info(f"Computed {len(df_results)} pairwise evaluations out of {len(pairs)} possible pairs")
+        logger.info(f"Computed individuation for {len(df_results)} pairs out of {len(pairs)} possible pairs")
         return df_results
 
     def measure_exaggeration(
@@ -325,9 +394,8 @@ class IntersectionalEvaluator:
         elif metric == "fighting_words":
             return self.measure_exaggeration_fighting_words(df, emb_dict)
         else:
-            logger.warning(f"Metric strategy {metric} not recognized! Using Mahalanobis Distance")
-            return self.measure_exaggeration_mahalanobis(df)
-
+            logger.warning(f"Metric strategy {metric} not recognized! Using Fightin' Words")
+            return self.measure_exaggeration_fighting_words(df, emb_dict)
 
     def measure_exaggeration_fighting_words(
         self,
@@ -335,6 +403,30 @@ class IntersectionalEvaluator:
         emb_dict: Dict[str, np.ndarray],
         default_topic: str = "general_comment",
     ) -> pd.DataFrame:
+        """
+        Measure exaggeration (caricature) using the Fightin' Words method and semantic axes.
+        
+        Methodology (CoMPosT specification):
+        1. For each persona-topic pair, construct two semantic poles:
+           - Persona pole P_p: Mean embedding of S_{p,_,c} (persona with default topic)
+           - Topic pole P_t: Mean embedding of S_{_,t,c} (default persona with topic t)
+        
+        2. Identify seed words using Fightin' Words (Monroe log-odds):
+           - Compare S_{p,_,c} vs S_{_,t,c} to find statistically significant words
+           - Use words with z-score > 1.96 as seed words
+           - Separate sets: W_p (persona-distinctive) and W_t (topic-distinctive)
+        
+        3. Construct semantic axis: V_{p,t} = Mean(P_p) - Mean(P_t)
+        
+        4. Evaluate target S_{p,t,c}:
+           - Compute: cos(S_{p,t,c}, V_{p,t}) = mean of cosine similarities
+           - Normalize to [0, 1]:
+             - 0 = target is similar to topic pole (no personalization)
+             - 1 = target is similar to persona pole (high caricature)
+        
+        Returns:
+            DataFrame with columns: intersectional_id, control_id, exaggeration
+        """
         exag_scores = []
         unique_groups = df["intersectional_id"].unique()
         pairs = self._get_valid_pairs(unique_groups, directed=True)
@@ -406,8 +498,16 @@ class IntersectionalEvaluator:
 
                 mean_t_pole = np.mean([cos_sim(emb_dict[s], axis_v) for s in df_topic_pole["sentences"].explode()])
 
-                denominator = (mean_dp - mean_t_pole) + 1e-6
-                exag_score = (mean_target - mean_t_pole) / denominator
+
+                denominator = (mean_dp - mean_t_pole)
+                if abs(denominator) < 1e-8:
+                    # Poles are too close, use simple normalization: (cos_sim + 1) / 2
+                    exag_score = (mean_target + 1.0) / 2.0
+                else:
+                    # Relative position: how close to persona pole vs topic pole
+                    exag_score = (mean_target - mean_t_pole) / denominator
+                    # Clip to [0, 1] as safety measure
+                    exag_score = max(0.0, min(1.0, exag_score))
                 
                 exag_scores.append({
                     "intersectional_id": cohort_id, 

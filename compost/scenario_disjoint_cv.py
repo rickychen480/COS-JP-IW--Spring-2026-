@@ -1,26 +1,29 @@
 """
 Scenario-Disjoint Cross-Validation Module
-Implements GroupKFold and LeaveOneGroupOut cross-validation to prevent data leakage.
+Implements both:
+1. Scenario-disjoint cross-validation (GroupKFold, LeaveOneGroupOut) to prevent data leakage
+2. Scenario-disjoint grouped 80/20 split for individuation measurement
 
-The key insight: train the classifier on personas navigating Scenarios A, B, C
-and test exclusively on unseen Scenario D. If accuracy drops to 50% (random chance),
+For individuation (CoMPosT bias audit), uses a scenario-disjoint 80/20 split to measure if S_{p,t,c}
+is differentiable from S_{_,t,c} based on test set accuracy alone.
+
+For cross-validation, trains the classifier on personas navigating Scenarios A, B, C
+and tests exclusively on unseen Scenario D. If accuracy drops to 50% (random chance),
 the model was memorizing prompts rather than learning stylistic patterns.
 """
 
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import (
-    GridSearchCV,
     GroupKFold, 
+    GroupShuffleSplit,
     LeaveOneGroupOut, 
-    cross_val_score, 
-    cross_val_predict,
     cross_validate
 )
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, classification_report
-from typing import Dict, List, Tuple, Optional, Any
+from sklearn.metrics import accuracy_score, f1_score
+from typing import Dict, Optional, Any
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -95,36 +98,107 @@ class ScenarioDisjointValidator:
         else:
             raise ValueError(f"Unknown classifier type: {self.classifier_type}")
     
-    def validate_by_scenario(
+    def validate_grouped_holdout(
         self,
         X: np.ndarray,
         y: np.ndarray,
         groups: np.ndarray,
-        scenario_ids: Optional[np.ndarray] = None
+        test_size: float = 0.2,
+        random_state: int = 42,
+    ) -> Dict[str, Any]:
+        """Run one scenario-disjoint grouped holdout split (default 80/20)."""
+        if len(X) != len(y) or len(X) != len(groups):
+            raise ValueError("X, y, and groups must have the same length")
+
+        groups = np.asarray(groups)
+        unique_groups = np.unique(groups)
+        if len(unique_groups) < 2:
+            raise ValueError(
+                "Cannot perform group-disjoint holdout with fewer than 2 unique groups."
+            )
+
+        logger.info(
+            f"Starting grouped holdout ({1.0 - test_size:.0%}/{test_size:.0%}) with "
+            f"{self.classifier_type}; samples={len(X)}, unique_groups={len(unique_groups)}"
+        )
+
+        split_found = False
+        for offset in range(20):
+            gss = GroupShuffleSplit(
+                n_splits=1,
+                test_size=test_size,
+                random_state=random_state + offset,
+            )
+            train_idx, test_idx = next(gss.split(X, y, groups=groups))
+            y_train = y[train_idx]
+            y_test = y[test_idx]
+            if len(np.unique(y_train)) > 1 and len(np.unique(y_test)) > 1:
+                split_found = True
+                break
+
+        if not split_found:
+            raise ValueError(
+                "Unable to find a group-disjoint split with both classes in train and test. "
+                "Try more data, different group balance, or scenario-disjoint CV."
+            )
+
+        X_train, X_test = X[train_idx], X[test_idx]
+        clf = self._get_classifier()
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+
+        test_accuracy = accuracy_score(y_test, y_pred)
+        test_f1_macro = f1_score(y_test, y_pred, average='macro', zero_division=0)
+        test_f1_weighted = f1_score(y_test, y_pred, average='weighted', zero_division=0)
+        train_accuracy = accuracy_score(y_train, clf.predict(X_train))
+
+        self.cv_results = {
+            'accuracy_mean': test_accuracy,
+            'accuracy_std': 0.0,
+            'f1_macro_mean': test_f1_macro,
+            'f1_macro_std': 0.0,
+            'f1_weighted_mean': test_f1_weighted,
+            'f1_weighted_std': 0.0,
+            'train_accuracy_mean': train_accuracy,
+            'raw_cv_results': None,
+            'evaluation_mode': 'grouped_holdout',
+            'n_train': len(X_train),
+            'n_test': len(X_test),
+        }
+        self.fold_results = [
+            {
+                'fold': 0,
+                'train_accuracy': train_accuracy,
+                'test_accuracy': test_accuracy,
+                'test_f1_macro': test_f1_macro,
+                'test_f1_weighted': test_f1_weighted,
+            }
+        ]
+        return self.cv_results
+
+    def validate_cv(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+        groups: np.ndarray,
     ) -> Dict[str, Any]:
         """
-        Perform scenario-disjoint cross-validation.
+        Run scenario-disjoint cross-validation (GroupKFold or LeaveOneGroupOut).
         
         Args:
             X: Feature matrix (embeddings)
             y: Target labels
             groups: Group IDs (scenario_id) for GroupKFold
-            scenario_ids: Optional scenario IDs for per-scenario reporting
             
         Returns:
-            Dictionary with cross-validation results including accuracy, F1, and per-fold metrics
+            Dictionary with evaluation results including accuracy and F1
         """
-        # Validate inputs
         if len(X) != len(y) or len(X) != len(groups):
             raise ValueError("X, y, and groups must have the same length")
-        
+
         logger.info(f"Starting {self.cv_strategy} cross-validation with {self.classifier_type}")
         logger.info(f"Total samples: {len(X)}, Unique groups: {len(np.unique(groups))}")
         
-        # adjust GroupKFold splits if there are fewer unique groups than
-        # the configured number of folds; otherwise sklearn will raise an
-        # exception.  we don't mutate self.n_splits permanently, just use a
-        # local splitter.
         if self.cv_strategy == "GroupKFold":
             unique_groups = np.unique(groups)
             n_groups = len(unique_groups)
@@ -158,9 +232,6 @@ class ScenarioDisjointValidator:
             return_train_score=True,
             n_jobs=-1
         )
-        
-        # Get predictions for per-fold analysis
-        y_pred = cross_val_predict(self.classifier, X, y, groups=groups, cv=cv)
         
         # Store results
         self.cv_results = {
@@ -206,10 +277,9 @@ class ScenarioDisjointValidator:
             logger.warning("Model may be unable to distinguish patterns beyond memorization.")
         
         return self.cv_results
-    
+
 
     ##### DEBUG FUNCTIONS #####
-    
     def per_scenario_performance(
         self,
         X: np.ndarray,
@@ -275,7 +345,7 @@ class ScenarioDisjointValidator:
     def get_summary_report(self) -> str:
         """Generate a human-readable summary of cross-validation results."""
         if not self.cv_results:
-            return "No cross-validation results available. Run validate_by_scenario first."
+            return "No cross-validation results available. Run validation first."
         
         report = f"""
 ================== SCENARIO-DISJOINT CROSS-VALIDATION REPORT ==================
