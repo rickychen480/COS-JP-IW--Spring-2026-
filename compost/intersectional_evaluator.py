@@ -49,68 +49,62 @@ def get_log_odds(df1, df2, df0):
         Negative z-score: word is more prevalent in df2
         |z-score| > 1.96 indicates statistical significance at p < 0.05
     """
-    # Get word -> frequencies for dfs
-    counts1 = defaultdict(
-        int,
-        df1.str.lower()
-        .str.split(expand=True)
-        .stack()
-        .replace(r"[^a-zA-Z\s]", "", regex=True)
-        .value_counts()
-        .to_dict(),
-    )
-    counts2 = defaultdict(
-        int,
-        df2.str.lower()
-        .str.split(expand=True)
-        .stack()
-        .replace(r"[^a-zA-Z\s]", "", regex=True)
-        .value_counts()
-        .to_dict(),
-    )
-    prior = defaultdict(
-        int,
-        df0.str.lower()
-        .str.split(expand=True)
-        .stack()
-        .replace(r"[^a-zA-Z\s]", "", regex=True)
-        .value_counts()
-        .to_dict(),
-    )
+    def _word_counts(text_series: pd.Series) -> Dict[str, float]:
+        if text_series is None or text_series.empty:
+            return {}
 
-    sigma = defaultdict(float)
+        tokens = (
+            text_series.astype(str)
+            .str.lower()
+            .str.replace(r"[^a-zA-Z\s]", " ", regex=True)
+            .str.split()
+            .explode()
+        )
+        tokens = tokens[tokens.notna() & tokens.str.fullmatch(r"[a-zA-Z]{2,}")]
+        if tokens.empty:
+            return {}
+        return tokens.value_counts().astype(float).to_dict()
+
+    # Get word->frequency maps for df1/df2 and prior corpus.
+    counts1_raw = _word_counts(df1)
+    counts2_raw = _word_counts(df2)
+    prior_raw = _word_counts(df0)
+
+    vocab = set(counts1_raw) | set(counts2_raw) | set(prior_raw)
+    if not vocab:
+        return {}
+
+    # Additive smoothing with prior (Monroe et al.).
+    prior = defaultdict(float, {w: prior_raw.get(w, 0.0) + 0.5 for w in vocab})
+    counts1 = defaultdict(float, {w: counts1_raw.get(w, 0.0) + 0.5 for w in vocab})
+    counts2 = defaultdict(float, {w: counts2_raw.get(w, 0.0) + 0.5 for w in vocab})
+
     delta = defaultdict(float)
 
-    # Add 0.5-smoothing to avoid zero-frequencies
-    for word in prior.keys():
-        prior[word] = int(prior[word] + 0.5)
-    for word in counts2.keys():
-        counts1[word] = int(counts1[word] + 0.5)
-        if prior[word] == 0:
-            prior[word] = 1
-    for word in counts1.keys():
-        counts2[word] = int(counts2[word] + 0.5)
-        if prior[word] == 0:
-            prior[word] = 1
+    n1 = float(sum(counts1.values()))
+    n2 = float(sum(counts2.values()))
+    nprior = float(sum(prior.values()))
 
-    n1 = sum(counts1.values())
-    n2 = sum(counts2.values())
-    nprior = sum(prior.values())
+    # Compute smoothed odds, variance, and z-score for each word.
+    for word in vocab:
+        c1 = counts1[word]
+        c2 = counts2[word]
+        p = prior[word]
 
-    # Compute smoothed odds, variance, and z-score for each word
-    for word in prior.keys():
-        if prior[word] > 0:
-            l1 = float(counts1[word] + prior[word]) / (
-                (n1 + nprior) - (counts1[word] + prior[word])
-            )
-            l2 = float(counts2[word] + prior[word]) / (
-                (n2 + nprior) - (counts2[word] + prior[word])
-            )
-            sigmasquared = 1 / (float(counts1[word]) + float(prior[word])) + 1 / (
-                float(counts2[word]) + float(prior[word])
-            )
-            sigma[word] = math.sqrt(sigmasquared)
-            delta[word] = (math.log(l1) - math.log(l2)) / sigma[word]
+        num1 = c1 + p
+        den1 = (n1 + nprior) - num1
+        num2 = c2 + p
+        den2 = (n2 + nprior) - num2
+        if den1 <= 0 or den2 <= 0:
+            continue
+
+        l1 = num1 / den1
+        l2 = num2 / den2
+        sigmasquared = (1.0 / (c1 + p)) + (1.0 / (c2 + p))
+        if sigmasquared <= 0:
+            continue
+
+        delta[word] = (math.log(l1) - math.log(l2)) / math.sqrt(sigmasquared)
 
     return delta
 
