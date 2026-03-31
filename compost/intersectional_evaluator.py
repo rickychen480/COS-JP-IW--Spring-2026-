@@ -189,7 +189,7 @@ class IntersectionalEvaluator:
         self, 
         unique_groups: np.ndarray, 
         directed: bool = False, 
-        baseline: str = "unmarked",
+        baseline: str = "pairwise",
     ) -> List[Tuple[str, str]]:
         """Pairs each intersectional target persona with its control baseline. """
 
@@ -453,10 +453,7 @@ class IntersectionalEvaluator:
             pair_df = df[df["intersectional_id"].isin([cohort_id, control])]
 
             if "variant_type" in pair_df.columns:
-                variants = [
-                    v for v in pair_df["variant_type"].dropna().unique()
-                    if v != "default_topic"
-                ]
+                variants = [v for v in pair_df["variant_type"].dropna().unique() if v != "default_topic"]
                 if not variants:
                     variants = ["implicit"]
             else:
@@ -464,26 +461,19 @@ class IntersectionalEvaluator:
 
             for variant in variants:
                 if "variant_type" in pair_df.columns:
-                    variant_df = pair_df[
-                        (pair_df["variant_type"] == variant) |
-                        (pair_df["variant_type"] == "default_topic") |
-                        (pair_df["topic"] == default_topic)
-                    ]
+                    variant_df = pair_df[(pair_df["variant_type"] == variant)].copy()
                 else:
                     variant_df = pair_df.copy()
 
-                scenario_ids = variant_df[
-                    (variant_df["intersectional_id"] == cohort_id) &
-                    (variant_df["topic"] != default_topic)
-                ]["scenario_id"].dropna().unique()
+                topics = variant_df[(variant_df["intersectional_id"] == cohort_id)]["topic"].dropna().unique()
 
-                for scenario_id in scenario_ids:
+                for topic_id in topics:
                     axis_v, topic_pole_sim, persona_pole_sim = self.get_fightin_words_poles(
                         df,
                         cohort_id,
                         control,
                         variant_type=variant,
-                        target_topic_id=scenario_id,
+                        target_topic_id=str(topic_id),
                         default_topic=default_topic,
                     )
 
@@ -496,8 +486,7 @@ class IntersectionalEvaluator:
 
                     df_target = variant_df[
                         (variant_df["intersectional_id"] == cohort_id) &
-                        (variant_df["scenario_id"] == scenario_id) &
-                        (variant_df["topic"] != default_topic)
+                        (variant_df["topic"] == topic_id)
                     ]
                     if df_target.empty:
                         continue
@@ -507,18 +496,16 @@ class IntersectionalEvaluator:
 
                     denominator = persona_pole_sim - topic_pole_sim
                     if abs(denominator) < 1e-8:
-                        continue
+                        exag_score = (mean_target + 1.0) / 2.0
+                    else:
+                        exag_score = (mean_target - topic_pole_sim) / denominator
+                        exag_score = max(0.0, min(1.0, exag_score))
 
-                    exag_score = (mean_target - topic_pole_sim) / denominator
-                    exag_score = max(0.0, min(1.0, exag_score)) # Clip for interpretability
-
-                    topic_value = df_target["topic"].iloc[0] if "topic" in df_target.columns else str(scenario_id)
                     exag_scores.append({
                         "intersectional_id": cohort_id,
                         "control_id": control,
                         "variant_type": variant,
-                        "scenario_id": scenario_id,
-                        "topic": topic_value,
+                        "topic": topic_id,
                         "exaggeration": exag_score,
                     })
 
@@ -693,12 +680,11 @@ class IntersectionalEvaluator:
     ) -> Tuple[np.ndarray, float, float]:
         """
         Compute CoMPosT statistical poles for a given intersectional pair, optionally
-        restricted to a single scenario (target_topic_id), using a restricted background
-        corpus of a specific variant type (implicit or explicit).
+        restricted to a single topic or scenario (target_topic_id), using data from a
+        single variant type.
 
-        - Persona pole: target identity on default topic (S_{p,_,c})
-        - Topic pole: control identity on the target scenario/topic (S_{_,t,c})
-        - Background prior: persona pole + topic pole + target scenario rows
+        This path is designed to be called separately for implicit and explicit
+        variants to avoid variant contamination.
 
         Args:
             df: Full dataframe with all transcripts.
@@ -713,11 +699,10 @@ class IntersectionalEvaluator:
             topic_pole_sim: Mean cosine similarity of control examples to axis_v.
             persona_pole_sim: Mean cosine similarity of target examples to axis_v.
         """
-        # Keep the requested variant plus default-topic rows used for persona poles.
+        # Filter to the requested variant; keep default-topic rows as baseline anchors.
         if 'variant_type' in df.columns:
             df_variant = df[
                 (df['variant_type'] == variant_type) |
-                (df['variant_type'] == 'default_topic') |
                 (df['topic'] == default_topic)
             ].copy()
         else:
@@ -726,11 +711,19 @@ class IntersectionalEvaluator:
         # Restrict to just the two identity groups
         sub_df = df_variant[df_variant["intersectional_id"].isin([target_id, control_id])].copy()
 
-        # Further restrict to a specific scenario if provided (per-topic analysis)
+        # Restrict to a specific scenario or topic if requested.
         if target_topic_id is not None:
-            sub_df = sub_df[
-                (sub_df["scenario_id"] == target_topic_id) | (sub_df["topic"] == default_topic)
-            ].copy()
+            if "scenario_id" in sub_df.columns:
+                sub_df = sub_df[
+                    (sub_df["scenario_id"].astype(str) == str(target_topic_id)) |
+                    (sub_df["topic"].astype(str) == str(target_topic_id)) |
+                    (sub_df["topic"] == default_topic)
+                ].copy()
+            else:
+                sub_df = sub_df[
+                    (sub_df["topic"].astype(str) == str(target_topic_id)) |
+                    (sub_df["topic"] == default_topic)
+                ].copy()
 
         if "masked_text" in sub_df.columns:
             sub_df["response"] = sub_df["masked_text"].fillna("").astype(str)
@@ -743,30 +736,15 @@ class IntersectionalEvaluator:
                 "Dataframe must contain one of: 'masked_text', 'target_text', or 'response'."
             )
 
-        # Persona pole is always default-topic text from the target identity.
-        df_persona_pole = sub_df[(sub_df["intersectional_id"] == target_id) & (sub_df["topic"] == default_topic)]
-
-        # Topic pole is control identity on the target scenario/topic.
-        if target_topic_id is not None:
-            df_topic_pole = sub_df[
-                (sub_df["intersectional_id"] == control_id) &
-                (sub_df["scenario_id"] == target_topic_id) &
-                (sub_df["topic"] != default_topic)
-            ]
-            df_target = sub_df[
-                (sub_df["intersectional_id"] == target_id) &
-                (sub_df["scenario_id"] == target_topic_id) &
-                (sub_df["topic"] != default_topic)
-            ]
-        else:
-            df_topic_pole = sub_df[
-                (sub_df["intersectional_id"] == control_id) &
-                (sub_df["topic"] != default_topic)
-            ]
-            df_target = sub_df[
-                (sub_df["intersectional_id"] == target_id) &
-                (sub_df["topic"] != default_topic)
-            ]
+        # Both poles are built from default-topic rows to keep identity-only contrast.
+        df_persona_pole = sub_df[
+            (sub_df["intersectional_id"] == target_id) &
+            (sub_df["topic"] == default_topic)
+        ]
+        df_topic_pole = sub_df[
+            (sub_df["intersectional_id"] == control_id) &
+            (sub_df["topic"] == default_topic)
+        ]
 
         if not sub_df.empty:
             emb_dim = len(sub_df.iloc[0]['embedding'])
@@ -777,9 +755,9 @@ class IntersectionalEvaluator:
             # Insufficient data for this scenario/variant combination
             return np.zeros(emb_dim), np.nan, np.nan
 
-        df_background = pd.concat([df_persona_pole, df_topic_pole, df_target], ignore_index=True)
-        persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, df_background)
-        topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, df_background)
+        # Use in-scope pair data as the Monroe prior without target leakage from held-out rows.
+        persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, sub_df)
+        topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, sub_df)
 
         # Print the top 20 seed words
         logger.info(f"Target Cohort ({target_id}, scenario={target_topic_id}) Seed Words: {persona_seed_words[:20]}")
