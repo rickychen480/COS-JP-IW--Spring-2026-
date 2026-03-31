@@ -180,7 +180,7 @@ class IntersectionalEvaluator:
         self, 
         unique_groups: np.ndarray, 
         directed: bool = False, 
-        baseline: str = "pairwise",
+        baseline: str = "unmarked",
     ) -> List[Tuple[str, str]]:
         """Pairs each intersectional target persona with its control baseline. """
 
@@ -458,7 +458,7 @@ class IntersectionalEvaluator:
                     continue
 
                 # Prior distribution: persona on default, control on topic, and target
-                df_background = pd.concat([df_persona_pole, df_topic_pole, df_target])
+                df_background = pd.concat([df_persona_pole, df_topic_pole])
 
                 persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, df_background)
                 topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, df_background)
