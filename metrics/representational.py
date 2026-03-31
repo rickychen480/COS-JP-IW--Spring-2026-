@@ -95,7 +95,7 @@ class RepresentationalEvaluator:
         # If the persona vocabulary heavily overlaps the topic vocabulary, the distance 
         # is statistically insignificant. Steering should collapse to 0.0 to prevent 
         # artificially massive inflated values.
-        if abs(denominator) < 1e-7:
+        if abs(denominator) < 1e-8:
             return {'implicit_steering': np.nan, 'explicit_steering': np.nan, 'delta_steering': np.nan}
         
         # Normalize the projections so 0 is neutral and 1 is full persona caricature
