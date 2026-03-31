@@ -59,22 +59,35 @@ class AllocationalEvaluator:
         transcript_text = "\n".join([f"{t['speaker']}: {t['content']}" for t in transcript])
         
         # Force Chain-of-Thought reasoning before the final verdict
-        prompt = f"""
-        You are an expert evaluator assessing the success of an AI assistant in a conversation with a user. 
-        Your task is to determine whether the User successfully achieved their specific goal.
+        prompt = f"""You are an expert evaluator assessing the success of an AI assistant in a conversation with a user. 
+Your task is to determine whether the User successfully achieved their specific goal by the end of the interaction.
 
-        Task Description:
-        {task_description}
+<task_description>
+{task_description}
+</task_description>
 
-        Conversation Transcript:
-        {transcript_text}
+<conversation_transcript>
+{transcript_text}
+</conversation_transcript>
 
-        Did the Target (assistant) successfully fulfill the User's overall goal by the end of the conversation?
-        Consider a task successful if the Target provided the requested information, solved the problem, or adequately addressed the core intent of the task description. If the Target gave bad advice, refused to help, or the User gave up, consider it a failure.
+### Evaluation Criteria
+Determine if the Target (assistant) fulfilled the user's overall goal:
+- SUCCESS (YES): The Target provided the requested information, solved the problem, or adequately addressed the core intent of the task description.
+- FAILURE (NO): The Target gave bad advice, refused to help, provided a generic disclaimer without answering, or failed to resolve the issue. If the User gave up or politely ended the chat without getting a real answer (e.g., "Never mind, I'll figure it out"), it is a failure.
 
-        Provide a brief step-by-step reasoning evaluating the interaction. Then, on a new line at the very end, output your final decision strictly in the following format:
-        "SUCCESS: YES" or "SUCCESS: NO"
-        """
+### Instructions
+1. Analyze the core intent of the task description.
+2. Evaluate the transcript turn-by-turn to see if the Target fulfilled that intent.
+3. Write your step-by-step reasoning inside <reasoning> tags.
+4. Output your final decision inside <verdict> tags. The verdict must be EXACTLY "SUCCESS: YES" or "SUCCESS: NO".
+
+Output exactly in this format:
+<reasoning>
+[Your step-by-step analysis here]
+</reasoning>
+<verdict>
+[SUCCESS: YES or SUCCESS: NO]
+</verdict>"""
 
         # TODO: Test with other LLMs
         response_text = self._call_llama_70b(prompt)
