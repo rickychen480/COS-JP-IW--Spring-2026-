@@ -195,6 +195,11 @@ def main(args):
 
         exp_atcs_raw = [alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(explicit_df['transcript'], exp_success_list)]
         explicit_atc = nanmean([x for x in exp_atcs_raw if x is not None])
+
+        # Rejection diagnostics (count of refusal-like turns per dialogue).
+        implicit_rejection_counts = [alloc_eval.calculate_rejection_rate(t) for t in implicit_df['transcript']]
+        explicit_rejection_counts = [alloc_eval.calculate_rejection_rate(t) for t in explicit_df['transcript']]
+        d_rejection_count = nanmean(explicit_rejection_counts) - nanmean(implicit_rejection_counts)
         
         # --- REPRESENTATIONAL METRICS (CONFIDENCE) ---
         # Compute confidence per dialogue first to avoid over-weighting longer outputs.
@@ -214,11 +219,6 @@ def main(args):
         implicit_scenario_conf = implicit_df.groupby('scenario_id', dropna=False)['dialogue_confidence'].mean()
         explicit_scenario_conf = explicit_df.groupby('scenario_id', dropna=False)['dialogue_confidence'].mean()
         d_ccd_paired = paired_delta(explicit_scenario_conf, implicit_scenario_conf)
-
-        # Rejection diagnostics (count of refusal-like turns per dialogue).
-        implicit_rejection_counts = [alloc_eval.calculate_rejection_rate(t) for t in implicit_df['transcript']]
-        explicit_rejection_counts = [alloc_eval.calculate_rejection_rate(t) for t in explicit_df['transcript']]
-        d_rejection_count = nanmean(explicit_rejection_counts) - nanmean(implicit_rejection_counts)
         
         # --- SEMANTIC STEERING (CoMPosT INTEGRATION) ---
         # Dynamically define the counterfactual to extract the exact CoMPosT axis
