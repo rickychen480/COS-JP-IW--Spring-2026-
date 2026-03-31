@@ -74,7 +74,7 @@ def get_log_odds(df1, df2, df0):
     if not vocab:
         return {}
 
-    # Additive smoothing with prior (Monroe et al.).
+    # Strict floating-point additive smoothing
     prior = defaultdict(float, {w: prior_raw.get(w, 0.0) + 0.5 for w in vocab})
     counts1 = defaultdict(float, {w: counts1_raw.get(w, 0.0) + 0.5 for w in vocab})
     counts2 = defaultdict(float, {w: counts2_raw.get(w, 0.0) + 0.5 for w in vocab})
@@ -87,24 +87,15 @@ def get_log_odds(df1, df2, df0):
 
     # Compute smoothed odds, variance, and z-score for each word.
     for word in vocab:
-        c1 = counts1[word]
-        c2 = counts2[word]
-        p = prior[word]
+        c1, c2, p = counts1[word], counts2[word], prior[word]
+        num1, num2 = c1 + p, c2 + p
+        den1, den2 = (n1 + nprior) - num1, (n2 + nprior) - num2
+        if den1 <= 0 or den2 <= 0: continue
 
-        num1 = c1 + p
-        den1 = (n1 + nprior) - num1
-        num2 = c2 + p
-        den2 = (n2 + nprior) - num2
-        if den1 <= 0 or den2 <= 0:
-            continue
-
-        l1 = num1 / den1
-        l2 = num2 / den2
+        l1, l2 = num1 / den1, num2 / den2
         sigmasquared = (1.0 / (c1 + p)) + (1.0 / (c2 + p))
-        if sigmasquared <= 0:
-            continue
-
-        delta[word] = (math.log(l1) - math.log(l2)) / math.sqrt(sigmasquared)
+        if sigmasquared > 0:
+            delta[word] = (math.log(l1) - math.log(l2)) / math.sqrt(sigmasquared)
 
     return delta
 
@@ -398,20 +389,22 @@ class IntersectionalEvaluator:
     def measure_exaggeration(
         self,
         df: pd.DataFrame,
+        emb_dict: Dict[str, np.ndarray],
         metric: str = "fighting_words"
     ) -> pd.DataFrame:
         
         if metric == "mahalanobis":
             return self.measure_exaggeration_mahalanobis(df)
         elif metric == "fighting_words":
-            return self.measure_exaggeration_fighting_words(df)
+            return self.measure_exaggeration_fighting_words(df, emb_dict)
         else:
             logger.warning(f"Metric strategy {metric} not recognized! Using Fightin' Words")
-            return self.measure_exaggeration_fighting_words(df)
+            return self.measure_exaggeration_fighting_words(df, emb_dict)
 
     def measure_exaggeration_fighting_words(
         self,
         df: pd.DataFrame,
+        emb_dict: Dict[str, np.ndarray],
         default_topic: str = "general_comment",
     ) -> pd.DataFrame:
         """
@@ -438,9 +431,6 @@ class IntersectionalEvaluator:
         Returns:
             DataFrame with columns: intersectional_id, control_id, exaggeration
         """
-        if "embedding" not in df.columns:
-            raise ValueError("measure_exaggeration_fighting_words requires an 'embedding' column.")
-
         exag_scores = []
         unique_groups = df["intersectional_id"].unique()
         pairs = self._get_valid_pairs(unique_groups, directed=True)
@@ -451,63 +441,84 @@ class IntersectionalEvaluator:
 
         for cohort_id, control in pairs:
             pair_df = df[df["intersectional_id"].isin([cohort_id, control])]
+            
+            # Get the persona pole (Sp,_,c) - This remains constant for the persona
+            df_persona_pole = pair_df[(pair_df["intersectional_id"] == cohort_id) & (pair_df["topic"] == default_topic)]
+            
+            # We evaluate caricature PER TOPIC
+            topics = pair_df[pair_df["topic"] != default_topic]["topic"].unique()
+            for t in topics:
+                # Topic pole (S_,t,c)
+                df_topic_pole = pair_df[(pair_df["intersectional_id"] == control) & (pair_df["topic"] == t)]
+                
+                # Target (Sp,t,c)
+                df_target = pair_df[(pair_df["intersectional_id"] == cohort_id) & (pair_df["topic"] == t)]
 
-            if "variant_type" in pair_df.columns:
-                variants = [v for v in pair_df["variant_type"].dropna().unique() if v != "default_topic"]
-                if not variants:
-                    variants = ["implicit"]
-            else:
-                variants = ["implicit"]
+                if df_persona_pole.empty or df_topic_pole.empty or df_target.empty:
+                    continue
 
-            for variant in variants:
-                if "variant_type" in pair_df.columns:
-                    variant_df = pair_df[(pair_df["variant_type"] == variant)].copy()
+                # Prior distribution: persona on default, control on topic, and target
+                df_background = pd.concat([df_persona_pole, df_topic_pole, df_target])
+
+                persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, df_background)
+                topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, df_background)
+
+                # Print the top 20 seed words
+                logger.info(f"Target Cohort ({cohort_id}) Seed Words: {persona_seed_words[:20]}")
+                logger.info(f"Control Cohort ({control}) Seed Words: {topic_seed_words[:20]}")
+
+                if not persona_seed_words or not topic_seed_words:
+                    continue
+
+                def get_pole_embedding(target_df, seed_words):
+                    patterns = [re.compile(rf"\b{re.escape(w)}\b") for w in seed_words]
+                    embs = []
+                    for sents in target_df["sentences"]:
+                        for s in sents:
+                            clean_s = re.sub(r"[^a-zA-Z\s]", "", s.lower())
+                            if any(p.search(clean_s) for p in patterns):
+                                embs.append(emb_dict[s])
+                    if not embs:
+                        return None
+                    return np.mean(embs, axis=0)
+
+                p_pole = get_pole_embedding(df_persona_pole, persona_seed_words)
+                t_pole = get_pole_embedding(df_topic_pole, topic_seed_words)
+                
+                if p_pole is None or t_pole is None:
+                    continue
+
+                axis_v = p_pole - t_pole
+                axis_norm = np.linalg.norm(axis_v)
+                if axis_norm < 1e-8:
+                    continue
+                axis_v = axis_v / axis_norm
+
+                target_sims = [cos_sim(emb_dict[s], axis_v) for s in df_target["sentences"].explode()]
+                mean_target = np.mean(target_sims)
+                
+                default_p_sims = [cos_sim(emb_dict[s], axis_v) for s in df_persona_pole["sentences"].explode()]
+                mean_dp = np.mean(default_p_sims)
+
+                mean_t_pole = np.mean([cos_sim(emb_dict[s], axis_v) for s in df_topic_pole["sentences"].explode()])
+
+
+                denominator = (mean_dp - mean_t_pole)
+                if abs(denominator) < 1e-8:
+                    # Poles are too close, use simple normalization: (cos_sim + 1) / 2
+                    exag_score = (mean_target + 1.0) / 2.0
                 else:
-                    variant_df = pair_df.copy()
-
-                topics = variant_df[(variant_df["intersectional_id"] == cohort_id)]["topic"].dropna().unique()
-
-                for topic_id in topics:
-                    axis_v, topic_pole_sim, persona_pole_sim = self.get_fightin_words_poles(
-                        df,
-                        cohort_id,
-                        control,
-                        variant_type=variant,
-                        target_topic_id=str(topic_id),
-                        default_topic=default_topic,
-                    )
-
-                    if not np.isfinite(topic_pole_sim) or not np.isfinite(persona_pole_sim):
-                        continue
-
-                    axis_norm = np.linalg.norm(axis_v)
-                    if axis_norm < 1e-8:
-                        continue
-
-                    df_target = variant_df[
-                        (variant_df["intersectional_id"] == cohort_id) &
-                        (variant_df["topic"] == topic_id)
-                    ]
-                    if df_target.empty:
-                        continue
-
-                    target_sims = [cos_sim(emb, axis_v) for emb in df_target["embedding"]]
-                    mean_target = float(np.mean(target_sims))
-
-                    denominator = persona_pole_sim - topic_pole_sim
-                    if abs(denominator) < 1e-8:
-                        exag_score = (mean_target + 1.0) / 2.0
-                    else:
-                        exag_score = (mean_target - topic_pole_sim) / denominator
-                        exag_score = max(0.0, min(1.0, exag_score))
-
-                    exag_scores.append({
-                        "intersectional_id": cohort_id,
-                        "control_id": control,
-                        "variant_type": variant,
-                        "topic": topic_id,
-                        "exaggeration": exag_score,
-                    })
+                    # Relative position: how close to persona pole vs topic pole
+                    exag_score = (mean_target - mean_t_pole) / denominator
+                    # Clip to [0, 1] as safety measure
+                    exag_score = max(0.0, min(1.0, exag_score))
+                
+                exag_scores.append({
+                    "intersectional_id": cohort_id, 
+                    "control_id": control, 
+                    "topic": t,               
+                    "exaggeration": exag_score
+                })
 
         res_df = pd.DataFrame(exag_scores)
         
