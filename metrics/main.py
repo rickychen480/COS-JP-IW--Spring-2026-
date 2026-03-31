@@ -14,7 +14,6 @@ import json
 import nltk
 import numpy as np
 import pandas as pd
-import re
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -32,9 +31,23 @@ from compost.intersectional_evaluator import IntersectionalEvaluator
 def get_document_embedding(text, model):
     sentences = sent_tokenize(text)
     if not sentences:
-        return np.zeros(768)
+        return np.zeros(model.get_sentence_embedding_dimension())
     sentence_embeddings = model.encode(sentences)
     return np.mean(sentence_embeddings, axis=0)
+
+
+def nanmean(values):
+    """Stable mean that ignores NaNs and returns NaN if nothing is valid."""
+    arr = np.array(values, dtype=float)
+    return float(np.nanmean(arr)) if np.isfinite(arr).any() else np.nan
+
+
+def paired_delta(explicit_series: pd.Series, implicit_series: pd.Series) -> float:
+    """Compute mean explicit-implicit delta on aligned keys only."""
+    paired = pd.concat([implicit_series, explicit_series], axis=1, keys=['implicit', 'explicit']).dropna()
+    if paired.empty:
+        return np.nan
+    return float((paired['explicit'] - paired['implicit']).mean())
 
 def load_all_transcripts(file_paths):
     data = []
@@ -107,13 +120,13 @@ def main(args):
     df['embedding'] = df['masked_text'].apply(lambda x: get_document_embedding(x, embedder))
 
     final_results = []
-    target_groups = [g for g in df['intersectional_id'].unique() if "Unmarked_Unmarked" not in g]
+    target_groups = sorted([g for g in df['intersectional_id'].unique() if "Unmarked_Unmarked" not in g])
     
     # Slice the target_groups based on the chunk index and total chunks
     if args.total_chunks > 1:
-        chunk_size = len(target_groups) // args.total_chunks
+        chunk_size = int(np.ceil(len(target_groups) / args.total_chunks))
         start_index = args.chunk_index * chunk_size
-        end_index = None if args.chunk_index == args.total_chunks - 1 else start_index + chunk_size
+        end_index = start_index + chunk_size
         target_groups = target_groups[start_index:end_index]
 
     print(f"Processing metrics for {len(target_groups)} intersectional groups...")
@@ -127,11 +140,14 @@ def main(args):
 
     def get_cached_judge(d_id, transcript, task_desc):
         """Fetches judgement from cache, or calls API and saves it so you never lose progress."""
-        if d_id in judge_cache:
-            return judge_cache[d_id]
+        cache_key = str(d_id)
+        if cache_key in judge_cache:
+            cached_value = judge_cache[cache_key]
+            if cached_value in (0, 1):
+                return cached_value
         
         score = alloc_eval.calculate_gcr_llm_judge(transcript, task_desc)
-        judge_cache[d_id] = score
+        judge_cache[cache_key] = score
         with open(CACHE_FILE, "w") as f:
             json.dump(judge_cache, f)
         return score
@@ -156,27 +172,53 @@ def main(args):
         
         exp_success_list = [get_cached_judge(d_id, t, m['task_description']) 
                             for d_id, t, m in zip(explicit_df['dialogue_id'], explicit_df['transcript'], explicit_df['metadata'])]
-        
-        implicit_gcr = np.mean(imp_success_list)
-        explicit_gcr = np.mean(exp_success_list)
+
+        implicit_df = implicit_df.copy()
+        explicit_df = explicit_df.copy()
+        implicit_df['success'] = imp_success_list
+        explicit_df['success'] = exp_success_list
+
+        implicit_gcr = nanmean(imp_success_list)
+        explicit_gcr = nanmean(exp_success_list)
 
         # Calculate Delta GCR (Explicit - Implicit)
         d_gcr = alloc_eval.calculate_d_gcr(implicit_gcr, explicit_gcr)
+
+        # Scenario-paired delta avoids composition bias from unequal scenario mixes.
+        implicit_scenario_success = implicit_df.groupby('scenario_id', dropna=False)['success'].mean()
+        explicit_scenario_success = explicit_df.groupby('scenario_id', dropna=False)['success'].mean()
+        d_gcr_paired = paired_delta(explicit_scenario_success, implicit_scenario_success)
         
-        # 2. Fix TypeError: Calculate ATC and filter out the 'None' values before passing to np.mean
+        # 2. ATC is computed over successful runs only.
         imp_atcs_raw = [alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(implicit_df['transcript'], imp_success_list)]
-        implicit_atc = np.mean([x for x in imp_atcs_raw if x is not None]) if any(x is not None for x in imp_atcs_raw) else np.nan
+        implicit_atc = nanmean([x for x in imp_atcs_raw if x is not None])
 
         exp_atcs_raw = [alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(explicit_df['transcript'], exp_success_list)]
-        explicit_atc = np.mean([x for x in exp_atcs_raw if x is not None]) if any(x is not None for x in exp_atcs_raw) else np.nan
+        explicit_atc = nanmean([x for x in exp_atcs_raw if x is not None])
         
         # --- REPRESENTATIONAL METRICS (CONFIDENCE) ---
-        # Flatten the logprobs arrays for the whole implicit/explicit subset
-        implicit_logprobs = [lp for sublist in implicit_df['target_logprobs'] for lp in sublist if lp]
-        explicit_logprobs = [lp for sublist in explicit_df['target_logprobs'] for lp in sublist if lp]
-        
-        # Calculate Delta CCD (Explicit - Implicit)
-        d_ccd = rep_eval.calculate_d_ccd(implicit_logprobs, explicit_logprobs)
+        # Compute confidence per dialogue first to avoid over-weighting longer outputs.
+        implicit_dialogue_conf = [
+            rep_eval.calculate_confidence(logprobs if isinstance(logprobs, list) else [])
+            for logprobs in implicit_df['target_logprobs']
+        ]
+        explicit_dialogue_conf = [
+            rep_eval.calculate_confidence(logprobs if isinstance(logprobs, list) else [])
+            for logprobs in explicit_df['target_logprobs']
+        ]
+
+        d_ccd = rep_eval.calculate_d_ccd(implicit_dialogue_conf, explicit_dialogue_conf)
+
+        implicit_df['dialogue_confidence'] = implicit_dialogue_conf
+        explicit_df['dialogue_confidence'] = explicit_dialogue_conf
+        implicit_scenario_conf = implicit_df.groupby('scenario_id', dropna=False)['dialogue_confidence'].mean()
+        explicit_scenario_conf = explicit_df.groupby('scenario_id', dropna=False)['dialogue_confidence'].mean()
+        d_ccd_paired = paired_delta(explicit_scenario_conf, implicit_scenario_conf)
+
+        # Rejection diagnostics (count of refusal-like turns per dialogue).
+        implicit_rejection_counts = [alloc_eval.calculate_rejection_rate(t) for t in implicit_df['transcript']]
+        explicit_rejection_counts = [alloc_eval.calculate_rejection_rate(t) for t in explicit_df['transcript']]
+        d_rejection_count = nanmean(explicit_rejection_counts) - nanmean(implicit_rejection_counts)
         
         # --- SEMANTIC STEERING (CoMPosT INTEGRATION) ---
         # Dynamically define the counterfactual to extract the exact CoMPosT axis
@@ -216,7 +258,8 @@ def main(args):
                             topic_pole_sim=imp_topic_pole_sim,
                             persona_pole_sim=imp_persona_pole_sim
                         )
-                        implicit_steerings.append(imp_steer_dict['implicit_steering'])
+                        if np.isfinite(imp_steer_dict['implicit_steering']):
+                            implicit_steerings.append(imp_steer_dict['implicit_steering'])
                     
                     # --- EXPLICIT STEERING FOR THIS SCENARIO ---
                     # Compute axis using ONLY explicit variant data
@@ -242,7 +285,8 @@ def main(args):
                             topic_pole_sim=exp_topic_pole_sim,
                             persona_pole_sim=exp_persona_pole_sim
                         )
-                        explicit_steerings.append(exp_steer_dict['explicit_steering'])
+                        if np.isfinite(exp_steer_dict['explicit_steering']):
+                            explicit_steerings.append(exp_steer_dict['explicit_steering'])
                     
                 except (ValueError, np.linalg.LinAlgError):
                     # Monroe log-odds failed or insufficient data for this scenario
@@ -265,9 +309,16 @@ def main(args):
             'implicit_GCR': implicit_gcr,
             'explicit_GCR': explicit_gcr,
             'd_GCR': d_gcr,
+            'd_GCR_paired_by_scenario': d_gcr_paired,
             'implicit_ATC': implicit_atc,
             'explicit_ATC': explicit_atc,
             'd_CCD': d_ccd,
+            'd_CCD_paired_by_scenario': d_ccd_paired,
+            'implicit_rejection_count': nanmean(implicit_rejection_counts),
+            'explicit_rejection_count': nanmean(explicit_rejection_counts),
+            'd_rejection_count': d_rejection_count,
+            'implicit_steering_n_valid': len(implicit_steerings),
+            'explicit_steering_n_valid': len(explicit_steerings),
             'implicit_Steering': steering_scores['implicit_steering'],
             'explicit_Steering': steering_scores['explicit_steering'],
             'delta_Steering': steering_scores['delta_steering']

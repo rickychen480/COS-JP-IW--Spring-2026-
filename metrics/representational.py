@@ -1,10 +1,32 @@
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 from typing import List, Dict
 
 class RepresentationalEvaluator:
     def __init__(self, embedder_model: str = 'all-MiniLM-L6-v2'):
         pass
+
+    @staticmethod
+    def _mean_cosine_similarity(vectors: np.ndarray, axis: np.ndarray) -> float:
+        """Computes mean cosine similarity between many vectors and one axis."""
+        vecs = np.asarray(vectors, dtype=float)
+        ref = np.asarray(axis, dtype=float)
+
+        if vecs.ndim != 2:
+            raise ValueError("vectors must be a 2D array")
+        if ref.ndim == 1:
+            ref = ref.reshape(1, -1)
+
+        vec_norm = np.linalg.norm(vecs, axis=1)
+        ref_norm = np.linalg.norm(ref, axis=1)[0]
+        denom = vec_norm * ref_norm
+
+        # Guard against zero vectors to avoid NaNs contaminating means.
+        valid = denom > 0
+        if not np.any(valid):
+            return np.nan
+
+        dots = np.dot(vecs[valid], ref[0])
+        return float(np.mean(dots / denom[valid]))
 
     def calculate_confidence(self, target_logprobs: List[float]) -> float:
         """
@@ -60,8 +82,11 @@ class RepresentationalEvaluator:
             
 
         axis_v = axis_v.reshape(1, -1)
-        implicit_sim = np.mean(cosine_similarity(implicit_target_embeddings, axis_v))
-        explicit_sim = np.mean(cosine_similarity(explicit_target_embeddings, axis_v))
+        implicit_sim = self._mean_cosine_similarity(implicit_target_embeddings, axis_v)
+        explicit_sim = self._mean_cosine_similarity(explicit_target_embeddings, axis_v)
+
+        if np.isnan(implicit_sim) or np.isnan(explicit_sim):
+            return {'implicit_steering': np.nan, 'explicit_steering': np.nan, 'delta_steering': np.nan}
         
         # Denominator scaling (Distance between the two statistical poles)
         denominator = persona_pole_sim - topic_pole_sim
@@ -71,7 +96,7 @@ class RepresentationalEvaluator:
         # is statistically insignificant. Steering should collapse to 0.0 to prevent 
         # artificially massive inflated values.
         if abs(denominator) < 1e-7:
-            return {'implicit_steering': 0.0, 'explicit_steering': 0.0, 'delta_steering': 0.0}
+            return {'implicit_steering': np.nan, 'explicit_steering': np.nan, 'delta_steering': np.nan}
         
         # Normalize the projections so 0 is neutral and 1 is full persona caricature
         implicit_steering = (implicit_sim - topic_pole_sim) / denominator
