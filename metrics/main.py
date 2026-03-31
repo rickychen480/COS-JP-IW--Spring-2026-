@@ -92,8 +92,7 @@ def main(args):
         axis=1
     )
     
-    # Apply Semantic Masking & Generate Embeddings for Steering
-    print("Masking explicit identifiers and generating embeddings...")
+    print("Generating embeddings from masked data...")
     def extract_target_text(transcript):
         return " ".join([turn['content'] for turn in transcript if turn['speaker'] == 'Target'])
     
@@ -157,8 +156,8 @@ def main(args):
         group_df = df[df['intersectional_id'] == target_id]
         
         # 2. Split into Implicit and Explicit datasets
-        implicit_df = group_df[group_df['variant_type'] == 'implicit']
-        explicit_df = group_df[group_df['variant_type'] == 'explicit']
+        implicit_df = group_df[group_df['variant_type'] == 'implicit'].copy()
+        explicit_df = group_df[group_df['variant_type'] == 'explicit'].copy()
         
         if implicit_df.empty or explicit_df.empty:
             print(f"Skipping {target_id}: Missing implicit or explicit data.")
@@ -180,8 +179,6 @@ def main(args):
 
         implicit_gcr = nanmean(imp_success_list)
         explicit_gcr = nanmean(exp_success_list)
-
-        # Calculate Delta GCR (Explicit - Implicit)
         d_gcr = alloc_eval.calculate_d_gcr(implicit_gcr, explicit_gcr)
 
         # Scenario-paired delta avoids composition bias from unequal scenario mixes.
@@ -234,9 +231,8 @@ def main(args):
             
             for scenario_id in unique_scenarios:
                 try:
-                    # --- IMPLICIT STEERING FOR THIS SCENARIO ---
-                    # Compute axis using ONLY implicit variant data
-                    implicit_axis, imp_topic_pole_sim, imp_persona_pole_sim = ie.get_fightin_words_poles(
+                    # Use one shared axis per scenario for both variants.
+                    axis_v, topic_pole_sim, persona_pole_sim = ie.get_fightin_words_poles(
                         df,
                         target_id,
                         control_id,
@@ -244,49 +240,31 @@ def main(args):
                         target_topic_id=scenario_id,
                         default_topic="general_comment"
                     )
-                    
-                    # Project implicit responses for this scenario onto the implicit axis
+
                     implicit_scenario_df = implicit_df[
                         (implicit_df['scenario_id'] == scenario_id) & (implicit_df['topic'] != 'general_comment')
                     ]
-                    if not implicit_scenario_df.empty:
-                        imp_target_embs = np.vstack(implicit_scenario_df['embedding'].values)
-                        imp_steer_dict = rep_eval.calculate_semantic_steering(
-                            implicit_target_embeddings=imp_target_embs,
-                            explicit_target_embeddings=imp_target_embs,
-                            axis_v=implicit_axis,
-                            topic_pole_sim=imp_topic_pole_sim,
-                            persona_pole_sim=imp_persona_pole_sim
-                        )
-                        if np.isfinite(imp_steer_dict['implicit_steering']):
-                            implicit_steerings.append(imp_steer_dict['implicit_steering'])
-                    
-                    # --- EXPLICIT STEERING FOR THIS SCENARIO ---
-                    # Compute axis using ONLY explicit variant data
-                    explicit_axis, exp_topic_pole_sim, exp_persona_pole_sim = ie.get_fightin_words_poles(
-                        df,
-                        target_id,
-                        control_id,
-                        variant_type='explicit',
-                        target_topic_id=scenario_id,
-                        default_topic="general_comment"
-                    )
-                    
-                    # Project explicit responses for this scenario onto the explicit axis
                     explicit_scenario_df = explicit_df[
                         (explicit_df['scenario_id'] == scenario_id) & (explicit_df['topic'] != 'general_comment')
                     ]
-                    if not explicit_scenario_df.empty:
-                        exp_target_embs = np.vstack(explicit_scenario_df['embedding'].values)
-                        exp_steer_dict = rep_eval.calculate_semantic_steering(
-                            implicit_target_embeddings=exp_target_embs,
-                            explicit_target_embeddings=exp_target_embs,
-                            axis_v=explicit_axis,
-                            topic_pole_sim=exp_topic_pole_sim,
-                            persona_pole_sim=exp_persona_pole_sim
-                        )
-                        if np.isfinite(exp_steer_dict['explicit_steering']):
-                            explicit_steerings.append(exp_steer_dict['explicit_steering'])
+
+                    if implicit_scenario_df.empty or explicit_scenario_df.empty:
+                        continue
+
+                    imp_target_embs = np.vstack(implicit_scenario_df['embedding'].values)
+                    exp_target_embs = np.vstack(explicit_scenario_df['embedding'].values)
+                    steer_dict = rep_eval.calculate_semantic_steering(
+                        implicit_target_embeddings=imp_target_embs,
+                        explicit_target_embeddings=exp_target_embs,
+                        axis_v=axis_v,
+                        topic_pole_sim=topic_pole_sim,
+                        persona_pole_sim=persona_pole_sim
+                    )
+
+                    if np.isfinite(steer_dict['implicit_steering']):
+                        implicit_steerings.append(steer_dict['implicit_steering'])
+                    if np.isfinite(steer_dict['explicit_steering']):
+                        explicit_steerings.append(steer_dict['explicit_steering'])
                     
                 except (ValueError, np.linalg.LinAlgError):
                     # Monroe log-odds failed or insufficient data for this scenario

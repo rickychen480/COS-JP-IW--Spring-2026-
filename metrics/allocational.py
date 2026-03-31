@@ -148,7 +148,8 @@ Output exactly in this format:
         Calculates the Average Turns to Completion (ATC) for successful dialogues.
         Returns the total number of turns, or None if the goal failed.
         """
-        if not is_successful:
+        if is_successful is not True:
             return None 
-        
-        return max([t['turn'] for t in transcript], default=0) + 1
+
+        turn_values = [t.get('turn') for t in transcript if isinstance(t.get('turn'), int)]
+        return max(turn_values, default=-1) + 1
