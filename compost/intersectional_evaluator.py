@@ -513,7 +513,7 @@ class IntersectionalEvaluator:
                         continue
 
                     exag_score = (mean_target - topic_pole_sim) / denominator
-                    exag_score = max(0.0, min(1.0, exag_score))
+                    exag_score = max(0.0, min(1.0, exag_score)) # Clip for interpretability
 
                     topic_value = df_target["topic"].iloc[0] if "topic" in df_target.columns else str(scenario_id)
                     exag_scores.append({
@@ -736,8 +736,12 @@ class IntersectionalEvaluator:
             sub_df["response"] = sub_df["masked_text"]
         elif "target_text" in sub_df.columns:
             sub_df["response"] = sub_df["target_text"]
+        elif "response" in sub_df.columns:
+            sub_df["response"] = sub_df["response"].fillna("").astype(str)
         else:
-            raise ValueError("Dataframe must contain 'masked_text' or 'target_text'.")
+            raise ValueError(
+                "Dataframe must contain one of: 'masked_text', 'target_text', or 'response'."
+            )
 
         # Persona pole is always default-topic text from the target identity.
         df_persona_pole = sub_df[(sub_df["intersectional_id"] == target_id) & (sub_df["topic"] == default_topic)]
