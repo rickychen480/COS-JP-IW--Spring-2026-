@@ -137,9 +137,9 @@ def main(args):
     else:
         judge_cache = {}
 
-    def get_cached_judge(d_id, transcript, task_desc):
+    def get_cached_judge(d_id, variant_type, transcript, task_desc):
         """Fetches judgement from cache, or calls API and saves it so you never lose progress."""
-        cache_key = str(d_id)
+        cache_key = f"{d_id}::{variant_type}::{task_desc}"
         if cache_key in judge_cache:
             cached_value = judge_cache[cache_key]
             if cached_value in (0, 1):
@@ -166,11 +166,25 @@ def main(args):
         # --- A. ALLOCATIONAL METRICS ---
         
         # 1. Use the checkpointed judge function (Requires 'dialogue_id')
-        imp_success_list = [get_cached_judge(d_id, t, m['task_description']) 
-                            for d_id, t, m in zip(implicit_df['dialogue_id'], implicit_df['transcript'], implicit_df['metadata'])]
+        imp_success_list = [
+            get_cached_judge(d_id, v, t, m.get('task_description', ''))
+            for d_id, v, t, m in zip(
+                implicit_df['dialogue_id'],
+                implicit_df['variant_type'],
+                implicit_df['transcript'],
+                implicit_df['metadata']
+            )
+        ]
         
-        exp_success_list = [get_cached_judge(d_id, t, m['task_description']) 
-                            for d_id, t, m in zip(explicit_df['dialogue_id'], explicit_df['transcript'], explicit_df['metadata'])]
+        exp_success_list = [
+            get_cached_judge(d_id, v, t, m.get('task_description', ''))
+            for d_id, v, t, m in zip(
+                explicit_df['dialogue_id'],
+                explicit_df['variant_type'],
+                explicit_df['transcript'],
+                explicit_df['metadata']
+            )
+        ]
 
         implicit_df = implicit_df.copy()
         explicit_df = explicit_df.copy()

@@ -129,7 +129,10 @@ def get_seed_words(df1, df2, df0, threshold=1.96):
         Only includes words where |z-score| > threshold
     """
     deltas = get_log_odds(df1["response"], df2["response"], df0["response"])
-    top_words = [k for k, v in deltas.items() if v > threshold]
+    top_words = [
+        k for k, v in deltas.items()
+        if v > threshold and isinstance(k, str) and re.fullmatch(r"[a-zA-Z]{2,}", k)
+    ]
     return sorted(top_words, key=lambda x: deltas[x], reverse=True)
 
 
@@ -717,11 +720,14 @@ class IntersectionalEvaluator:
             persona_pole_sim: Mean cosine similarity of target examples to axis_v.
         """
         # Keep the requested variant plus default-topic rows used for persona poles.
-        df_variant = df[
-            (df['variant_type'] == variant_type) |
-            (df['variant_type'] == 'default_topic') |
-            (df['topic'] == default_topic)
-        ].copy()
+        if 'variant_type' in df.columns:
+            df_variant = df[
+                (df['variant_type'] == variant_type) |
+                (df['variant_type'] == 'default_topic') |
+                (df['topic'] == default_topic)
+            ].copy()
+        else:
+            df_variant = df.copy()
 
         # Restrict to just the two identity groups
         sub_df = df_variant[df_variant["intersectional_id"].isin([target_id, control_id])].copy()
@@ -733,9 +739,9 @@ class IntersectionalEvaluator:
             ].copy()
 
         if "masked_text" in sub_df.columns:
-            sub_df["response"] = sub_df["masked_text"]
+            sub_df["response"] = sub_df["masked_text"].fillna("").astype(str)
         elif "target_text" in sub_df.columns:
-            sub_df["response"] = sub_df["target_text"]
+            sub_df["response"] = sub_df["target_text"].fillna("").astype(str)
         elif "response" in sub_df.columns:
             sub_df["response"] = sub_df["response"].fillna("").astype(str)
         else:

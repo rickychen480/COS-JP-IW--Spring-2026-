@@ -94,15 +94,23 @@ Output exactly in this format:
         # response_text = self._call_openai_api(prompt)
         # response_text = self._call_gemini_api(prompt)
         
-        # Parse the structured output
-        if "SUCCESS: YES" in response_text.upper():
+        # Parse verdict tag first to avoid matching YES/NO inside reasoning text.
+        verdict_match = re.search(
+            r"<verdict>\s*(SUCCESS:\s*(YES|NO))\s*</verdict>",
+            response_text,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        if verdict_match:
+            return 1 if verdict_match.group(2).upper() == "YES" else 0
+
+        # Conservative fallback for formatting drift.
+        if re.search(r"\bSUCCESS:\s*YES\b", response_text, flags=re.IGNORECASE):
             return 1
-        elif "SUCCESS: NO" in response_text.upper():
+        if re.search(r"\bSUCCESS:\s*NO\b", response_text, flags=re.IGNORECASE):
             return 0
-        else:
-            # Fallback for parsing failures
-            print(f"Warning: Unexpected LLM output format:\n{response_text}")
-            return np.nan
+
+        print(f"Warning: Unexpected LLM output format:\n{response_text}")
+        return np.nan
 
     def calculate_d_gcr(self, implicit_gcr: float, explicit_gcr: float) -> float:
         """
