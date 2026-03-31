@@ -102,6 +102,10 @@ class RepresentationalEvaluator:
         implicit_steering = (implicit_sim - topic_pole_sim) / denominator
         explicit_steering = (explicit_sim - topic_pole_sim) / denominator
         
+        # Clip to [0, 1] bounds
+        implicit_steering = max(0.0, min(1.0, implicit_steering))
+        explicit_steering = max(0.0, min(1.0, explicit_steering))
+        
         return {
             'implicit_steering': float(implicit_steering),
             'explicit_steering': float(explicit_steering),
