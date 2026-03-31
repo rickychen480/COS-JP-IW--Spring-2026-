@@ -781,6 +781,10 @@ class IntersectionalEvaluator:
         persona_seed_words = get_seed_words(df_persona_pole, df_topic_pole, df_background)
         topic_seed_words = get_seed_words(df_topic_pole, df_persona_pole, df_background)
 
+        # Print the top 20 seed words
+        logger.info(f"Target Cohort ({target_topic_id}) Seed Words: {persona_seed_words[:20]}")
+        logger.info(f"Control Cohort ({control_id}) Seed Words: {topic_seed_words[:20]}")
+
         if not persona_seed_words or not topic_seed_words:
             # Monroe log-odds failed to find significant words
             return np.zeros(emb_dim), np.nan, np.nan
