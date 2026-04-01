@@ -24,7 +24,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score, f1_score
-from imblearn.over_sampling import SMOTE
+from xgboost import XGBClassifier
 from typing import Dict, Optional, Any
 import logging
 
@@ -41,22 +41,18 @@ class ScenarioDisjointValidator:
     def __init__(self, 
                  cv_strategy: str = "StratifiedGroupKFold",
                  n_splits: int = 5,
-                 classifier_type: str = "LinearSVC",
-                 use_smote: bool = True,
-                 smote_k_neighbors: int = 5):
+                 classifier_type: str = "XGBoost"):
         """
         Initialize scenario-disjoint validator.
         
         Args:
             cv_strategy: "GroupKFold" or "LeaveOneGroupOut"
             n_splits: Number of splits for GroupKFold (ignored for LOGO)
-            classifier_type: "RandomForest", "GradientBoosting", or "LogisticRegression"
+            classifier_type: "XGBoost", "LinearSVC", "RandomForest", "GradientBoosting", or "LogisticRegression"
         """
         self.cv_strategy = cv_strategy
         self.n_splits = n_splits
         self.classifier_type = classifier_type
-        self.use_smote = use_smote
-        self.smote_k_neighbors = smote_k_neighbors
         
         # Initialize the CV splitter
         if cv_strategy == "StratifiedGroupKFold":
@@ -81,52 +77,46 @@ class ScenarioDisjointValidator:
         y_train: np.ndarray,
     ) -> Any:
         """
-        Fit classifier on train split with optional SMOTE.
-        SMOTE is applied only on train data to avoid test leakage.
+        Fit classifier on train split.
+        For XGBoost, compute split-specific scale_pos_weight to handle class imbalance.
         """
-        clf = self._get_classifier()
-
-        if not self.use_smote:
-            clf.fit(X_train, y_train)
-            return clf
-
         labels, counts = np.unique(y_train, return_counts=True)
         if len(labels) < 2:
+            clf = self._get_classifier()
             clf.fit(X_train, y_train)
             return clf
 
-        minority_count = int(np.min(counts))
-        if minority_count <= 1:
-            logger.warning(
-                "Skipping SMOTE on this split: minority class has <= 1 sample."
-            )
-            clf.fit(X_train, y_train)
-            return clf
+        scale_pos_weight = None
+        if self.classifier_type == "XGBoost":
+            n_neg = int(np.sum(y_train == 0))
+            n_pos = int(np.sum(y_train == 1))
+            if n_pos > 0 and n_neg > 0:
+                scale_pos_weight = float(n_neg) / float(n_pos)
+                logger.info("XGBoost scale_pos_weight for split: %.3f", scale_pos_weight)
 
-        adaptive_k = min(self.smote_k_neighbors, minority_count - 1)
-        if adaptive_k < 1:
-            clf.fit(X_train, y_train)
-            return clf
-
-        try:
-            smote = SMOTE(k_neighbors=adaptive_k, random_state=42)
-            X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
-            logger.info(
-                "Applied SMOTE on train split: %d -> %d samples (k_neighbors=%d)",
-                len(X_train),
-                len(X_resampled),
-                adaptive_k,
-            )
-            clf.fit(X_resampled, y_resampled)
-        except ValueError as e:
-            logger.warning("SMOTE failed on this split (%s); training without SMOTE.", e)
-            clf.fit(X_train, y_train)
+        clf = self._get_classifier(scale_pos_weight=scale_pos_weight)
+        clf.fit(X_train, y_train)
 
         return clf
     
-    def _get_classifier(self) -> Any:
+    def _get_classifier(self, scale_pos_weight: Optional[float] = None) -> Any:
         """Get classifier instance based on type."""
-        if self.classifier_type == "RandomForest":
+        if self.classifier_type == "XGBoost":
+            return XGBClassifier(
+                n_estimators=300,
+                max_depth=6,
+                learning_rate=0.05,
+                subsample=0.9,
+                colsample_bytree=0.9,
+                objective="binary:logistic",
+                eval_metric="logloss",
+                scale_pos_weight=scale_pos_weight if scale_pos_weight is not None else 1.0,
+                random_state=42,
+                n_jobs=-1,
+                tree_method="hist",
+            )
+
+        elif self.classifier_type == "RandomForest":
             return RandomForestClassifier(
                 n_estimators=200,
                 max_depth=5,
@@ -285,7 +275,7 @@ class ScenarioDisjointValidator:
         else:
             cv = self.cv
 
-        # Manual CV loop keeps scenario-disjoint behavior and applies SMOTE train-only per fold.
+        # Manual CV loop keeps scenario-disjoint behavior and applies split-specific fitting.
         test_accuracy_scores = []
         test_f1_macro_scores = []
         test_f1_weighted_scores = []

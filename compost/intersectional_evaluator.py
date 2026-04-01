@@ -265,9 +265,7 @@ class IntersectionalEvaluator:
         df: pd.DataFrame,
         embeddings: np.ndarray,
         intersectional_col: str = 'intersectional_id',
-        classifier_type: str = 'LinearSVC',
-        use_smote: bool = True,
-        smote_k_neighbors: int = 5,
+        classifier_type: str = 'XGBoost',
         min_group_size: Optional[int] = None,
         evaluation_mode: str = 'cv',
         test_size: float = 0.2,
@@ -285,9 +283,7 @@ class IntersectionalEvaluator:
             df: DataFrame containing intersectional_id, scenario_id, etc.
             embeddings: numpy array of Sentence-BERT embeddings (aligned with df)
             intersectional_col: column name for intersectional identity groups
-            classifier_type: 'RandomForest', 'GradientBoosting', or 'LogisticRegression'
-            use_smote: apply SMOTE on each train split to balance minority class
-            smote_k_neighbors: base k-neighbors for SMOTE (auto-capped per split)
+            classifier_type: 'XGBoost', 'LinearSVC', 'RandomForest', 'GradientBoosting', or 'LogisticRegression'
             min_group_size: minimum samples required per group (default 10)
             evaluation_mode: 'cv' (default) or 'grouped_holdout'
             test_size: fraction of data for test set when evaluation_mode='grouped_holdout'
@@ -355,8 +351,6 @@ class IntersectionalEvaluator:
                     cv_strategy="StratifiedGroupKFold",
                     n_splits=min(n_splits, len(np.unique(groups))),
                     classifier_type=classifier_type,
-                    use_smote=use_smote,
-                    smote_k_neighbors=smote_k_neighbors,
                 )
                 split_results = validator.validate_cv(
                     X=X,
@@ -366,8 +360,6 @@ class IntersectionalEvaluator:
             else:
                 validator = ScenarioDisjointValidator(
                     classifier_type=classifier_type,
-                    use_smote=use_smote,
-                    smote_k_neighbors=smote_k_neighbors,
                 )
                 split_results = validator.validate_grouped_holdout(
                     X=X,
