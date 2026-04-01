@@ -78,10 +78,11 @@ def main(args):
     
     print("Transcripts loaded. Initializing evaluators")
     # Initialize Evaluators
-    alloc_eval = AllocationalEvaluator(
-        model_path=args.judge_model,
-        tensor_parallel_size=args.tensor_parallel_size
-    )
+    # alloc_eval = AllocationalEvaluator(
+    #     model_path=args.judge_model,
+    #     tensor_parallel_size=args.tensor_parallel_size
+    # )
+    alloc_eval = None
     rep_eval = RepresentationalEvaluator()
     ie = IntersectionalEvaluator()
     
@@ -163,54 +164,54 @@ def main(args):
             print(f"Skipping {target_id}: Missing implicit or explicit data.")
             continue
         
-        # --- A. ALLOCATIONAL METRICS ---
+        # # --- A. ALLOCATIONAL METRICS ---
         
-        # 1. Use the checkpointed judge function (Requires 'dialogue_id')
-        imp_success_list = [
-            get_cached_judge(d_id, v, t, m.get('task_description', ''))
-            for d_id, v, t, m in zip(
-                implicit_df['dialogue_id'],
-                implicit_df['variant_type'],
-                implicit_df['transcript'],
-                implicit_df['metadata']
-            )
-        ]
+        # # 1. Use the checkpointed judge function (Requires 'dialogue_id')
+        # imp_success_list = [
+        #     get_cached_judge(d_id, v, t, m.get('task_description', ''))
+        #     for d_id, v, t, m in zip(
+        #         implicit_df['dialogue_id'],
+        #         implicit_df['variant_type'],
+        #         implicit_df['transcript'],
+        #         implicit_df['metadata']
+        #     )
+        # ]
+        # 
+        # exp_success_list = [
+        #     get_cached_judge(d_id, v, t, m.get('task_description', ''))
+        #     for d_id, v, t, m in zip(
+        #         explicit_df['dialogue_id'],
+        #         explicit_df['variant_type'],
+        #         explicit_df['transcript'],
+        #         explicit_df['metadata']
+        #     )
+        # ]
+        # 
+        # implicit_df = implicit_df.copy()
+        # explicit_df = explicit_df.copy()
+        # implicit_df['success'] = imp_success_list
+        # explicit_df['success'] = exp_success_list
+
+        # implicit_gcr = nanmean(imp_success_list)
+        # explicit_gcr = nanmean(exp_success_list)
+        # d_gcr = alloc_eval.calculate_d_gcr(implicit_gcr, explicit_gcr)
+
+        # # Scenario-paired delta avoids composition bias from unequal scenario mixes.
+        # implicit_scenario_success = implicit_df.groupby('scenario_id', dropna=False)['success'].mean()
+        # explicit_scenario_success = explicit_df.groupby('scenario_id', dropna=False)['success'].mean()
+        # d_gcr_paired = paired_delta(explicit_scenario_success, implicit_scenario_success)
         
-        exp_success_list = [
-            get_cached_judge(d_id, v, t, m.get('task_description', ''))
-            for d_id, v, t, m in zip(
-                explicit_df['dialogue_id'],
-                explicit_df['variant_type'],
-                explicit_df['transcript'],
-                explicit_df['metadata']
-            )
-        ]
+        # # 2. ATC is computed over successful runs only.
+        # imp_atcs_raw = [alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(implicit_df['transcript'], imp_success_list)]
+        # implicit_atc = nanmean([x for x in imp_atcs_raw if x is not None])
 
-        implicit_df = implicit_df.copy()
-        explicit_df = explicit_df.copy()
-        implicit_df['success'] = imp_success_list
-        explicit_df['success'] = exp_success_list
+        # exp_atcs_raw = [alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(explicit_df['transcript'], exp_success_list)]
+        # explicit_atc = nanmean([x for x in exp_atcs_raw if x is not None])
 
-        implicit_gcr = nanmean(imp_success_list)
-        explicit_gcr = nanmean(exp_success_list)
-        d_gcr = alloc_eval.calculate_d_gcr(implicit_gcr, explicit_gcr)
-
-        # Scenario-paired delta avoids composition bias from unequal scenario mixes.
-        implicit_scenario_success = implicit_df.groupby('scenario_id', dropna=False)['success'].mean()
-        explicit_scenario_success = explicit_df.groupby('scenario_id', dropna=False)['success'].mean()
-        d_gcr_paired = paired_delta(explicit_scenario_success, implicit_scenario_success)
-        
-        # 2. ATC is computed over successful runs only.
-        imp_atcs_raw = [alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(implicit_df['transcript'], imp_success_list)]
-        implicit_atc = nanmean([x for x in imp_atcs_raw if x is not None])
-
-        exp_atcs_raw = [alloc_eval.calculate_atc(t, is_successful=succ) for t, succ in zip(explicit_df['transcript'], exp_success_list)]
-        explicit_atc = nanmean([x for x in exp_atcs_raw if x is not None])
-
-        # Rejection diagnostics (count of refusal-like turns per dialogue).
-        implicit_rejection_counts = [alloc_eval.calculate_rejection_rate(t) for t in implicit_df['transcript']]
-        explicit_rejection_counts = [alloc_eval.calculate_rejection_rate(t) for t in explicit_df['transcript']]
-        d_rejection_count = nanmean(explicit_rejection_counts) - nanmean(implicit_rejection_counts)
+        # # Rejection diagnostics (count of refusal-like turns per dialogue).
+        # implicit_rejection_counts = [alloc_eval.calculate_rejection_rate(t) for t in implicit_df['transcript']]
+        # explicit_rejection_counts = [alloc_eval.calculate_rejection_rate(t) for t in explicit_df['transcript']]
+        # d_rejection_count = nanmean(explicit_rejection_counts) - nanmean(implicit_rejection_counts)
         
         # --- REPRESENTATIONAL METRICS (CONFIDENCE) ---
         # Compute confidence per dialogue first to avoid over-weighting longer outputs.
@@ -255,6 +256,9 @@ def main(args):
                         default_topic="general_comment"
                     )
 
+                    if np.isnan(topic_pole_sim) or np.isnan(persona_pole_sim):
+                        continue
+
                     implicit_scenario_df = implicit_df[
                         (implicit_df['scenario_id'] == scenario_id) & (implicit_df['topic'] != 'general_comment')
                     ]
@@ -298,17 +302,17 @@ def main(args):
         # 3. Compile the group's results
         final_results.append({
             'group_label': target_id,
-            'implicit_GCR': implicit_gcr,
-            'explicit_GCR': explicit_gcr,
-            'd_GCR': d_gcr,
-            'd_GCR_paired_by_scenario': d_gcr_paired,
-            'implicit_ATC': implicit_atc,
-            'explicit_ATC': explicit_atc,
+            # 'implicit_GCR': implicit_gcr,
+            # 'explicit_GCR': explicit_gcr,
+            # 'd_GCR': d_gcr,
+            # 'd_GCR_paired_by_scenario': d_gcr_paired,
+            # 'implicit_ATC': implicit_atc,
+            # 'explicit_ATC': explicit_atc,
             'd_CCD': d_ccd,
             'd_CCD_paired_by_scenario': d_ccd_paired,
-            'implicit_rejection_count': nanmean(implicit_rejection_counts),
-            'explicit_rejection_count': nanmean(explicit_rejection_counts),
-            'd_rejection_count': d_rejection_count,
+            # 'implicit_rejection_count': nanmean(implicit_rejection_counts),
+            # 'explicit_rejection_count': nanmean(explicit_rejection_counts),
+            # 'd_rejection_count': d_rejection_count,
             'implicit_steering_n_valid': len(implicit_steerings),
             'explicit_steering_n_valid': len(explicit_steerings),
             'implicit_Steering': steering_scores['implicit_steering'],
