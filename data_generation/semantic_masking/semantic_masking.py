@@ -22,6 +22,7 @@ from transformers import AutoTokenizer
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def build_prompt(tokenizer, text: str) -> str:
     """Formats the prompt using the model's chat template."""
     system_prompt = (
@@ -34,13 +35,16 @@ def build_prompt(tokenizer, text: str) -> str:
         "the token [MASKED]. Preserve the syntax, emotion, and pragmatic structure perfectly.\n\n"
         f"Text to redact: '{text}'"
     )
-    
+
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
+        {"role": "user", "content": user_prompt},
     ]
-    
-    return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+
+    return tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True
+    )
+
 
 def process_file(input_path: str, output_path: str, model_name: str):
     logger.info(f"Loading data from {input_path}...")
@@ -49,10 +53,7 @@ def process_file(input_path: str, output_path: str, model_name: str):
 
     # 1. Initialize vLLM Engine and Tokenizer
     logger.info(f"Initializing vLLM engine for {model_name}...")
-    llm = LLM(
-        model=model_name, 
-        max_model_len=8192
-    )
+    llm = LLM(model=model_name, max_model_len=8192)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     sampling_params = SamplingParams(temperature=0.0, max_tokens=2048)
 
@@ -78,7 +79,7 @@ def process_file(input_path: str, output_path: str, model_name: str):
     for turn, output in zip(turns_to_process, outputs):
         original_text = turn.get("content", "")
         masked_text = output.outputs[0].text.strip()
-        
+
         # Fallback in case the LLM outputs an empty string
         if not masked_text:
             masked_text = original_text
@@ -92,12 +93,15 @@ def process_file(input_path: str, output_path: str, model_name: str):
     with open(output_path, "wb") as f:
         f.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run vLLM Semantic Masking.")
     parser.add_argument("--input", type=str, required=True, help="Input JSON file")
     parser.add_argument("--output", type=str, required=True, help="Output JSON file")
-    parser.add_argument("--model", type=str, required=True, help="HuggingFace model ID or local path")
-    
+    parser.add_argument(
+        "--model", type=str, required=True, help="HuggingFace model ID or local path"
+    )
+
     args = parser.parse_args()
     process_file(args.input, args.output, args.model)
     logger.info("Semantic Masking complete.")

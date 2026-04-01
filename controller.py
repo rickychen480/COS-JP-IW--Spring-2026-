@@ -74,7 +74,17 @@ def check_early_stopping(msg_u, msg_t):
     return False
 
 
-def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None, tp=1, quant=None, chunk_index=0, total_chunks=1):
+def run_simulation(
+    input_file,
+    output_file,
+    model_path,
+    max_turns=10,
+    limit=None,
+    tp=1,
+    quant=None,
+    chunk_index=0,
+    total_chunks=1,
+):
     # LOAD DATA
     with open(input_file, "r") as f:
         scenarios = json.load(f)
@@ -84,8 +94,10 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
     start_idx = chunk_index * chunk_size
     end_idx = min(start_idx + chunk_size, len(scenarios))
     scenarios = scenarios[start_idx:end_idx]
-    
-    print(f"Processing chunk {chunk_index}/{total_chunks}: scenarios {start_idx}-{end_idx-1}")
+
+    print(
+        f"Processing chunk {chunk_index}/{total_chunks}: scenarios {start_idx}-{end_idx-1}"
+    )
 
     # Allow running a small slice for testing
     if limit:
@@ -95,24 +107,17 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
     # INITIALIZE ENGINE (Loads model once for both Agents)
     print(f"Loading model: {model_path}...")
     llm = LLM(
-        model=model_path, 
-        tensor_parallel_size=tp, 
+        model=model_path,
+        tensor_parallel_size=tp,
         quantization=quant,
-        max_model_len=8192
+        max_model_len=8192,
     )
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    
+
     sampling_params_u = SamplingParams(
-        temperature=0.65,
-        top_p=0.90,
-        repetition_penalty=1.0,
-        max_tokens=512
+        temperature=0.65, top_p=0.90, repetition_penalty=1.0, max_tokens=512
     )
-    sampling_params_t = SamplingParams(
-        temperature=0.7, 
-        max_tokens=512, 
-        logprobs=1
-    )
+    sampling_params_t = SamplingParams(temperature=0.7, max_tokens=512, logprobs=1)
 
     # INITIALIZE STATE
     active_dialogues = []
@@ -122,8 +127,12 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
                 "dialogue_id": sc["dialogue_id"],
                 "variant_type": sc.get("variant_type", "Unknown"),
                 "meta": sc["metadata"],
-                "history_u": [{"role": "system", "content": sc["user_agent"]["system_prompt"]}],
-                "history_t": [{"role": "system", "content": sc["audit_target"]["system_prompt"]}],
+                "history_u": [
+                    {"role": "system", "content": sc["user_agent"]["system_prompt"]}
+                ],
+                "history_t": [
+                    {"role": "system", "content": sc["audit_target"]["system_prompt"]}
+                ],
                 "transcript": [],
                 "done": False,
             }
@@ -165,33 +174,47 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
 
         for d, out in zip(batch_u, outputs_t):
             msg_t = out.outputs[0].text.strip()
-            
+
             # EXTRACT TARGET LOGPROBS FOR d-CCD METRIC
             if out.outputs[0].logprobs:
                 persona_name = d["meta"]["persona"].get("name", "").lower()
-                
+
                 # Base referential words
-                ref_words = {"you", "your", "yours", "you're", "you've", "you'll", "you'd"}
+                ref_words = {
+                    "you",
+                    "your",
+                    "yours",
+                    "you're",
+                    "you've",
+                    "you'll",
+                    "you'd",
+                }
                 if persona_name:
                     ref_words.add(persona_name)
-                
+
                 for token_dict in out.outputs[0].logprobs:
                     for tok_id, logprob_obj in token_dict.items():
                         tok_text = logprob_obj.decoded_token
                         if tok_text is not None:
                             # Clean the token text to match against our reference list
                             clean_tok = tok_text.strip().lower()
-                            clean_tok = ''.join(c for c in clean_tok if c.isalpha() or c == "'")
-                            
+                            clean_tok = "".join(
+                                c for c in clean_tok if c.isalpha() or c == "'"
+                            )
+
                             if clean_tok in ref_words:
                                 # Append the log-likelihood (float) of the referential token
-                                d["meta"].setdefault("target_logprobs", []).append(logprob_obj.logprob)
+                                d["meta"].setdefault("target_logprobs", []).append(
+                                    logprob_obj.logprob
+                                )
 
             last_msg_u = d["transcript"][-1]["content"]
 
             d["history_t"].append({"role": "assistant", "content": msg_t})
             d["history_u"].append({"role": "user", "content": msg_t})
-            d["transcript"].append({"turn": turn, "speaker": "Target", "content": msg_t})
+            d["transcript"].append(
+                {"turn": turn, "speaker": "Target", "content": msg_t}
+            )
 
             if check_early_stopping(last_msg_u, msg_t):
                 d["done"] = True
@@ -199,17 +222,17 @@ def run_simulation(input_file, output_file, model_path, max_turns=10, limit=None
         # INCREMENTALLY SAVE RESULTS
         final_output = [
             {
-                "dialogue_id": d["dialogue_id"], 
+                "dialogue_id": d["dialogue_id"],
                 "variant_type": d["variant_type"],
-                "metadata": d["meta"], 
-                "transcript": d["transcript"]
+                "metadata": d["meta"],
+                "transcript": d["transcript"],
             }
             for d in active_dialogues
         ]
 
         with open(output_file, "w") as f:
             json.dump(final_output, f, indent=2)
-    
+
     print(f"Simulation complete. Saved {len(final_output)} dialogues to {output_file}")
 
 
@@ -218,23 +241,37 @@ if __name__ == "__main__":
     parser.add_argument("--data", type=str, required=True, help="Path to input JSON")
     parser.add_argument("--out", type=str, required=True, help="Path to output JSON")
     parser.add_argument("--model", type=str, default="meta-llama/Llama-3.1-8B-Instruct")
-    parser.add_argument("--quant", type=str, default=None, help="Quantization method, e.g., 'awq'")
-    parser.add_argument("--tp", type=int, default=1, help="Tensor parallel size (number of GPUs to split the model across)")
-    parser.add_argument("--chunk_index", type=int, default=0, help="Index of the current chunk (from SLURM)")
-    parser.add_argument("--total_chunks", type=int, default=1, help="Total number of parallel chunks")
+    parser.add_argument(
+        "--quant", type=str, default=None, help="Quantization method, e.g., 'awq'"
+    )
+    parser.add_argument(
+        "--tp",
+        type=int,
+        default=1,
+        help="Tensor parallel size (number of GPUs to split the model across)",
+    )
+    parser.add_argument(
+        "--chunk_index",
+        type=int,
+        default=0,
+        help="Index of the current chunk (from SLURM)",
+    )
+    parser.add_argument(
+        "--total_chunks", type=int, default=1, help="Total number of parallel chunks"
+    )
     parser.add_argument(
         "--limit", type=int, default=None, help="Test mode: number of dialogues to run"
     )
     args = parser.parse_args()
 
     run_simulation(
-        args.data, 
-        args.out, 
-        args.model, 
-        max_turns=10, 
-        limit=args.limit, 
-        tp=args.tp, 
+        args.data,
+        args.out,
+        args.model,
+        max_turns=10,
+        limit=args.limit,
+        tp=args.tp,
         quant=args.quant,
         chunk_index=args.chunk_index,
-        total_chunks=args.total_chunks
+        total_chunks=args.total_chunks,
     )

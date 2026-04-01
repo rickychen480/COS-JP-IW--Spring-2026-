@@ -10,7 +10,7 @@ import generators as gen
 # target sample count: approximately (number of identity combinations) * (samples per pair)
 # with 5 races × 2 genders × 9 occupations = 90 combos, 12000 gives ~133 per pair, leaving headroom
 NUM_SAMPLES = 12000
-NUM_UNMARKED_SAMPLES = 1150 # 23 tasks × 50 samples/task = 1150
+NUM_UNMARKED_SAMPLES = 1150  # 23 tasks × 50 samples/task = 1150
 OUT_DIR = Path("data/prompts")
 
 
@@ -46,12 +46,14 @@ def main() -> None:
     task_indices = list(range(len(high_stakes_tasks)))
     random.shuffle(task_indices)
     task_sampler = cycle(task_indices)
-    
+
     # Create stratified sample of identities for balanced representation
     # 5 races × 2 genders × 9 occupations = 90 unique intersectional combinations
-    identity_combinations = list(product(const.RACES, const.GENDERS, const.OCCUPATIONS_GRID))
+    identity_combinations = list(
+        product(const.RACES, const.GENDERS, const.OCCUPATIONS_GRID)
+    )
     random.shuffle(identity_combinations)
-    
+
     # Cycle through combinations to ensure equal statistical power across groups
     identity_sampler = cycle(identity_combinations)
 
@@ -62,10 +64,12 @@ def main() -> None:
         task_idx = next(task_sampler)
         mw_sample = high_stakes_tasks[task_idx]
         goal = gen.extract_goal_from_metalwoz(mw_sample)
-        
-        unmarked_variants = gen.generate_unmarked_scenarios(goal, scenario_id=f"{task_idx:04d}")
+
+        unmarked_variants = gen.generate_unmarked_scenarios(
+            goal, scenario_id=f"{task_idx:04d}"
+        )
         control_simulations.extend(unmarked_variants)
-    
+
     # scaled sampling: goal is ~100 examples per paired identity (NUM_SAMPLES already set high)
     for _ in range(NUM_SAMPLES):
         # extract a random high-stakes goal from MetaLWoz
@@ -95,14 +99,22 @@ def main() -> None:
 
     with control_file.open("w", encoding="utf-8") as f:
         json.dump(control_simulations, f, indent=2)
-        
+
     with default_topic_file.open("w", encoding="utf-8") as f:
         json.dump(default_topics, f, indent=2)
 
-    explicit_count = sum(1 for s in target_simulations if s["variant_type"] == "explicit")
-    implicit_count = sum(1 for s in target_simulations if s["variant_type"] == "implicit")
-    control_explicit = sum(1 for s in control_simulations if s["variant_type"] == "explicit")
-    control_implicit = sum(1 for s in control_simulations if s["variant_type"] == "implicit")
+    explicit_count = sum(
+        1 for s in target_simulations if s["variant_type"] == "explicit"
+    )
+    implicit_count = sum(
+        1 for s in target_simulations if s["variant_type"] == "implicit"
+    )
+    control_explicit = sum(
+        1 for s in control_simulations if s["variant_type"] == "explicit"
+    )
+    control_implicit = sum(
+        1 for s in control_simulations if s["variant_type"] == "implicit"
+    )
 
     print(f"\nSuccessfully saved scenarios to {OUT_DIR}.")
     print("Dataset Breakdown:")
