@@ -18,13 +18,13 @@ from sklearn.model_selection import (
     GroupKFold, 
     GroupShuffleSplit,
     StratifiedGroupKFold,
-    LeaveOneGroupOut, 
-    cross_validate
+    LeaveOneGroupOut,
 )
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score, f1_score
+from imblearn.over_sampling import SMOTE
 from typing import Dict, Optional, Any
 import logging
 
@@ -41,7 +41,9 @@ class ScenarioDisjointValidator:
     def __init__(self, 
                  cv_strategy: str = "StratifiedGroupKFold",
                  n_splits: int = 5,
-                 classifier_type: str = "LogisticRegression"):
+                 classifier_type: str = "RandomForest",
+                 use_smote: bool = True,
+                 smote_k_neighbors: int = 5):
         """
         Initialize scenario-disjoint validator.
         
@@ -53,6 +55,8 @@ class ScenarioDisjointValidator:
         self.cv_strategy = cv_strategy
         self.n_splits = n_splits
         self.classifier_type = classifier_type
+        self.use_smote = use_smote
+        self.smote_k_neighbors = smote_k_neighbors
         
         # Initialize the CV splitter
         if cv_strategy == "StratifiedGroupKFold":
@@ -70,6 +74,55 @@ class ScenarioDisjointValidator:
         # Store results
         self.cv_results = {}
         self.fold_results = []
+
+    def _fit_classifier(
+        self,
+        X_train: np.ndarray,
+        y_train: np.ndarray,
+    ) -> Any:
+        """
+        Fit classifier on train split with optional SMOTE.
+        SMOTE is applied only on train data to avoid test leakage.
+        """
+        clf = self._get_classifier()
+
+        if not self.use_smote:
+            clf.fit(X_train, y_train)
+            return clf
+
+        labels, counts = np.unique(y_train, return_counts=True)
+        if len(labels) < 2:
+            clf.fit(X_train, y_train)
+            return clf
+
+        minority_count = int(np.min(counts))
+        if minority_count <= 1:
+            logger.warning(
+                "Skipping SMOTE on this split: minority class has <= 1 sample."
+            )
+            clf.fit(X_train, y_train)
+            return clf
+
+        adaptive_k = min(self.smote_k_neighbors, minority_count - 1)
+        if adaptive_k < 1:
+            clf.fit(X_train, y_train)
+            return clf
+
+        try:
+            smote = SMOTE(k_neighbors=adaptive_k, random_state=42)
+            X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
+            logger.info(
+                "Applied SMOTE on train split: %d -> %d samples (k_neighbors=%d)",
+                len(X_train),
+                len(X_resampled),
+                adaptive_k,
+            )
+            clf.fit(X_resampled, y_resampled)
+        except ValueError as e:
+            logger.warning("SMOTE failed on this split (%s); training without SMOTE.", e)
+            clf.fit(X_train, y_train)
+
+        return clf
     
     def _get_classifier(self) -> Any:
         """Get classifier instance based on type."""
@@ -157,8 +210,7 @@ class ScenarioDisjointValidator:
             )
 
         X_train, X_test = X[train_idx], X[test_idx]
-        clf = self._get_classifier()
-        clf.fit(X_train, y_train)
+        clf = self._fit_classifier(X_train, y_train)
         y_pred = clf.predict(X_test)
 
         test_accuracy = accuracy_score(y_test, y_pred)
@@ -233,22 +285,65 @@ class ScenarioDisjointValidator:
         else:
             cv = self.cv
 
-        # Run cross-validation with multiple metrics
-        scoring = {
-            'accuracy': 'accuracy',
-            'f1_macro': 'f1_macro',
-            'f1_weighted': 'f1_weighted'
+        # Manual CV loop keeps scenario-disjoint behavior and applies SMOTE train-only per fold.
+        test_accuracy_scores = []
+        test_f1_macro_scores = []
+        test_f1_weighted_scores = []
+        train_accuracy_scores = []
+
+        for fold_idx, (train_idx, test_idx) in enumerate(cv.split(X, y, groups)):
+            X_train, X_test = X[train_idx], X[test_idx]
+            y_train, y_test = y[train_idx], y[test_idx]
+
+            if len(np.unique(y_train)) < 2 or len(np.unique(y_test)) < 2:
+                logger.warning(
+                    "Skipping fold %d because train/test contains a single class.",
+                    fold_idx,
+                )
+                continue
+
+            clf = self._fit_classifier(X_train, y_train)
+
+            y_pred_test = clf.predict(X_test)
+            y_pred_train = clf.predict(X_train)
+
+            test_acc = accuracy_score(y_test, y_pred_test)
+            test_f1_macro = f1_score(y_test, y_pred_test, average='macro', zero_division=0)
+            test_f1_weighted = f1_score(y_test, y_pred_test, average='weighted', zero_division=0)
+            train_acc = accuracy_score(y_train, y_pred_train)
+
+            test_accuracy_scores.append(test_acc)
+            test_f1_macro_scores.append(test_f1_macro)
+            test_f1_weighted_scores.append(test_f1_weighted)
+            train_accuracy_scores.append(train_acc)
+
+            fold_info = {
+                'fold': fold_idx,
+                'train_accuracy': train_acc,
+                'test_accuracy': test_acc,
+                'test_f1_macro': test_f1_macro,
+                'test_f1_weighted': test_f1_weighted,
+            }
+            self.fold_results.append(fold_info)
+            logger.info(
+                "Fold %d: train_acc=%.3f, test_acc=%.3f, f1_macro=%.3f",
+                fold_idx,
+                train_acc,
+                test_acc,
+                test_f1_macro,
+            )
+
+        if not test_accuracy_scores:
+            raise ValueError(
+                "No valid CV folds were produced. Check class balance and group splits."
+            )
+
+        cv_results = {
+            'test_accuracy': np.array(test_accuracy_scores),
+            'test_f1_macro': np.array(test_f1_macro_scores),
+            'test_f1_weighted': np.array(test_f1_weighted_scores),
+            'train_accuracy': np.array(train_accuracy_scores),
         }
-        
-        cv_results = cross_validate(
-            self.classifier,
-            X, y, 
-            groups=groups,
-            cv=cv,
-            scoring=scoring,
-            return_train_score=True,
-            n_jobs=-1
-        )
         
         # Store results
         self.cv_results = {
@@ -261,23 +356,6 @@ class ScenarioDisjointValidator:
             'train_accuracy_mean': np.mean(cv_results['train_accuracy']),
             'raw_cv_results': cv_results
         }
-        
-        # Detailed per-fold results
-        n_folds = len(cv_results['test_accuracy'])
-        self.fold_results = []
-        
-        for fold_idx in range(n_folds):
-            fold_info = {
-                'fold': fold_idx,
-                'train_accuracy': cv_results['train_accuracy'][fold_idx],
-                'test_accuracy': cv_results['test_accuracy'][fold_idx],
-                'test_f1_macro': cv_results['test_f1_macro'][fold_idx],
-                'test_f1_weighted': cv_results['test_f1_weighted'][fold_idx]
-            }
-            self.fold_results.append(fold_info)
-            logger.info(f"Fold {fold_idx}: train_acc={fold_info['train_accuracy']:.3f}, "
-                       f"test_acc={fold_info['test_accuracy']:.3f}, "
-                       f"f1_macro={fold_info['test_f1_macro']:.3f}")
         
         # Check for overfitting
         train_acc = self.cv_results['train_accuracy_mean']
