@@ -75,8 +75,8 @@ class ScenarioDisjointValidator:
         """Get classifier instance based on type."""
         if self.classifier_type == "RandomForest":
             return RandomForestClassifier(
-                n_estimators=300,
-                max_depth=None,
+                n_estimators=200,
+                max_depth=5,
                 min_samples_leaf=10,
                 max_features="sqrt",
                 class_weight="balanced",
