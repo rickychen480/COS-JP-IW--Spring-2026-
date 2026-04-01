@@ -376,7 +376,7 @@ class IntersectionalEvaluator:
                 'f1_score': split_results['f1_macro_mean'],
             })
             
-            logger.info(f"Pair ({target}, {control_label}): accuracy={split_results['accuracy_mean']:.4f}")
+            logger.info(f"Pair ({target}, {control_label}): f1={split_results['f1_macro_mean']:.4f}")
 
         df_results = pd.DataFrame(results)
 
