@@ -212,7 +212,7 @@ if __name__ == "__main__":
     logger.info(f"Saved intersectional individuation to {perf_path}")
 
     logger.info("5. Measuring Intersectional Exaggeration...")
-    exag_df = ie.measure_exaggeration(df, metric="fighting_words")
+    exag_df = ie.measure_exaggeration(df, emb_dict, metric="fighting_words")
     exag_path = output_dir / "exaggeration.csv"
     exag_df.to_csv(exag_path, index=False)
     logger.info(f"Saved intersectional exaggeration to {exag_path}")
