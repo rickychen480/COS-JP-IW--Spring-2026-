@@ -265,7 +265,7 @@ class IntersectionalEvaluator:
         df: pd.DataFrame,
         embeddings: np.ndarray,
         intersectional_col: str = 'intersectional_id',
-        classifier_type: str = 'RandomForest',
+        classifier_type: str = 'LogisticRegression',
         min_group_size: Optional[int] = None,
         evaluation_mode: str = 'cv',
         test_size: float = 0.2,
@@ -348,7 +348,7 @@ class IntersectionalEvaluator:
 
             if evaluation_mode == "cv":
                 validator = ScenarioDisjointValidator(
-                    cv_strategy="GroupKFold",
+                    cv_strategy="StratifiedGroupKFold",
                     n_splits=min(n_splits, len(np.unique(groups))),
                     classifier_type=classifier_type,
                 )

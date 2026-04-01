@@ -17,11 +17,14 @@ import pandas as pd
 from sklearn.model_selection import (
     GroupKFold, 
     GroupShuffleSplit,
+    StratifiedGroupKFold,
     LeaveOneGroupOut, 
     cross_validate
 )
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, f1_score
 from typing import Dict, Optional, Any
 import logging
@@ -37,9 +40,9 @@ class ScenarioDisjointValidator:
     """
     
     def __init__(self, 
-                 cv_strategy: str = "GroupKFold",
+                 cv_strategy: str = "StratifiedGroupKFold",
                  n_splits: int = 5,
-                 classifier_type: str = "RandomForest"):
+                 classifier_type: str = "LogisticRegression"):
         """
         Initialize scenario-disjoint validator.
         
@@ -53,7 +56,9 @@ class ScenarioDisjointValidator:
         self.classifier_type = classifier_type
         
         # Initialize the CV splitter
-        if cv_strategy == "GroupKFold":
+        if cv_strategy == "StratifiedGroupKFold":
+            self.cv = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=42)
+        elif cv_strategy == "GroupKFold":
             self.cv = GroupKFold(n_splits=n_splits)
         elif cv_strategy == "LeaveOneGroupOut":
             self.cv = LeaveOneGroupOut()
@@ -89,11 +94,17 @@ class ScenarioDisjointValidator:
                 random_state=42
             )
         elif self.classifier_type == "LogisticRegression":
-            return LogisticRegression(
-                C=0.1,
-                max_iter=1000,
-                random_state=42,
-                n_jobs=-1
+            # Linear model over sentence embeddings generally yields stronger
+            # minority-class recall than shallow tree models for this task.
+            return make_pipeline(
+                StandardScaler(),
+                LogisticRegression(
+                    C=1.0,
+                    max_iter=2000,
+                    class_weight="balanced",
+                    random_state=42,
+                    n_jobs=-1,
+                )
             )
         else:
             raise ValueError(f"Unknown classifier type: {self.classifier_type}")
@@ -199,12 +210,12 @@ class ScenarioDisjointValidator:
         logger.info(f"Starting {self.cv_strategy} cross-validation with {self.classifier_type}")
         logger.info(f"Total samples: {len(X)}, Unique groups: {len(np.unique(groups))}")
         
-        if self.cv_strategy == "GroupKFold":
+        if self.cv_strategy in {"GroupKFold", "StratifiedGroupKFold"}:
             unique_groups = np.unique(groups)
             n_groups = len(unique_groups)
             if n_groups < 2:
                 raise ValueError(
-                    "Cannot perform GroupKFold with fewer than 2 unique groups."
+                    "Cannot perform grouped CV with fewer than 2 unique groups."
                 )
             if n_groups < self.n_splits:
                 logger.warning(
@@ -212,7 +223,10 @@ class ScenarioDisjointValidator:
                     "because only {n_groups} unique groups were provided."
                 )
             actual_splits = min(self.n_splits, n_groups)
-            cv = GroupKFold(n_splits=actual_splits)
+            if self.cv_strategy == "StratifiedGroupKFold":
+                cv = StratifiedGroupKFold(n_splits=actual_splits, shuffle=True, random_state=42)
+            else:
+                cv = GroupKFold(n_splits=actual_splits)
         else:
             cv = self.cv
 
