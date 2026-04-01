@@ -1,0 +1,2 @@
+CoMPosT Evaluation Complete at /n/fs/dynamicbias/COS-JP/results/compost/linearsvc
+Timestamp: 2026-04-01 04:09:32.560392
