@@ -54,6 +54,7 @@ httpx==0.28.1
 httpx-sse==0.4.3
 huggingface_hub==0.36.2
 idna==3.11
+imbalanced-learn==0.14.0
 ijson==3.4.0.post0
 interegular==0.3.3
 Jinja2==3.1.6
