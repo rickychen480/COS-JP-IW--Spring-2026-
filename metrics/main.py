@@ -248,6 +248,8 @@ def main(args):
         ]
         explicit_atc = nanmean([x for x in exp_atcs_raw if x is not None])
 
+        d_atc = nanmean(explicit_atc) - nanmean(implicit_atc)
+
         # Rejection diagnostics (count of refusal-like turns per dialogue).
         implicit_rejection_counts = [
             alloc_eval.calculate_rejection_rate(t) for t in implicit_df["transcript"]
@@ -381,6 +383,7 @@ def main(args):
                 "d_GCR_paired_by_scenario": d_gcr_paired,
                 "implicit_ATC": implicit_atc,
                 "explicit_ATC": explicit_atc,
+                "d_ATC": d_atc,
                 "d_CCD": d_ccd,
                 "d_CCD_paired_by_scenario": d_ccd_paired,
                 "implicit_rejection_count": nanmean(implicit_rejection_counts),
