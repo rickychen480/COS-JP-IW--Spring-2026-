@@ -265,7 +265,7 @@ class IntersectionalEvaluator:
         df: pd.DataFrame,
         embeddings: np.ndarray,
         intersectional_col: str = 'intersectional_id',
-        classifier_type: str = 'RandomForest',
+        classifier_type: str = 'LinearSVC',
         use_smote: bool = True,
         smote_k_neighbors: int = 5,
         min_group_size: Optional[int] = None,

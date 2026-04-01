@@ -41,7 +41,7 @@ class ScenarioDisjointValidator:
     def __init__(self, 
                  cv_strategy: str = "StratifiedGroupKFold",
                  n_splits: int = 5,
-                 classifier_type: str = "RandomForest",
+                 classifier_type: str = "LinearSVC",
                  use_smote: bool = True,
                  smote_k_neighbors: int = 5):
         """
