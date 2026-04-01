@@ -255,6 +255,9 @@ def main(args):
                         default_topic="general_comment"
                     )
 
+                    if np.isnan(topic_pole_sim) or np.isnan(persona_pole_sim):
+                        continue
+
                     implicit_scenario_df = implicit_df[
                         (implicit_df['scenario_id'] == scenario_id) & (implicit_df['topic'] != 'general_comment')
                     ]
