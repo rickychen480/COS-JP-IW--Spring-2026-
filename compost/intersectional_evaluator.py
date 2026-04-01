@@ -16,7 +16,6 @@ import os
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 from sklearn.covariance import LedoitWolf
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -28,35 +27,6 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Additional conversational fillers/common boilerplate that are rarely useful
-# as semantic style anchors for Fightin' Words seed extraction.
-SEED_WORD_EXCLUDE = set(ENGLISH_STOP_WORDS) | {
-    "thanks", "thank", "hello", "hi", "hey", "yeah", "yep", "okay", "ok",
-    "right", "sure", "great", "got", "info", "information", "please",
-    "need", "help", "support", "service", "services", "customer", "customers",
-    "program", "account", "plan", "policy", "item", "items", "store",
-    "month", "current", "new", "also", "just", "really", "like",
-    "im", "ive", "youre", "theyre", "weve", "dont", "cant", "wont",
-}
-
-
-def _word_counts(text_series: pd.Series) -> Dict[str, float]:
-    if text_series is None or text_series.empty:
-        return {}
-
-    tokens = (
-        text_series.astype(str)
-        .str.lower()
-        .str.replace(r"[^a-zA-Z\s]", " ", regex=True)
-        .str.split()
-        .explode()
-    )
-    tokens = tokens[tokens.notna() & tokens.str.fullmatch(r"[a-zA-Z]{3,}")]
-    tokens = tokens[~tokens.isin(SEED_WORD_EXCLUDE)]
-    if tokens.empty:
-        return {}
-    return tokens.value_counts().astype(float).to_dict()
 
 def clean_text_for_matching(text):
     return re.sub(r"[^a-zA-Z\s]", "", text.lower())
@@ -79,6 +49,22 @@ def get_log_odds(df1, df2, df0):
         Negative z-score: word is more prevalent in df2
         |z-score| > 1.96 indicates statistical significance at p < 0.05
     """
+    def _word_counts(text_series: pd.Series) -> Dict[str, float]:
+        if text_series is None or text_series.empty:
+            return {}
+
+        tokens = (
+            text_series.astype(str)
+            .str.lower()
+            .str.replace(r"[^a-zA-Z\s]", " ", regex=True)
+            .str.split()
+            .explode()
+        )
+        tokens = tokens[tokens.notna() & tokens.str.fullmatch(r"[a-zA-Z]{2,}")]
+        if tokens.empty:
+            return {}
+        return tokens.value_counts().astype(float).to_dict()
+
     # Get word->frequency maps for df1/df2 and prior corpus.
     counts1_raw = _word_counts(df1)
     counts2_raw = _word_counts(df2)
@@ -127,30 +113,12 @@ def get_seed_words(df1, df2, df0, threshold=1.96):
         List of seed words sorted by z-score (descending)
         Only includes words where |z-score| > threshold
     """
-    series1 = df1["response"]
-    series2 = df2["response"]
-    series0 = df0["response"]
-
-    deltas = get_log_odds(series1, series2, series0)
-    counts1 = _word_counts(series1)
-    counts2 = _word_counts(series2)
-
-    top_words = []
-    for word, z in deltas.items():
-        c1 = counts1.get(word, 0.0)
-        c2 = counts2.get(word, 0.0)
-
-        # Keep only robust, directional terms to avoid filler/task bleed.
-        if z <= threshold:
-            continue
-        if c1 < 2:      # Token must appear at least twice in df1
-            continue
-        if c1 < 1.5 * (c2 + 1e-8):  # TOken must be at least 1.5x more frequent in df1 than df2
-            continue
-        top_words.append(word)
-
-    # Ranked so rare one-offs are deprioritized
-    return sorted(top_words, key=lambda x: deltas[x] * np.log1p(counts1.get(x, 0.0)), reverse=True)
+    deltas = get_log_odds(df1["response"], df2["response"], df0["response"])
+    top_words = [
+        k for k, v in deltas.items()
+        if v > threshold and isinstance(k, str) and re.fullmatch(r"[a-zA-Z]{2,}", k)
+    ]
+    return sorted(top_words, key=lambda x: deltas[x], reverse=True)
 
 
 class IntersectionalEvaluator:
