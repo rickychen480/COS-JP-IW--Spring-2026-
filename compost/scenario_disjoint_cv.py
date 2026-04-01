@@ -23,6 +23,7 @@ from sklearn.model_selection import (
 )
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score, f1_score
 from typing import Dict, Optional, Any
 import logging
@@ -99,6 +100,14 @@ class ScenarioDisjointValidator:
                 solver="lbfgs",
                 random_state=42,
                 n_jobs=-1,
+            )
+        elif self.classifier_type == "LinearSVC":
+            return LinearSVC(
+                C=0.5,
+                class_weight="balanced",
+                dual=False, # dual=False is preferred when n_samples > n_features is not guaranteed
+                max_iter=2000,
+                random_state=42
             )
         else:
             raise ValueError(f"Unknown classifier type: {self.classifier_type}")
