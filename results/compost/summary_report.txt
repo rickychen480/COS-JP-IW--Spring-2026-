@@ -1,0 +1,2 @@
+CoMPosT Evaluation Complete at /n/fs/dynamicbias/COS-JP/results/compost
+Timestamp: 2026-04-01 02:45:16.895737
