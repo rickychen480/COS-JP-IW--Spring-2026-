@@ -159,7 +159,7 @@ if __name__ == "__main__":
     logger.info("=" * 80)
     logger.info("CoMPosT EVALUATOR - Bias Audit Methodology")
     logger.info("=" * 80)
-    logger.info("Individuation: scenario-disjoint cross-validation (Random Forest classifier)")
+    logger.info("Individuation: scenario-disjoint cross-validation")
     logger.info("Exaggeration: Fightin' Words + semantic axes (z-score > 1.96)")
     logger.info("=" * 80)
 
