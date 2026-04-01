@@ -23,8 +23,6 @@ from sklearn.model_selection import (
 )
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, f1_score
 from typing import Dict, Optional, Any
 import logging
@@ -76,8 +74,8 @@ class ScenarioDisjointValidator:
         """Get classifier instance based on type."""
         if self.classifier_type == "RandomForest":
             return RandomForestClassifier(
-                n_estimators=200,
-                max_depth=5,
+                n_estimators=300,
+                max_depth=None,
                 min_samples_leaf=10,
                 max_features="sqrt",
                 class_weight="balanced",
@@ -94,17 +92,13 @@ class ScenarioDisjointValidator:
                 random_state=42
             )
         elif self.classifier_type == "LogisticRegression":
-            # Linear model over sentence embeddings generally yields stronger
-            # minority-class recall than shallow tree models for this task.
-            return make_pipeline(
-                StandardScaler(),
-                LogisticRegression(
-                    C=1.0,
-                    max_iter=2000,
-                    class_weight="balanced",
-                    random_state=42,
-                    n_jobs=-1,
-                )
+            return LogisticRegression(
+                C=0.5, 
+                max_iter=2000,
+                class_weight="balanced",
+                solver="lbfgs",
+                random_state=42,
+                n_jobs=-1,
             )
         else:
             raise ValueError(f"Unknown classifier type: {self.classifier_type}")
