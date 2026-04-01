@@ -5,7 +5,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH -c 4                          
 #SBATCH --mem=32G        
-#SBATCH -t 12:00:00                   
+#SBATCH -t 3:00:00                   
 #SBATCH --output=logs/slurm-compost-%j.out         
 #SBATCH --error=logs/slurm-compost-%j.err   
 #SBATCH --mail-type=end
@@ -29,6 +29,6 @@ python compost/compost_evaluator.py \
   --data data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/control_simulations_masked.json \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics_masked.json \
         data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_masked.json \
-  --output-dir results/compost/llama-70b
+  --output-dir results/compost/
 
 echo "CoMPosT complete!"
