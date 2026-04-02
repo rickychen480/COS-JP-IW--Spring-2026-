@@ -1,8 +1,12 @@
+import logging
 import re
 import numpy as np
 import pandas as pd
 from typing import List, Dict
 from vllm import LLM, SamplingParams
+
+
+logger = logging.getLogger(__name__)
 
 
 class AllocationalEvaluator:
@@ -102,6 +106,10 @@ Respond now with your reasoning and verdict:"""
         response_text = self._call_llama_70b(prompt)
         # response_text = self._call_openai_api(prompt)
         # response_text = self._call_gemini_api(prompt)
+
+        logger.warning(
+            "Judge LLM output for task %r:\n%s", task_description, response_text
+        )
 
         # Parse verdict tag first to avoid matching YES/NO inside reasoning text.
         verdict_match = re.search(
