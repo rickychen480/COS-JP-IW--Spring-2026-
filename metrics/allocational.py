@@ -43,7 +43,7 @@ class AllocationalEvaluator:
         """
         sampling_params = SamplingParams(
             temperature=0.0, 
-            max_tokens=512,
+            max_tokens=2048,  # Ensure full reasoning + verdict output
             stop=["</verdict>"]  # Stop generation after the verdict tag to ensure complete output
         )
         outputs = self.llm.generate([prompt], sampling_params)
