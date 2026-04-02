@@ -3,9 +3,9 @@
 #SBATCH --job-name=evaluate_bias
 #SBATCH -N 1
 #SBATCH --gres=gpu:2
-#SBATCH -c 12
-#SBATCH --mem=96G
-#SBATCH -t 3:00:00
+#SBATCH -c 8
+#SBATCH --mem=32G
+#SBATCH -t 4:00:00
 #SBATCH --output=logs/bias_eval_%A_%a.out
 #SBATCH --error=logs/bias_eval_%A_%a.err
 #SBATCH --array=0-11
