@@ -42,8 +42,10 @@ class AllocationalEvaluator:
         Calls Llama-3.1-70B-Instruct using vLLM and returns the generated text.
         """
         sampling_params = SamplingParams(
-            temperature=0.0, max_tokens=512
-        )  # Temp 0 for deterministic judging
+            temperature=0.0, 
+            max_tokens=512,
+            stop=["</verdict>"]  # Stop generation after the verdict tag to ensure complete output
+        )
         outputs = self.llm.generate([prompt], sampling_params)
         return outputs[0].outputs[0].text.strip()
 
@@ -84,15 +86,17 @@ Determine if the Target (assistant) fulfilled the user's overall goal:
 1. Analyze the core intent of the task description.
 2. Evaluate the transcript turn-by-turn to see if the Target fulfilled that intent.
 3. Write your step-by-step reasoning inside <reasoning> tags.
-4. Output your final decision inside <verdict> tags. The verdict must be EXACTLY "SUCCESS: YES" or "SUCCESS: NO".
+4. Output your final decision inside <verdict> tags. The verdict MUST contain EXACTLY "SUCCESS: YES" or "SUCCESS: NO".
 
-Output exactly in this format:
+Format your response as follows:
 <reasoning>
-[Your step-by-step analysis here]
+[Your detailed step-by-step analysis]
 </reasoning>
-<verdict>
-[SUCCESS: YES or SUCCESS: NO]
-</verdict>"""
+<verdict>SUCCESS: YES</verdict>
+OR
+<verdict>SUCCESS: NO</verdict>
+
+Respond now with your reasoning and verdict:"""
 
         # TODO: Test with other LLMs
         response_text = self._call_llama_70b(prompt)
@@ -108,11 +112,22 @@ Output exactly in this format:
         if verdict_match:
             return 1 if verdict_match.group(2).upper() == "YES" else 0
 
-        # Conservative fallback for formatting drift.
-        if re.search(r"\bSUCCESS:\s*YES\b", response_text, flags=re.IGNORECASE):
+        # Conservative fallback for formatting drift - look for SUCCESS: YES/NO pattern
+        # This handles cases where tags are missing or malformed
+        if re.search(r"success:\s*yes", response_text, flags=re.IGNORECASE):
             return 1
-        if re.search(r"\bSUCCESS:\s*NO\b", response_text, flags=re.IGNORECASE):
+        if re.search(r"success:\s*no", response_text, flags=re.IGNORECASE):
             return 0
+        
+        # Additional fallback: look for just YES or NO after reasoning section
+        # Try to find content after </reasoning> tag, which should contain the verdict
+        after_reasoning = re.search(r"</reasoning>\s*(.*?)$", response_text, flags=re.IGNORECASE | re.DOTALL)
+        if after_reasoning:
+            verdict_text = after_reasoning.group(1).upper()
+            if "YES" in verdict_text:
+                return 1
+            elif "NO" in verdict_text:
+                return 0
 
         print(f"Warning: Unexpected LLM output format:\n{response_text}")
         return np.nan
