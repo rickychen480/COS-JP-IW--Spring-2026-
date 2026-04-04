@@ -166,19 +166,41 @@ def main(args):
     else:
         judge_cache = {}
 
-    def get_cached_judge(d_id, variant_type, transcript, task_desc):
-        """Fetches judgement from cache, or calls API and saves it so you never lose progress."""
-        cache_key = f"{d_id}::{variant_type}::{task_desc}"
-        if cache_key in judge_cache:
-            cached_value = judge_cache[cache_key]
-            if cached_value in (0, 1):
-                return cached_value
+    def get_cached_judges_batch(d_ids, variant_types, transcripts, metadatas):
+        """Fetches judgements from cache, or calls API in batches and saves so we never lose progress."""
+        scores = [None] * len(d_ids)
+        missing_dialogues = []
+        missing_indices = []
 
-        score = alloc_eval.calculate_gcr_llm_judge(transcript, task_desc)
-        judge_cache[cache_key] = score
-        with open(CACHE_FILE, "w") as f:
-            json.dump(judge_cache, f)
-        return score
+        for i, (d_id, v, t, m) in enumerate(zip(d_ids, variant_types, transcripts, metadatas)):
+            task_desc = m.get("task_description", "")
+            cache_key = f"{d_id}::{v}::{task_desc}"
+            
+            if cache_key in judge_cache:
+                cached_value = judge_cache[cache_key]
+                if cached_value in (0, 1):
+                    scores[i] = cached_value
+                    continue
+            
+            missing_dialogues.append({
+                "metadata": {"task_description": task_desc},
+                "transcript": t,
+                "cache_key": cache_key
+            })
+            missing_indices.append(i)
+
+        if missing_dialogues:
+            new_scores = alloc_eval.batch_evaluate_gcr(missing_dialogues)
+            for idx, score, dialogue in zip(missing_indices, new_scores, missing_dialogues):
+                scores[idx] = score
+                # Ensure we only cache solid numerical hits, ignoring the newly caught NaNs
+                if pd.notna(score) and score in (0, 1, 0.0, 1.0):
+                    judge_cache[dialogue["cache_key"]] = int(score)
+            
+            with open(CACHE_FILE, "w") as f:
+                json.dump(judge_cache, f)
+
+        return scores
 
     for target_id in target_groups:
         # 1. Isolate the data for this specific intersectional group
@@ -195,25 +217,19 @@ def main(args):
         # --- A. ALLOCATIONAL METRICS ---
 
         # 1. Use the checkpointed judge function (Requires 'dialogue_id')
-        imp_success_list = [
-            get_cached_judge(d_id, v, t, m.get("task_description", ""))
-            for d_id, v, t, m in zip(
-                implicit_df["dialogue_id"],
-                implicit_df["variant_type"],
-                implicit_df["transcript"],
-                implicit_df["metadata"],
-            )
-        ]
+        imp_success_list = get_cached_judges_batch(
+            implicit_df["dialogue_id"],
+            implicit_df["variant_type"],
+            implicit_df["transcript"],
+            implicit_df["metadata"]
+        )
 
-        exp_success_list = [
-            get_cached_judge(d_id, v, t, m.get("task_description", ""))
-            for d_id, v, t, m in zip(
-                explicit_df["dialogue_id"],
-                explicit_df["variant_type"],
-                explicit_df["transcript"],
-                explicit_df["metadata"],
-            )
-        ]
+        exp_success_list = get_cached_judges_batch(
+            explicit_df["dialogue_id"],
+            explicit_df["variant_type"],
+            explicit_df["transcript"],
+            explicit_df["metadata"]
+        )
 
         implicit_df = implicit_df.copy()
         explicit_df = explicit_df.copy()

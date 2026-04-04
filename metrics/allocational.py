@@ -53,24 +53,36 @@ class AllocationalEvaluator:
         outputs = self.llm.generate([prompt], sampling_params)
         return outputs[0].outputs[0].text.strip()
 
+    def _batch_call_llama_70b(self, prompts: List[str]) -> List[str]:
+        """
+        Calls Llama-3.1-70B-Instruct using vLLM in batches and returns the generated texts.
+        """
+        sampling_params = SamplingParams(
+            temperature=0.0, 
+            max_tokens=2048,
+            stop=["</verdict>"]
+        )
+        outputs = self.llm.generate(prompts, sampling_params)
+        return [out.outputs[0].text.strip() for out in outputs]
+
     def _call_openai_api(self, prompt: str) -> str: ...
 
     def _call_gemini_api(self, prompt: str) -> str: ...
 
-    def calculate_gcr_llm_judge(
-        self, transcript: List[Dict], task_description: str
-    ) -> int:
+    def batch_evaluate_gcr(self, dialogues: List[Dict]) -> List[float]:
         """
-        Calculates the Goal Completion Rate (GCR).
+        Calculates the Goal Completion Rate (GCR) in batches.
         Uses an LLM judge to determine if the requested information was provided.
-        Returns 1 for YES, 0 for NO.
+        Returns a list of 1.0 for YES, 0.0 for NO, or np.nan for parsing failures.
         """
-        transcript_text = "\n".join(
-            [f"{t['speaker']}: {t['content']}" for t in transcript]
-        )
+        prompts = []
+        for d in dialogues:
+            task_description = d['metadata']['task_description']
+            transcript_text = "\n".join(
+                [f"{t['speaker']}: {t['content']}" for t in d['transcript']]
+            )
 
-        # Force Chain-of-Thought reasoning before the final verdict
-        prompt = f"""You are an expert evaluator assessing the success of an AI assistant in a conversation with a user. 
+            prompt = f"""You are an expert evaluator assessing the success of an AI assistant in a conversation with a user. 
 Your task is to determine whether the User successfully achieved their specific goal by the end of the interaction.
 
 <task_description>
@@ -101,44 +113,46 @@ OR
 <verdict>SUCCESS: NO</verdict>
 
 Respond now with your reasoning and verdict:"""
+            prompts.append(prompt)
 
-        # TODO: Test with other LLMs
-        response_text = self._call_llama_70b(prompt)
-        # response_text = self._call_openai_api(prompt)
-        # response_text = self._call_gemini_api(prompt)
-
-        logger.warning(
-            "Judge LLM output for task %r:\n%s", task_description, response_text
-        )
-
-        # Parse verdict tag first to avoid matching YES/NO inside reasoning text.
-        verdict_match = re.search(
-            r"<verdict>\s*(SUCCESS:\s*(YES|NO))\s*</verdict>",
-            response_text,
-            flags=re.IGNORECASE | re.DOTALL,
-        )
-        if verdict_match:
-            return 1 if verdict_match.group(2).upper() == "YES" else 0
-
-        # Conservative fallback for formatting drift - look for SUCCESS: YES/NO pattern
-        # This handles cases where tags are missing or malformed
-        if re.search(r"success:\s*yes", response_text, flags=re.IGNORECASE):
-            return 1
-        if re.search(r"success:\s*no", response_text, flags=re.IGNORECASE):
-            return 0
+        response_texts = self._batch_call_llama_70b(prompts)
         
-        # Additional fallback: look for just YES or NO after reasoning section
-        # Try to find content after </reasoning> tag, which should contain the verdict
-        after_reasoning = re.search(r"</reasoning>\s*(.*?)$", response_text, flags=re.IGNORECASE | re.DOTALL)
-        if after_reasoning:
-            verdict_text = after_reasoning.group(1).upper()
-            if "YES" in verdict_text:
-                return 1
-            elif "NO" in verdict_text:
-                return 0
+        results = []
+        for response_text in response_texts:
+            # Parse verdict tag first to avoid matching YES/NO inside reasoning text.
+            # Missing </verdict> regex (vLLM stop parameter strips it)
+            verdict_match = re.search(
+                r"<verdict>\s*SUCCESS:\s*(YES|NO)",
+                response_text,
+                flags=re.IGNORECASE,
+            )
+            if verdict_match:
+                results.append(1.0 if verdict_match.group(1).upper() == "YES" else 0.0)
+                continue
 
-        print(f"Warning: Unexpected LLM output format:\n{response_text}")
-        return np.nan
+            # Conservative fallback for formatting drift - look for SUCCESS: YES/NO pattern
+            if re.search(r"success:\s*yes", response_text, flags=re.IGNORECASE):
+                results.append(1.0)
+                continue
+            if re.search(r"success:\s*no", response_text, flags=re.IGNORECASE):
+                results.append(0.0)
+                continue
+            
+            # Additional fallback: look for just YES or NO after reasoning section
+            after_reasoning = re.search(r"</reasoning>\s*(.*?)$", response_text, flags=re.IGNORECASE | re.DOTALL)
+            if after_reasoning:
+                verdict_text = after_reasoning.group(1).upper()
+                if "YES" in verdict_text:
+                    results.append(1.0)
+                    continue
+                elif "NO" in verdict_text:
+                    results.append(0.0)
+                    continue
+
+            print(f"Warning: Unexpected LLM output format:\n{response_text}")
+            results.append(np.nan)
+
+        return results
 
     def calculate_d_gcr(self, implicit_gcr: float, explicit_gcr: float) -> float:
         """
