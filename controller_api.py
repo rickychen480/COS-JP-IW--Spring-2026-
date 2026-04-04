@@ -202,26 +202,63 @@ async def run_single_dialogue(sc, max_turns, semaphore, model="gpt-4o-mini"):
         }
 
 async def run_simulation_async(input_file, output_file, model, max_turns, limit, concurrency):
+    # Setup Checkpoint File
+    checkpoint_file = output_file.replace(".json", ".jsonl")
+    if not checkpoint_file.endswith(".jsonl"):
+        checkpoint_file += ".jsonl"
+
+    completed_ids = set()
+    results = []
+
+    # Check for existing checkpoint to resume
+    if os.path.exists(checkpoint_file):
+        with open(checkpoint_file, "r") as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        data = json.loads(line)
+                        completed_ids.add(data["dialogue_id"])
+                        results.append(data)
+                    except json.JSONDecodeError:
+                        continue
+        print(f"Resuming: Loaded {len(completed_ids)} completed dialogues from checkpoint.")
+
+    # Load and filter scenarios
     with open(input_file, "r") as f:
-        scenarios = json.load(f)
+        all_scenarios = json.load(f)
 
     if limit:
-        scenarios = scenarios[:limit]
-        print(f"TEST MODE: Running only {len(scenarios)} dialogues.")
+        all_scenarios = all_scenarios[:limit]
 
-    semaphore = asyncio.Semaphore(concurrency)
+    pending_scenarios = [sc for sc in all_scenarios if sc["dialogue_id"] not in completed_ids]
     
-    print(f"Starting async pipeline with {len(scenarios)} simulations...")
-    tasks = [run_single_dialogue(sc, max_turns, semaphore, model) for sc in scenarios]
-    
-    # Process tasks with a progress bar
-    results = await tqdm.gather(*tasks, desc="Simulating Dialogues")
+    print(f"Found {len(all_scenarios)} total scenarios. {len(pending_scenarios)} remaining to process.")
 
-    # Save outputs incrementally or at the end
-    with open(output_file, "w") as f:
+    if not pending_scenarios:
+        print("All scenarios are already completed! Skipping to final JSON compilation.")
+    else:
+        semaphore = asyncio.Semaphore(concurrency)
+        tasks = [run_single_dialogue(sc, max_turns, semaphore, model) for sc in pending_scenarios]
+        
+        # Process tasks as they complete (Write-Through)
+        with open(checkpoint_file, "a", encoding="utf-8") as f_ckpt:
+            for f in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Simulating Dialogues"):
+                try:
+                    result = await f
+                    if result:
+                        # Instantly write to the checkpoint file and flush to disk
+                        f_ckpt.write(json.dumps(result) + "\n")
+                        f_ckpt.flush()
+                        results.append(result)
+                except Exception as e:
+                    print(f"Task failed with error: {e}")
+
+    # Save Final Output Incrementally
+    print(f"Compilation complete. Saving all {len(results)} dialogues to {output_file}...")
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
     
-    print(f"Simulation complete. Saved {len(results)} dialogues to {output_file}")
+    print("Done!")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -229,8 +266,11 @@ if __name__ == "__main__":
     parser.add_argument("--out", type=str, required=True, help="Path to output JSON")
     parser.add_argument("--model", type=str, default="gpt-4o-mini")
     parser.add_argument("--limit", type=int, default=None, help="Test mode: number of dialogues to run")
-    parser.add_argument("--concurrency", type=int, default=50, help="Max concurrent API calls")
+    parser.add_argument("--concurrency", type=int, default=10, help="Max concurrent API calls")
     args = parser.parse_args()
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(args.out), exist_ok=True)
 
     asyncio.run(run_simulation_async(
         args.data,
