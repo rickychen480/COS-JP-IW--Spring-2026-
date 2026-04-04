@@ -154,8 +154,14 @@ async def run_single_dialogue(sc, max_turns, semaphore, model="gpt-4o-mini"):
                 )
                 msg_u = response_u.choices[0].message.content.strip()
             except Exception as e:
-                print(f"\nFatal Error for Agent U (ID {dialogue['dialogue_id']}): {e}")
-                return None  # Return None so this broken dialogue is NOT saved to the checkpoint
+                # LOGGING UPDATE: Return an explicit failure object
+                return {
+                    "status": "failed",
+                    "dialogue_id": dialogue["dialogue_id"],
+                    "agent": "User Simulator",
+                    "error": str(e),
+                    "failed_at_turn": turn
+                }
 
             dialogue["history_u"].append({"role": "assistant", "content": msg_u})
             dialogue["history_t"].append({"role": "user", "content": msg_u})
@@ -199,8 +205,14 @@ async def run_single_dialogue(sc, max_turns, semaphore, model="gpt-4o-mini"):
                             )
 
             except Exception as e:
-                print(f"Error for Agent T (ID {dialogue['dialogue_id']}): {e}")
-                break
+                # LOGGING UPDATE: Return an explicit failure object
+                return {
+                    "status": "failed",
+                    "dialogue_id": dialogue["dialogue_id"],
+                    "agent": "Target Model",
+                    "error": str(e),
+                    "failed_at_turn": turn
+                }
 
             dialogue["history_t"].append({"role": "assistant", "content": msg_t})
             dialogue["history_u"].append({"role": "user", "content": msg_t})
@@ -211,6 +223,7 @@ async def run_single_dialogue(sc, max_turns, semaphore, model="gpt-4o-mini"):
                 break
 
         return {
+            "status": "success",
             "dialogue_id": dialogue["dialogue_id"],
             "variant_type": dialogue["variant_type"],
             "metadata": dialogue["metadata"],
@@ -218,10 +231,14 @@ async def run_single_dialogue(sc, max_turns, semaphore, model="gpt-4o-mini"):
         }
 
 async def run_simulation_async(input_file, output_file, model, max_turns, limit, concurrency):
-    # Setup Checkpoint File
+    # Setup Checkpoint and Error Log Files
     checkpoint_file = output_file.replace(".json", ".jsonl")
+    error_file = output_file.replace(".json", "_errors.jsonl")
+    
     if not checkpoint_file.endswith(".jsonl"):
         checkpoint_file += ".jsonl"
+    if not error_file.endswith(".jsonl"):
+        error_file += ".jsonl"
 
     completed_ids = set()
     results = []
@@ -234,6 +251,11 @@ async def run_simulation_async(input_file, output_file, model, max_turns, limit,
                     try:
                         data = json.loads(line)
                         completed_ids.add(data["dialogue_id"])
+                        
+                        # Strip out the 'status' key we used internally before appending to final results
+                        if "status" in data:
+                            del data["status"]
+                            
                         results.append(data)
                     except json.JSONDecodeError:
                         print(f"Warning: Corrupted JSON on line {line_number} of checkpoint. Skipping.")
@@ -258,20 +280,32 @@ async def run_simulation_async(input_file, output_file, model, max_turns, limit,
         tasks = [run_single_dialogue(sc, max_turns, semaphore, model) for sc in pending_scenarios]
         
         # Process tasks as they complete (Write-Through)
-        with open(checkpoint_file, "a", encoding="utf-8") as f_ckpt:
+        with open(checkpoint_file, "a", encoding="utf-8") as f_ckpt, \
+             open(error_file, "a", encoding="utf-8") as f_err:
+             
             for f in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Simulating Dialogues"):
                 try:
                     result = await f
-                    # Only save if the dialogue completed successfully (did not return None)
-                    if result is not None:
-                        f_ckpt.write(json.dumps(result) + "\n")
+                    
+                    if result["status"] == "failed":
+                        # Write failures to the dedicated error log
+                        f_err.write(json.dumps(result) + "\n")
+                        f_err.flush()
+                    else:
+                        # Write successes to the main checkpoint
+                        # Make a copy to avoid mutating the original before saving to checkpoint
+                        save_data = dict(result)
+                        del save_data["status"]
+                        
+                        f_ckpt.write(json.dumps(save_data) + "\n")
                         f_ckpt.flush()
-                        results.append(result)
+                        results.append(save_data)
+                        
                 except Exception as e:
-                    print(f"Task failed with error: {e}")
+                    print(f"Task encountered an unhandled exception: {e}")
 
     # Atomic Final Save
-    print(f"Compilation complete. Saving all {len(results)} dialogues to {output_file}...")
+    print(f"Compilation complete. Saving all {len(results)} successful dialogues to {output_file}...")
     temp_out = output_file + ".tmp"
     with open(temp_out, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
