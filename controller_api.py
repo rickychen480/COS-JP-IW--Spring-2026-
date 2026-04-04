@@ -22,6 +22,7 @@ import json
 import argparse
 import asyncio
 import os
+import tempfile
 from openai import AsyncOpenAI
 from tqdm.asyncio import tqdm
 from dotenv import load_dotenv
@@ -105,7 +106,9 @@ def check_early_stopping(msg_u, msg_t):
     return False
 
 async def generate_with_retry(client, messages, model, max_retries=6, **kwargs):
-    """Helper function to retry API calls with exponential backoff."""
+    """Helper function to retry API calls with exponential backoff for various network/rate errors."""
+    retryable_errors = ["429", "rate limit", "500", "502", "503", "504", "timeout", "connection"]
+    
     for attempt in range(max_retries):
         try:
             return await client.chat.completions.create(
@@ -115,15 +118,15 @@ async def generate_with_retry(client, messages, model, max_retries=6, **kwargs):
             )
         except Exception as e:
             error_str = str(e).lower()
-            if "429" in error_str or "rate limit" in error_str:
+            if any(err in error_str for err in retryable_errors):
                 wait_time = 2 ** attempt  # Waits 1s, 2s, 4s, 8s, 16s, 32s
-                print(f"Rate limit hit. Pausing for {wait_time}s... (Attempt {attempt + 1}/{max_retries})")
+                print(f"Network/Rate limit hit. Pausing for {wait_time}s... (Attempt {attempt + 1}/{max_retries})")
                 await asyncio.sleep(wait_time)
             else:
-                # If it's a different kind of error (e.g., bad API key), raise it immediately
+                # If it's a fatal error (e.g., bad API key, invalid request format), do not retry
                 raise e
     
-    raise Exception(f"Failed after {max_retries} retries due to rate limits.")
+    raise Exception(f"Failed after {max_retries} retries due to persistent API errors.")
 
 async def run_single_dialogue(sc, max_turns, semaphore, model="gpt-4o-mini"):
     """Runs a single dual-agent simulation asynchronously."""
@@ -152,8 +155,8 @@ async def run_single_dialogue(sc, max_turns, semaphore, model="gpt-4o-mini"):
                 )
                 msg_u = response_u.choices[0].message.content.strip()
             except Exception as e:
-                print(f"Error for Agent U (ID {dialogue['dialogue_id']}): {e}")
-                break # Gives up and returns the incomplete transcript only if ALL retries fail
+                print(f"\nFatal Error for Agent U (ID {dialogue['dialogue_id']}): {e}")
+                return None  # Return None so this broken dialogue is NOT saved to the checkpoint
 
             dialogue["history_u"].append({"role": "assistant", "content": msg_u})
             dialogue["history_t"].append({"role": "user", "content": msg_u})
@@ -227,13 +230,14 @@ async def run_simulation_async(input_file, output_file, model, max_turns, limit,
     # Check for existing checkpoint to resume
     if os.path.exists(checkpoint_file):
         with open(checkpoint_file, "r") as f:
-            for line in f:
+            for line_number, line in enumerate(f, 1):
                 if line.strip():
                     try:
                         data = json.loads(line)
                         completed_ids.add(data["dialogue_id"])
                         results.append(data)
                     except json.JSONDecodeError:
+                        print(f"Warning: Corrupted JSON on line {line_number} of checkpoint. Skipping.")
                         continue
         print(f"Resuming: Loaded {len(completed_ids)} completed dialogues from checkpoint.")
 
@@ -259,19 +263,21 @@ async def run_simulation_async(input_file, output_file, model, max_turns, limit,
             for f in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Simulating Dialogues"):
                 try:
                     result = await f
-                    if result:
-                        # Instantly write to the checkpoint file and flush to disk
+                    # Only save if the dialogue completed successfully (did not return None)
+                    if result is not None:
                         f_ckpt.write(json.dumps(result) + "\n")
                         f_ckpt.flush()
                         results.append(result)
                 except Exception as e:
                     print(f"Task failed with error: {e}")
 
-    # Save Final Output Incrementally
+    # Atomic Final Save
     print(f"Compilation complete. Saving all {len(results)} dialogues to {output_file}...")
-    with open(output_file, "w", encoding="utf-8") as f:
+    temp_out = output_file + ".tmp"
+    with open(temp_out, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
     
+    os.replace(temp_out, output_file) # Safely overwrites the target file in one atomic step
     print("Done!")
 
 if __name__ == "__main__":
