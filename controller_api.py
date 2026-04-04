@@ -4,19 +4,18 @@ Orchestrate the dual agent transcript generation w/ an LLM API.
 Usage:
 python controller_api.py \
   --data data/prompts/target_simulations.json \
-  --out data/transcripts/gpt/target_simulations.json \
-  --concurrency 75 \
-  --limit 10
+  --out data/transcripts/gpt-4o-mini/target_simulations.json \
+  --concurrency 10
 
 python controller_api.py \
   --data data/prompts/control_simulations.json \
-  --out data/transcripts/gpt/control_simulations.json \
-  --concurrency 75
+  --out data/transcripts/gpt-4o-mini/control_simulations.json \
+  --concurrency 10
 
 python controller_api.py \
   --data data/prompts/default_topics.json \
-  --out data/transcripts/gpt/default_topics.json \
-  --concurrency 75
+  --out data/transcripts/gpt-4o-mini/default_topics.json \
+  --concurrency 10
 """
 
 import json
