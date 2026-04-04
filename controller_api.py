@@ -104,6 +104,27 @@ def check_early_stopping(msg_u, msg_t):
 
     return False
 
+async def generate_with_retry(client, messages, model, max_retries=6, **kwargs):
+    """Helper function to retry API calls with exponential backoff."""
+    for attempt in range(max_retries):
+        try:
+            return await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                **kwargs
+            )
+        except Exception as e:
+            error_str = str(e).lower()
+            if "429" in error_str or "rate limit" in error_str:
+                wait_time = 2 ** attempt  # Waits 1s, 2s, 4s, 8s, 16s, 32s
+                print(f"Rate limit hit. Pausing for {wait_time}s... (Attempt {attempt + 1}/{max_retries})")
+                await asyncio.sleep(wait_time)
+            else:
+                # If it's a different kind of error (e.g., bad API key), raise it immediately
+                raise e
+    
+    raise Exception(f"Failed after {max_retries} retries due to rate limits.")
+
 async def run_single_dialogue(sc, max_turns, semaphore, model="gpt-4o-mini"):
     """Runs a single dual-agent simulation asynchronously."""
     async with semaphore:
@@ -125,17 +146,14 @@ async def run_single_dialogue(sc, max_turns, semaphore, model="gpt-4o-mini"):
         for turn in range(max_turns):
             # --- AGENT U (User Simulator) ---
             try:
-                response_u = await client.chat.completions.create(
-                    model=model,
-                    messages=dialogue["history_u"],
-                    temperature=0.65,
-                    top_p=0.90,
-                    max_tokens=512
+                response_u = await generate_with_retry(
+                    client, dialogue["history_u"], model, 
+                    temperature=0.65, top_p=0.90, max_tokens=512
                 )
                 msg_u = response_u.choices[0].message.content.strip()
             except Exception as e:
                 print(f"Error for Agent U (ID {dialogue['dialogue_id']}): {e}")
-                break
+                break # Gives up and returns the incomplete transcript only if ALL retries fail
 
             dialogue["history_u"].append({"role": "assistant", "content": msg_u})
             dialogue["history_t"].append({"role": "user", "content": msg_u})
@@ -143,13 +161,9 @@ async def run_single_dialogue(sc, max_turns, semaphore, model="gpt-4o-mini"):
 
             # --- AGENT T (Target Model) ---
             try:
-                response_t = await client.chat.completions.create(
-                    model=model,
-                    messages=dialogue["history_t"],
-                    temperature=0.7,
-                    max_tokens=512,
-                    logprobs=True,
-                    top_logprobs=1
+                response_t = await generate_with_retry(
+                    client, dialogue["history_t"], model, 
+                    temperature=0.7, max_tokens=512, logprobs=True, top_logprobs=1
                 )
                 msg_t = response_t.choices[0].message.content.strip()
                 
