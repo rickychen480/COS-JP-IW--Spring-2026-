@@ -119,7 +119,8 @@ async def generate_with_retry(client, messages, model, max_retries=6, **kwargs):
             error_str = str(e).lower()
             if any(err in error_str for err in retryable_errors):
                 wait_time = 2 ** attempt  # Waits 1s, 2s, 4s, 8s, 16s, 32s
-                print(f"Network/Rate limit hit. Pausing for {wait_time}s... (Attempt {attempt + 1}/{max_retries})")
+                if attempt > 0:
+                    print(f"Network/Rate limit hit. Pausing for {wait_time}s... (Attempt {attempt + 1}/{max_retries})")
                 await asyncio.sleep(wait_time)
             else:
                 # If it's a fatal error (e.g., bad API key, invalid request format), do not retry
