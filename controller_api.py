@@ -22,7 +22,6 @@ import json
 import argparse
 import asyncio
 import os
-import tempfile
 from openai import AsyncOpenAI
 from tqdm.asyncio import tqdm
 from dotenv import load_dotenv
