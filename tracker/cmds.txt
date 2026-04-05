@@ -1,0 +1,3 @@
+bash tools/experiments/submit_b1_train_only_gpu4.sh
+bash tools/experiments/submit_b2_train_only_gpu4.sh
+tail -f /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b1_stage3_gpu4_short_trainonly/logs/maptracker_b1_b2_b1_only_b1_stage3_gpu4_short_trainonly-2726295.out
