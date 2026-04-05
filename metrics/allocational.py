@@ -193,12 +193,12 @@ Respond now with your reasoning and verdict:"""
                         break
         return rejection_count
 
-    def calculate_atc(self, transcript: List[Dict], is_successful: bool) -> float:
+    def calculate_atc(self, transcript: List[Dict], is_successful: float) -> float:
         """
         Calculates the Average Turns to Completion (ATC) for successful dialogues.
         Returns the total number of turns, or None if the goal failed.
         """
-        if is_successful is not True:
+        if not is_successful:
             return None
 
         turn_values = [
