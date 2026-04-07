@@ -40,7 +40,7 @@ CUDA_VISIBLE_DEVICES=0,1 python metrics/main.py \
   --tensor_parallel_size 2 \
   --chunk_index $SLURM_ARRAY_TASK_ID \
   --total_chunks 12 \
-  --masked_path data/transcripts/gpt-4o-mini//target_simulations_masked.json
+  --masked_path data/transcripts/gpt-4o-mini/target_simulations_masked.json
 
 wait
 echo "Chunk $SLURM_ARRAY_TASK_ID complete!"
