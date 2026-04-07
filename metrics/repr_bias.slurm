@@ -35,7 +35,7 @@ export TOKENIZERS_PARALLELISM=false
 
 CUDA_VISIBLE_DEVICES=0 python metrics/main.py \
   --dir data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/ \
-  --out results/metrics/dynamic_bias_results.csv \
+  --out results/metrics/test-repr-bias.csv \
   --judge_model "${MODEL_ID}" \
   --tensor_parallel_size 1 \
   --chunk_index 0 \
