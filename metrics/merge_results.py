@@ -4,7 +4,7 @@ import glob
 import os
 
 
-def merge_csv_results(results_dir="results/metrics"):
+def merge_csv_results(results_dir="results/metrics/gpt-4o-mini/"):
     """Merges all chunked CSV files into a single file."""
     chunk_files = glob.glob(
         os.path.join(results_dir, "dynamic_bias_results_chunk_*.csv")
