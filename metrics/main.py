@@ -36,6 +36,16 @@ def get_document_embedding(text, model):
     return np.mean(sentence_embeddings, axis=0)
 
 
+def get_turn_embeddings(turn_texts, model):
+    """Encodes each target turn separately for trajectory metrics."""
+    if not turn_texts:
+        return np.empty((0, model.get_sentence_embedding_dimension()), dtype=float)
+    turn_embeddings = np.asarray(model.encode(turn_texts), dtype=float)
+    if turn_embeddings.ndim == 1:
+        turn_embeddings = turn_embeddings.reshape(1, -1)
+    return turn_embeddings
+
+
 def nanmean(values):
     """Stable mean that ignores NaNs and returns NaN if nothing is valid."""
     arr = np.array(values, dtype=float)
@@ -114,7 +124,11 @@ def main(args):
             [turn["content"] for turn in transcript if turn["speaker"] == "Target"]
         )
 
+    def extract_target_turn_texts(transcript):
+        return [turn["content"] for turn in transcript if turn["speaker"] == "Target"]
+
     df["target_text"] = df["transcript"].apply(extract_target_text)
+    df["target_turn_texts"] = df["transcript"].apply(extract_target_turn_texts)
 
     if args.masked_path:
         print(f"Loading masked data from {args.masked_path}...")
@@ -123,26 +137,37 @@ def main(args):
 
         masked_df = pd.DataFrame(masked_data)
         masked_df["masked_text"] = masked_df["transcript"].apply(extract_target_text)
+        masked_df["masked_turn_texts"] = masked_df["transcript"].apply(
+            extract_target_turn_texts
+        )
 
         # Merge the masked text into the main dataframe
         df = pd.merge(
             df,
-            masked_df[["dialogue_id", "masked_text"]],
+            masked_df[["dialogue_id", "masked_text", "masked_turn_texts"]],
             on="dialogue_id",
             how="left",
             suffixes=("", "_masked"),
         )
         # Control simulations and other non-target simulations will have NaN in 'masked_text', so fill them
         df["masked_text"] = df["masked_text"].fillna(df["target_text"])
+        missing_turns = df["masked_turn_texts"].isna()
+        df.loc[missing_turns, "masked_turn_texts"] = df.loc[
+            missing_turns, "target_turn_texts"
+        ]
     else:
         print(
             "Warning: No masked data file provided. Using unmasked text for all embeddings."
         )
         df["masked_text"] = df["target_text"]
+        df["masked_turn_texts"] = df["target_turn_texts"]
 
     embedder = SentenceTransformer("all-mpnet-base-v2")
     df["embedding"] = df["masked_text"].apply(
         lambda x: get_document_embedding(x, embedder)
+    )
+    df["turn_embeddings"] = df["masked_turn_texts"].apply(
+        lambda x: get_turn_embeddings(x, embedder)
     )
 
     final_results = []
@@ -311,6 +336,8 @@ def main(args):
 
         implicit_steerings = []
         explicit_steerings = []
+        implicit_trajectories = []
+        explicit_trajectories = []
 
         if control_id in df["intersectional_id"].values:
             # Get unique scenarios (topics) for this group, excluding the general_comment baseline
@@ -360,11 +387,33 @@ def main(args):
                         topic_pole_sim=topic_pole_sim,
                         persona_pole_sim=persona_pole_sim,
                     )
+                    trajectory_dict = rep_eval.calculate_semantic_steering_trajectory(
+                        implicit_turn_embeddings=implicit_scenario_df[
+                            "turn_embeddings"
+                        ].tolist(),
+                        explicit_turn_embeddings=explicit_scenario_df[
+                            "turn_embeddings"
+                        ].tolist(),
+                        axis_v=axis_v,
+                        topic_pole_sim=topic_pole_sim,
+                        persona_pole_sim=persona_pole_sim,
+                    )
 
                     if np.isfinite(steer_dict["implicit_steering"]):
                         implicit_steerings.append(steer_dict["implicit_steering"])
                     if np.isfinite(steer_dict["explicit_steering"]):
                         explicit_steerings.append(steer_dict["explicit_steering"])
+
+                    imp_traj = np.asarray(
+                        trajectory_dict["implicit_trajectory"], dtype=float
+                    )
+                    exp_traj = np.asarray(
+                        trajectory_dict["explicit_trajectory"], dtype=float
+                    )
+                    if imp_traj.size and np.isfinite(imp_traj).any():
+                        implicit_trajectories.append(imp_traj)
+                    if exp_traj.size and np.isfinite(exp_traj).any():
+                        explicit_trajectories.append(exp_traj)
 
                 except (ValueError, np.linalg.LinAlgError):
                     # Monroe log-odds failed or insufficient data for this scenario
@@ -382,6 +431,29 @@ def main(args):
             if not (np.isnan(final_imp_steer) or np.isnan(final_exp_steer))
             else np.nan
         )
+
+        def aggregate_trajectory(trajectory_list):
+            if not trajectory_list:
+                return []
+            max_len = max(len(t) for t in trajectory_list)
+            out = []
+            for i in range(max_len):
+                vals = [t[i] for t in trajectory_list if i < len(t) and np.isfinite(t[i])]
+                out.append(float(np.mean(vals)) if vals else np.nan)
+            return out
+
+        final_imp_traj = aggregate_trajectory(implicit_trajectories)
+        final_exp_traj = aggregate_trajectory(explicit_trajectories)
+
+        max_len_delta = max(len(final_imp_traj), len(final_exp_traj))
+        final_delta_traj = []
+        for i in range(max_len_delta):
+            imp_val = final_imp_traj[i] if i < len(final_imp_traj) else np.nan
+            exp_val = final_exp_traj[i] if i < len(final_exp_traj) else np.nan
+            if np.isfinite(imp_val) and np.isfinite(exp_val):
+                final_delta_traj.append(float(exp_val - imp_val))
+            else:
+                final_delta_traj.append(np.nan)
 
         steering_scores = {
             "implicit_steering": final_imp_steer,
@@ -410,6 +482,11 @@ def main(args):
                 "implicit_Steering": steering_scores["implicit_steering"],
                 "explicit_Steering": steering_scores["explicit_steering"],
                 "delta_Steering": steering_scores["delta_steering"],
+                "implicit_Steering_Trajectory": json.dumps(final_imp_traj),
+                "explicit_Steering_Trajectory": json.dumps(final_exp_traj),
+                "delta_Steering_Trajectory": json.dumps(final_delta_traj),
+                "implicit_steering_traj_n_valid": len(implicit_trajectories),
+                "explicit_steering_traj_n_valid": len(explicit_trajectories),
             }
         )
 

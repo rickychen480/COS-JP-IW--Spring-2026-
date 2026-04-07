@@ -7,8 +7,8 @@ class RepresentationalEvaluator:
         pass
 
     @staticmethod
-    def _mean_cosine_similarity(vectors: np.ndarray, axis: np.ndarray) -> float:
-        """Computes mean cosine similarity between many vectors and one axis."""
+    def _cosine_similarities(vectors: np.ndarray, axis: np.ndarray) -> np.ndarray:
+        """Computes cosine similarity between many vectors and one axis."""
         vecs = np.asarray(vectors, dtype=float)
         ref = np.asarray(axis, dtype=float)
 
@@ -21,13 +21,103 @@ class RepresentationalEvaluator:
         ref_norm = np.linalg.norm(ref, axis=1)[0]
         denom = vec_norm * ref_norm
 
-        # Guard against zero vectors to avoid NaNs contaminating means.
+        sims = np.full(vecs.shape[0], np.nan, dtype=float)
         valid = denom > 0
         if not np.any(valid):
-            return np.nan
+            return sims
 
         dots = np.dot(vecs[valid], ref[0])
-        return float(np.mean(dots / denom[valid]))
+        sims[valid] = dots / denom[valid]
+        return sims
+
+    @staticmethod
+    def _normalize_and_clip_steering(
+        similarities: np.ndarray, topic_pole_sim: float, persona_pole_sim: float
+    ) -> np.ndarray:
+        """Normalizes cosine similarities onto [0, 1] steering scale."""
+        sims = np.asarray(similarities, dtype=float)
+        denominator = persona_pole_sim - topic_pole_sim
+        if abs(denominator) < 1e-8:
+            return np.full_like(sims, np.nan, dtype=float)
+
+        steer = (sims - topic_pole_sim) / denominator
+        return np.clip(steer, 0.0, 1.0)
+
+    @staticmethod
+    def _mean_cosine_similarity(vectors: np.ndarray, axis: np.ndarray) -> float:
+        """Computes mean cosine similarity between many vectors and one axis."""
+        sims = RepresentationalEvaluator._cosine_similarities(vectors, axis)
+        if not np.isfinite(sims).any():
+            return np.nan
+        return float(np.nanmean(sims))
+
+    def calculate_semantic_steering_trajectory(
+        self,
+        implicit_turn_embeddings: List[np.ndarray],
+        explicit_turn_embeddings: List[np.ndarray],
+        axis_v: np.ndarray,
+        topic_pole_sim: float,
+        persona_pole_sim: float,
+    ) -> Dict[str, List[float]]:
+        """
+        Computes turn-indexed semantic steering trajectories.
+
+        Each item in implicit_turn_embeddings / explicit_turn_embeddings corresponds
+        to one dialogue with shape [num_target_turns, emb_dim]. For each turn index,
+        similarities are averaged across dialogues that have that turn.
+        """
+
+        def aggregate_turn_sims(dialogue_turn_embs: List[np.ndarray]) -> np.ndarray:
+            per_dialogue_sims = []
+            max_turns = 0
+
+            for emb in dialogue_turn_embs:
+                arr = np.asarray(emb, dtype=float)
+                if arr.size == 0:
+                    continue
+                if arr.ndim == 1:
+                    arr = arr.reshape(1, -1)
+                if arr.ndim != 2:
+                    raise ValueError("each dialogue turn embedding must be a 2D array")
+
+                sims = self._cosine_similarities(arr, axis_v)
+                per_dialogue_sims.append(sims)
+                max_turns = max(max_turns, sims.shape[0])
+
+            if max_turns == 0:
+                return np.array([], dtype=float)
+
+            turn_means = np.full(max_turns, np.nan, dtype=float)
+            for i in range(max_turns):
+                vals = [s[i] for s in per_dialogue_sims if i < len(s) and np.isfinite(s[i])]
+                if vals:
+                    turn_means[i] = float(np.mean(vals))
+            return turn_means
+
+        axis_v = np.asarray(axis_v, dtype=float).reshape(1, -1)
+        imp_turn_sims = aggregate_turn_sims(implicit_turn_embeddings)
+        exp_turn_sims = aggregate_turn_sims(explicit_turn_embeddings)
+
+        imp_traj = self._normalize_and_clip_steering(
+            imp_turn_sims, topic_pole_sim, persona_pole_sim
+        )
+        exp_traj = self._normalize_and_clip_steering(
+            exp_turn_sims, topic_pole_sim, persona_pole_sim
+        )
+
+        max_len = max(len(imp_traj), len(exp_traj))
+        delta_traj = np.full(max_len, np.nan, dtype=float)
+        for i in range(max_len):
+            imp_val = imp_traj[i] if i < len(imp_traj) else np.nan
+            exp_val = exp_traj[i] if i < len(exp_traj) else np.nan
+            if np.isfinite(imp_val) and np.isfinite(exp_val):
+                delta_traj[i] = exp_val - imp_val
+
+        return {
+            "implicit_trajectory": imp_traj.astype(float).tolist(),
+            "explicit_trajectory": exp_traj.astype(float).tolist(),
+            "delta_trajectory": delta_traj.astype(float).tolist(),
+        }
 
     def calculate_confidence(self, target_logprobs: List[float]) -> float:
         """
@@ -100,27 +190,20 @@ class RepresentationalEvaluator:
                 "delta_steering": np.nan,
             }
 
-        # Denominator scaling (Distance between the two statistical poles)
-        denominator = persona_pole_sim - topic_pole_sim
-
         # Exception handling for highly overlapping poles.
-        # If the persona vocabulary heavily overlaps the topic vocabulary, the distance
-        # is statistically insignificant. Steering should collapse to 0.0 to prevent
-        # artificially massive inflated values.
-        if abs(denominator) < 1e-8:
+        if abs(persona_pole_sim - topic_pole_sim) < 1e-8:
             return {
                 "implicit_steering": np.nan,
                 "explicit_steering": np.nan,
                 "delta_steering": np.nan,
             }
 
-        # Normalize the projections so 0 is neutral and 1 is full persona caricature
-        implicit_steering = (implicit_sim - topic_pole_sim) / denominator
-        explicit_steering = (explicit_sim - topic_pole_sim) / denominator
-
-        # Clip to [0, 1] bounds
-        implicit_steering = max(0.0, min(1.0, implicit_steering))
-        explicit_steering = max(0.0, min(1.0, explicit_steering))
+        implicit_steering = self._normalize_and_clip_steering(
+            np.array([implicit_sim], dtype=float), topic_pole_sim, persona_pole_sim
+        )[0]
+        explicit_steering = self._normalize_and_clip_steering(
+            np.array([explicit_sim], dtype=float), topic_pole_sim, persona_pole_sim
+        )[0]
 
         return {
             "implicit_steering": float(implicit_steering),
