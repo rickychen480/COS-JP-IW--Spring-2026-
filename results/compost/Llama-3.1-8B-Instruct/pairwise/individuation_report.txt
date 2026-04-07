@@ -2,108 +2,243 @@
 ================ PAIRWISE INTERSECTIONAL BIAS REPORT ================
 
 RELATIVE SEMANTIC DISTANCES ACROSS GROUPS:
-                intersectional_id                   control_id  n_target  n_control  accuracy  f1_score
-          Hispanic_Female_Cleaner    Unmarked_Unmarked_Cleaner       269       2667  0.938257  0.840686
-          Hispanic_Female_Cashier    Unmarked_Unmarked_Cashier       267       2669  0.924716  0.816381
-            Hispanic_Male_Cashier    Unmarked_Unmarked_Cashier       269       2669  0.914623  0.802711
-            Hispanic_Male_Cleaner    Unmarked_Unmarked_Cleaner       267       2667  0.913429  0.797498
-         Hispanic_Female_Mechanic   Unmarked_Unmarked_Mechanic       267       2665  0.907892  0.790994
-           Hispanic_Male_Mechanic   Unmarked_Unmarked_Mechanic       267       2665  0.896967  0.775886
-         Hispanic_Male_Accountant Unmarked_Unmarked_Accountant       269       2669  0.896591  0.773583
-     Native American_Male_Cashier    Unmarked_Unmarked_Cashier       267       2669  0.890640  0.765968
-            Hispanic_Female_Nurse      Unmarked_Unmarked_Nurse       267       2669  0.896259  0.765657
-       Hispanic_Female_Accountant Unmarked_Unmarked_Accountant       267       2669  0.886552  0.756953
-     Native American_Male_Cleaner    Unmarked_Unmarked_Cleaner       267       2667  0.882085  0.754925
-              Hispanic_Male_Nurse      Unmarked_Unmarked_Nurse       269       2669  0.880639  0.753077
-            Hispanic_Male_Teacher    Unmarked_Unmarked_Teacher       267       2665  0.874008  0.741570
-    Native American_Male_Mechanic   Unmarked_Unmarked_Mechanic       267       2665  0.866917  0.740615
-          Hispanic_Female_Teacher    Unmarked_Unmarked_Teacher       267       2665  0.868953  0.734384
-   Native American_Female_Cashier    Unmarked_Unmarked_Cashier       269       2669  0.859326  0.722511
-             Asian_Female_Cashier    Unmarked_Unmarked_Cashier       267       2669  0.835046  0.705873
-             Asian_Female_Cleaner    Unmarked_Unmarked_Cleaner       267       2667  0.834054  0.698895
-              Hispanic_Female_CEO        Unmarked_Unmarked_CEO       267       2669  0.842169  0.698469
-   Native American_Female_Cleaner    Unmarked_Unmarked_Cleaner       267       2667  0.835792  0.696268
-       Native American_Male_Nurse      Unmarked_Unmarked_Nurse       269       2669  0.838220  0.694749
-  Native American_Female_Mechanic   Unmarked_Unmarked_Mechanic       269       2665  0.843231  0.693563
-       Native American_Female_CEO        Unmarked_Unmarked_CEO       269       2669  0.830542  0.689499
-             Black_Female_Cashier    Unmarked_Unmarked_Cashier       267       2669  0.830859  0.688021
-               Black_Male_Cleaner    Unmarked_Unmarked_Cleaner       269       2667  0.831511  0.687159
-                 Black_Female_CEO        Unmarked_Unmarked_CEO       267       2669  0.831965  0.686829
-               Asian_Male_Cleaner    Unmarked_Unmarked_Cleaner       267       2667  0.821661  0.683833
-            Asian_Female_Mechanic   Unmarked_Unmarked_Mechanic       267       2665  0.824780  0.683384
-               Asian_Male_Cashier    Unmarked_Unmarked_Cashier       267       2669  0.818391  0.678695
-     Native American_Male_Teacher    Unmarked_Unmarked_Teacher       267       2665  0.821685  0.678480
-                   Black_Male_CEO        Unmarked_Unmarked_CEO       267       2669  0.817942  0.675250
-            White_Female_Mechanic   Unmarked_Unmarked_Mechanic       267       2665  0.818622  0.674954
-Native American_Female_Accountant Unmarked_Unmarked_Accountant       267       2669  0.803018  0.671214
-     Native American_Female_Nurse      Unmarked_Unmarked_Nurse       267       2669  0.806680  0.670759
-   Native American_Female_Teacher    Unmarked_Unmarked_Teacher       267       2665  0.817447  0.668381
-  Native American_Male_Accountant Unmarked_Unmarked_Accountant       267       2669  0.809021  0.666670
-            Black_Male_Accountant Unmarked_Unmarked_Accountant       267       2669  0.805511  0.663869
-            Black_Female_Mechanic   Unmarked_Unmarked_Mechanic       269       2665  0.809330  0.663841
-              Black_Male_Mechanic   Unmarked_Unmarked_Mechanic       267       2665  0.810924  0.662837
-              White_Male_Mechanic   Unmarked_Unmarked_Mechanic       267       2665  0.811365  0.661566
-             White_Female_Cashier    Unmarked_Unmarked_Cashier       267       2669  0.806712  0.660414
-         Native American_Male_CEO        Unmarked_Unmarked_CEO       269       2669  0.806575  0.659113
-      Native American_Male_Doctor     Unmarked_Unmarked_Doctor       267       2665  0.809594  0.658715
-             Black_Female_Cleaner    Unmarked_Unmarked_Cleaner       267       2667  0.793552  0.658668
-             White_Female_Cleaner    Unmarked_Unmarked_Cleaner       269       2667  0.805053  0.658620
-               White_Male_Cleaner    Unmarked_Unmarked_Cleaner       267       2667  0.806374  0.655555
-             Hispanic_Male_Lawyer     Unmarked_Unmarked_Lawyer       269       2671  0.796982  0.654215
-               Black_Male_Cashier    Unmarked_Unmarked_Cashier       269       2669  0.771748  0.653681
-      Native American_Male_Lawyer     Unmarked_Unmarked_Lawyer       267       2671  0.801289  0.653493
-                   White_Male_CEO        Unmarked_Unmarked_CEO       267       2669  0.800172  0.649569
-                Hispanic_Male_CEO        Unmarked_Unmarked_CEO       267       2669  0.792886  0.647152
-               Black_Male_Teacher    Unmarked_Unmarked_Teacher       267       2665  0.787419  0.646396
-    Native American_Female_Doctor     Unmarked_Unmarked_Doctor       267       2665  0.788048  0.645719
-                   Asian_Male_CEO        Unmarked_Unmarked_CEO       269       2669  0.784428  0.643012
-                 White_Female_CEO        Unmarked_Unmarked_CEO       269       2669  0.790115  0.642914
-              Black_Female_Lawyer     Unmarked_Unmarked_Lawyer       267       2671  0.791541  0.641957
-               White_Male_Cashier    Unmarked_Unmarked_Cashier       269       2669  0.768593  0.641352
-              Asian_Male_Mechanic   Unmarked_Unmarked_Mechanic       267       2665  0.794475  0.640695
-           Hispanic_Female_Lawyer     Unmarked_Unmarked_Lawyer       267       2671  0.784775  0.639606
-              Asian_Female_Lawyer     Unmarked_Unmarked_Lawyer       269       2671  0.785909  0.635612
-                 Asian_Male_Nurse      Unmarked_Unmarked_Nurse       269       2669  0.777637  0.632824
-           Hispanic_Female_Doctor     Unmarked_Unmarked_Doctor       267       2665  0.788758  0.632304
-    Native American_Female_Lawyer     Unmarked_Unmarked_Lawyer       269       2671  0.774649  0.629929
-                 Asian_Female_CEO        Unmarked_Unmarked_CEO       267       2669  0.782993  0.629077
-             White_Female_Teacher    Unmarked_Unmarked_Teacher       267       2665  0.769708  0.626959
-             Hispanic_Male_Doctor     Unmarked_Unmarked_Doctor       267       2665  0.776805  0.626565
-          Black_Female_Accountant Unmarked_Unmarked_Accountant       267       2669  0.774766  0.626490
-             Asian_Female_Teacher    Unmarked_Unmarked_Teacher       269       2665  0.767222  0.626197
-             Black_Female_Teacher    Unmarked_Unmarked_Teacher       269       2665  0.767486  0.624247
-                 Black_Male_Nurse      Unmarked_Unmarked_Nurse       267       2669  0.766571  0.622766
-               Black_Female_Nurse      Unmarked_Unmarked_Nurse       267       2669  0.772966  0.621966
-            Asian_Male_Accountant Unmarked_Unmarked_Accountant       267       2669  0.754382  0.621258
-                Black_Male_Doctor     Unmarked_Unmarked_Doctor       267       2665  0.758093  0.619818
-              Asian_Female_Doctor     Unmarked_Unmarked_Doctor       267       2665  0.766358  0.618019
-              White_Female_Lawyer     Unmarked_Unmarked_Lawyer       267       2671  0.755966  0.615777
-                Black_Male_Lawyer     Unmarked_Unmarked_Lawyer       267       2671  0.761308  0.615562
-              Black_Female_Doctor     Unmarked_Unmarked_Doctor       269       2665  0.755066  0.613960
-                White_Male_Lawyer     Unmarked_Unmarked_Lawyer       269       2671  0.754257  0.613668
-              White_Female_Doctor     Unmarked_Unmarked_Doctor       267       2665  0.750657  0.610929
-          White_Female_Accountant Unmarked_Unmarked_Accountant       269       2669  0.747462  0.610515
-          Asian_Female_Accountant Unmarked_Unmarked_Accountant       269       2669  0.743901  0.607956
-            White_Male_Accountant Unmarked_Unmarked_Accountant       269       2669  0.743468  0.602971
-               Asian_Female_Nurse      Unmarked_Unmarked_Nurse       267       2669  0.752719  0.602954
-               White_Male_Teacher    Unmarked_Unmarked_Teacher       267       2665  0.741838  0.600231
-               White_Female_Nurse      Unmarked_Unmarked_Nurse       267       2669  0.740335  0.597790
-                 White_Male_Nurse      Unmarked_Unmarked_Nurse       269       2669  0.739627  0.593191
-                Asian_Male_Lawyer     Unmarked_Unmarked_Lawyer       269       2671  0.732738  0.587044
-                White_Male_Doctor     Unmarked_Unmarked_Doctor       267       2665  0.729111  0.583123
-                Asian_Male_Doctor     Unmarked_Unmarked_Doctor       269       2665  0.720606  0.579867
-               Asian_Male_Teacher    Unmarked_Unmarked_Teacher       267       2665  0.709854  0.574189
+              intersectional_id                        control_id  n_target  n_control  accuracy  f1_score
+        Hispanic_Female_Cleaner    Native American_Female_Cleaner       269        267  0.814165  0.809894
+           Asian_Female_Cleaner           Hispanic_Female_Cleaner       267        269  0.808801  0.803459
+           White_Female_Cleaner           Hispanic_Female_Cleaner       269        269  0.806533  0.800995
+           Black_Female_Cleaner           Hispanic_Female_Cleaner       267        269  0.798056  0.790618
+          Hispanic_Female_Nurse      Native American_Female_Nurse       267        267  0.776327  0.772757
+         Hispanic_Male_Mechanic     Native American_Male_Mechanic       267        267  0.778494  0.772677
+        Black_Female_Accountant        Hispanic_Female_Accountant       267        267  0.771304  0.768274
+          Hispanic_Male_Cleaner      Native American_Male_Cleaner       267        267  0.772857  0.767854
+     Hispanic_Female_Accountant Native American_Female_Accountant       267        267  0.769315  0.764904
+             Asian_Male_Cashier             Hispanic_Male_Cashier       267        269  0.769883  0.764140
+           Asian_Female_Cashier           Hispanic_Female_Cashier       267        267  0.773099  0.763881
+        White_Female_Accountant        Hispanic_Female_Accountant       269        267  0.770657  0.763818
+             Asian_Male_Cleaner             Hispanic_Male_Cleaner       267        267  0.769754  0.762504
+            Hispanic_Male_Nurse        Native American_Male_Nurse       269        269  0.763392  0.760071
+             Asian_Female_Nurse             Hispanic_Female_Nurse       267        267  0.764045  0.759389
+          White_Female_Mechanic          Hispanic_Female_Mechanic       267        267  0.763032  0.758888
+        Asian_Female_Accountant        Hispanic_Female_Accountant       269        267  0.762362  0.755993
+          Asian_Male_Accountant          Hispanic_Male_Accountant       267        269  0.760748  0.753034
+           White_Female_Cashier           Hispanic_Female_Cashier       267        267  0.761894  0.751827
+           Black_Female_Cashier           Hispanic_Female_Cashier       267        267  0.759003  0.751641
+        Hispanic_Female_Teacher    Native American_Female_Teacher       267        267  0.752991  0.749603
+             White_Male_Cleaner             Hispanic_Male_Cleaner       267        267  0.754235  0.748843
+          Hispanic_Male_Cashier      Native American_Male_Cashier       269        267  0.752531  0.747681
+       Hispanic_Male_Accountant   Native American_Male_Accountant       269        267  0.754288  0.747481
+          Hispanic_Male_Teacher      Native American_Male_Teacher       267        267  0.750018  0.745993
+       Hispanic_Female_Mechanic   Native American_Female_Mechanic       267        269  0.751431  0.745010
+        Hispanic_Female_Cashier    Native American_Female_Cashier       267        269  0.751607  0.744444
+           Asian_Female_Teacher           Hispanic_Female_Teacher       269        267  0.747779  0.743377
+             White_Female_Nurse             Hispanic_Female_Nurse       267        267  0.746871  0.741439
+          Black_Male_Accountant          Hispanic_Male_Accountant       267        269  0.747124  0.740088
+             Black_Female_Nurse             Hispanic_Female_Nurse       267        267  0.743360  0.739546
+            Asian_Male_Mechanic     Native American_Male_Mechanic       267        267  0.739583  0.738388
+               Black_Male_Nurse               Hispanic_Male_Nurse       267        269  0.742700  0.736791
+               Asian_Male_Nurse               Hispanic_Male_Nurse       269        269  0.737563  0.732018
+               White_Male_Nurse               Hispanic_Male_Nurse       269        269  0.736707  0.730447
+             White_Male_Cashier             Hispanic_Male_Cashier       269        269  0.734397  0.729836
+             Black_Male_Cashier             Hispanic_Male_Cashier       269        269  0.733015  0.727258
+          Black_Female_Mechanic          Hispanic_Female_Mechanic       269        267  0.731548  0.725557
+             Asian_Male_Teacher             Hispanic_Male_Teacher       267        267  0.730795  0.724930
+          Asian_Female_Mechanic          Hispanic_Female_Mechanic       267        267  0.725114  0.721308
+          White_Male_Accountant          Hispanic_Male_Accountant       269        269  0.725986  0.715692
+             Black_Male_Teacher             Hispanic_Male_Teacher       267        267  0.722596  0.714336
+             Asian_Male_Cashier      Native American_Male_Cashier       267        267  0.713820  0.712822
+           White_Female_Teacher           Hispanic_Female_Teacher       267        267  0.717926  0.711126
+             Black_Male_Cleaner             Hispanic_Male_Cleaner       269        267  0.718672  0.709294
+            White_Male_Mechanic            Hispanic_Male_Mechanic       267        267  0.712978  0.703457
+           Black_Female_Teacher           Hispanic_Female_Teacher       269        267  0.707850  0.701411
+            Asian_Male_Mechanic            Hispanic_Male_Mechanic       267        267  0.703810  0.699047
+             Asian_Male_Cleaner      Native American_Male_Cleaner       267        267  0.700711  0.698922
+            Black_Male_Mechanic            Hispanic_Male_Mechanic       267        267  0.704115  0.696093
+           Asian_Female_Cleaner    Native American_Female_Cleaner       267        267  0.695541  0.694108
+             White_Male_Teacher             Hispanic_Male_Teacher       267        267  0.698925  0.688033
+           Asian_Female_Cashier    Native American_Female_Cashier       267        269  0.687357  0.680078
+            White_Male_Mechanic     Native American_Male_Mechanic       267        267  0.681618  0.679555
+           White_Female_Cleaner    Native American_Female_Cleaner       269        267  0.680448  0.675975
+             White_Male_Cleaner      Native American_Male_Cleaner       267        267  0.670787  0.668903
+          White_Female_Mechanic   Native American_Female_Mechanic       267        269  0.669809  0.668140
+             Black_Male_Cashier                Asian_Male_Cashier       269        267  0.657128  0.656376
+          Asian_Female_Mechanic   Native American_Female_Mechanic       267        269  0.657337  0.656190
+          Asian_Male_Accountant   Native American_Male_Accountant       267        267  0.659616  0.655067
+            Hispanic_Female_CEO        Native American_Female_CEO       267        269  0.656420  0.652882
+           Asian_Female_Teacher    Native American_Female_Teacher       269        267  0.653705  0.652512
+            White_Female_Lawyer     Native American_Female_Lawyer       267        269  0.651247  0.649635
+            Black_Male_Mechanic     Native American_Male_Mechanic       267        267  0.646228  0.645188
+             White_Male_Cashier      Native American_Male_Cashier       269        267  0.647440  0.644814
+             Asian_Male_Teacher      Native American_Male_Teacher       267        267  0.644225  0.642393
+           White_Female_Cashier    Native American_Female_Cashier       267        269  0.645359  0.640663
+               White_Female_CEO        Native American_Female_CEO       269        269  0.642896  0.638623
+        Asian_Female_Accountant Native American_Female_Accountant       269        267  0.639721  0.637304
+             Black_Male_Cleaner              Black_Female_Cleaner       269        267  0.641930  0.636788
+              Asian_Male_Doctor       Native American_Male_Doctor       269        267  0.639398  0.636506
+           Hispanic_Male_Doctor       Native American_Male_Doctor       267        267  0.639146  0.635959
+          Black_Female_Mechanic             Asian_Female_Mechanic       269        267  0.635950  0.632579
+              White_Male_Lawyer       Native American_Male_Lawyer       269        267  0.634116  0.632421
+           Hispanic_Male_Lawyer       Native American_Male_Lawyer       269        267  0.636518  0.632270
+               Asian_Male_Nurse        Native American_Male_Nurse       269        269  0.629754  0.628583
+             Black_Male_Cleaner                Asian_Male_Cleaner       269        267  0.632208  0.626902
+             Asian_Male_Cashier              Asian_Female_Cashier       267        267  0.631294  0.626475
+                 White_Male_CEO          Native American_Male_CEO       267        269  0.631369  0.626396
+          Black_Male_Accountant   Native American_Male_Accountant       267        267  0.626939  0.625268
+             White_Male_Teacher      Native American_Male_Teacher       267        267  0.627313  0.622300
+             Black_Male_Cashier              Black_Female_Cashier       269        267  0.618419  0.615800
+         Hispanic_Female_Lawyer     Native American_Female_Lawyer       267        269  0.617498  0.615752
+                 Asian_Male_CEO          Native American_Male_CEO       269        269  0.617815  0.615342
+            White_Male_Mechanic             White_Female_Mechanic       267        267  0.618406  0.615262
+              Hispanic_Male_CEO          Native American_Male_CEO       267        269  0.622267  0.614918
+              Black_Male_Doctor              Hispanic_Male_Doctor       267        267  0.616594  0.614457
+           Black_Female_Cashier              Asian_Female_Cashier       267        267  0.621005  0.614070
+               White_Male_Nurse                  Asian_Male_Nurse       269        269  0.616275  0.613236
+           White_Female_Teacher    Native American_Female_Teacher       267        267  0.615081  0.612925
+        White_Female_Accountant Native American_Female_Accountant       269        267  0.620748  0.611594
+   Native American_Male_Cleaner    Native American_Female_Cleaner       267        267  0.616802  0.610495
+                 Black_Male_CEO                    Asian_Male_CEO       267        269  0.614967  0.609004
+             Black_Male_Cashier      Native American_Male_Cashier       269        267  0.615536  0.608446
+              White_Male_Doctor       Native American_Male_Doctor       267        267  0.614241  0.607392
+          White_Male_Accountant   Native American_Male_Accountant       269        267  0.615776  0.607086
+             Asian_Female_Nurse      Native American_Female_Nurse       267        267  0.619063  0.606058
+            White_Female_Doctor     Native American_Female_Doctor       267        267  0.615302  0.606036
+             White_Female_Nurse      Native American_Female_Nurse       267        267  0.613613  0.605856
+                 White_Male_CEO                 Hispanic_Male_CEO       267        267  0.609560  0.605779
+          Black_Female_Mechanic   Native American_Female_Mechanic       269        269  0.608292  0.604623
+               Black_Female_CEO               Hispanic_Female_CEO       267        267  0.615023  0.604095
+                 Black_Male_CEO                 Hispanic_Male_CEO       267        267  0.606716  0.603554
+               White_Female_CEO                  Asian_Female_CEO       269        267  0.607153  0.603490
+               Black_Female_CEO                  Asian_Female_CEO       267        267  0.606267  0.603371
+               White_Female_CEO               Hispanic_Female_CEO       269        267  0.607558  0.602996
+          Hispanic_Male_Cleaner           Hispanic_Female_Cleaner       267        269  0.609281  0.602255
+          Hispanic_Male_Cashier           Hispanic_Female_Cashier       269        267  0.617095  0.602235
+             White_Male_Cleaner                Black_Male_Cleaner       267        269  0.606640  0.601797
+     Native American_Male_Nurse      Native American_Female_Nurse       269        267  0.604732  0.601619
+             Black_Male_Teacher              Black_Female_Teacher       267        269  0.605470  0.601361
+  Native American_Male_Mechanic   Native American_Female_Mechanic       267        269  0.602917  0.601016
+              Asian_Male_Lawyer       Native American_Male_Lawyer       269        267  0.610787  0.600746
+   Native American_Male_Cashier    Native American_Female_Cashier       267        269  0.604329  0.600221
+             Black_Male_Teacher                Asian_Male_Teacher       267        267  0.603147  0.599266
+               Black_Male_Nurse        Native American_Male_Nurse       267        269  0.603694  0.599171
+             White_Male_Cashier              White_Female_Cashier       269        267  0.607698  0.598870
+             Black_Male_Cleaner      Native American_Male_Cleaner       269        267  0.602494  0.597590
+             White_Male_Cleaner              White_Female_Cleaner       267        269  0.601981  0.597359
+               White_Male_Nurse        Native American_Male_Nurse       269        269  0.598151  0.597347
+            Black_Female_Lawyer            Hispanic_Female_Lawyer       267        267  0.602350  0.597210
+            White_Female_Lawyer            Hispanic_Female_Lawyer       267        267  0.605138  0.596574
+              Black_Male_Lawyer              Hispanic_Male_Lawyer       267        269  0.609242  0.596112
+           Black_Female_Cleaner              Asian_Female_Cleaner       267        267  0.596667  0.593103
+            Black_Male_Mechanic               Asian_Male_Mechanic       267        267  0.594429  0.592927
+           Black_Female_Cleaner    Native American_Female_Cleaner       267        267  0.608613  0.592690
+            Asian_Female_Lawyer     Native American_Female_Lawyer       269        269  0.599715  0.591467
+               Asian_Female_CEO        Native American_Female_CEO       267        269  0.593984  0.590916
+             White_Male_Cashier                Asian_Male_Cashier       269        267  0.594387  0.590502
+           Black_Female_Cashier    Native American_Female_Cashier       267        269  0.594387  0.590443
+               Black_Male_Nurse                  Asian_Male_Nurse       267        269  0.596699  0.590392
+            Asian_Female_Doctor     Native American_Female_Doctor       267        267  0.597692  0.589967
+            Black_Female_Lawyer     Native American_Female_Lawyer       267        269  0.591856  0.589126
+            Asian_Female_Lawyer            Hispanic_Female_Lawyer       269        267  0.596542  0.588770
+               White_Female_CEO                  Black_Female_CEO       269        267  0.598753  0.588633
+             Black_Male_Teacher      Native American_Male_Teacher       267        267  0.599768  0.588205
+              Asian_Male_Doctor              Hispanic_Male_Doctor       269        267  0.600986  0.587104
+           White_Female_Teacher              Asian_Female_Teacher       267        269  0.596405  0.586859
+            White_Female_Doctor            Hispanic_Female_Doctor       267        267  0.593823  0.586419
+              Asian_Male_Lawyer              Hispanic_Male_Lawyer       269        269  0.589018  0.585785
+          White_Female_Mechanic             Black_Female_Mechanic       267        269  0.586794  0.584194
+             Asian_Male_Cleaner              Asian_Female_Cleaner       267        267  0.585779  0.583982
+              Hispanic_Male_CEO               Hispanic_Female_CEO       267        267  0.585237  0.583629
+                 White_Male_CEO                    Asian_Male_CEO       267        269  0.585141  0.582810
+            White_Female_Doctor               Black_Female_Doctor       267        269  0.586170  0.582679
+               Black_Female_CEO        Native American_Female_CEO       267        269  0.590091  0.582555
+                 Black_Male_CEO          Native American_Male_CEO       267        269  0.598795  0.582495
+         Hispanic_Female_Doctor     Native American_Female_Doctor       267        267  0.582655  0.580510
+          Black_Male_Accountant             Asian_Male_Accountant       267        267  0.586728  0.575004
+              White_Male_Lawyer              Hispanic_Male_Lawyer       269        269  0.578697  0.574176
+                 White_Male_CEO                  White_Female_CEO       267        269  0.579729  0.573095
+             Black_Female_Nurse                Asian_Female_Nurse       267        267  0.580970  0.573058
+               Asian_Female_CEO               Hispanic_Female_CEO       267        267  0.575966  0.572962
+    Native American_Male_Lawyer     Native American_Female_Lawyer       267        269  0.577146  0.572544
+             White_Male_Cashier                Black_Male_Cashier       269        269  0.581147  0.571615
+             White_Male_Cleaner                Asian_Male_Cleaner       267        267  0.577655  0.571336
+            Black_Female_Doctor            Hispanic_Female_Doctor       269        267  0.580239  0.570831
+            White_Female_Lawyer               Asian_Female_Lawyer       267        269  0.573404  0.570486
+              Black_Male_Lawyer                 Asian_Male_Lawyer       267        269  0.582612  0.568774
+           Black_Female_Teacher    Native American_Female_Teacher       269        267  0.573158  0.565072
+                 White_Male_CEO                    Black_Male_CEO       267        267  0.568031  0.564748
+           Black_Female_Teacher              Asian_Female_Teacher       269        269  0.569003  0.563635
+           White_Female_Cleaner              Asian_Female_Cleaner       269        267  0.566214  0.563423
+              White_Male_Doctor               White_Female_Doctor       267        267  0.567384  0.562785
+             Black_Female_Nurse      Native American_Female_Nurse       267        267  0.570434  0.562681
+            Asian_Female_Doctor            Hispanic_Female_Doctor       267        267  0.563106  0.562417
+              Black_Male_Lawyer       Native American_Male_Lawyer       267        267  0.564889  0.562404
+           White_Female_Cleaner              Black_Female_Cleaner       269        267  0.574804  0.562387
+           White_Female_Teacher              Black_Female_Teacher       267        269  0.570877  0.561971
+            Black_Male_Mechanic             Black_Female_Mechanic       267        269  0.565798  0.561562
+        White_Female_Accountant           Asian_Female_Accountant       269        269  0.564514  0.559820
+             White_Male_Teacher                Black_Male_Teacher       267        267  0.560694  0.558813
+             White_Female_Nurse                Asian_Female_Nurse       267        267  0.560217  0.555543
+          White_Male_Accountant             Black_Male_Accountant       269        267  0.558677  0.555428
+            White_Female_Doctor               Asian_Female_Doctor       267        267  0.560667  0.555046
+                 Asian_Male_CEO                 Hispanic_Male_CEO       269        267  0.555616  0.554718
+          White_Male_Accountant             Asian_Male_Accountant       269        267  0.559951  0.553906
+       Native American_Male_CEO        Native American_Female_CEO       269        269  0.555808  0.553759
+            Black_Female_Doctor     Native American_Female_Doctor       269        267  0.555077  0.552818
+              Black_Male_Doctor                 Asian_Male_Doctor       267        269  0.560125  0.551738
+              Asian_Male_Lawyer               Asian_Female_Lawyer       269        269  0.556195  0.551165
+               White_Male_Nurse                White_Female_Nurse       269        267  0.554439  0.550896
+            Asian_Male_Mechanic             Asian_Female_Mechanic       267        267  0.561445  0.550254
+            White_Female_Lawyer               Black_Female_Lawyer       267        267  0.561099  0.550080
+         Hispanic_Male_Mechanic          Hispanic_Female_Mechanic       267        267  0.556710  0.549935
+              White_Male_Lawyer                 Asian_Male_Lawyer       269        269  0.552267  0.549808
+                 Black_Male_CEO                  Black_Female_CEO       267        267  0.551471  0.549530
+        White_Female_Accountant           Black_Female_Accountant       269        267  0.552174  0.548453
+                 Asian_Male_CEO                  Asian_Female_CEO       269        267  0.550183  0.548426
+             White_Male_Teacher              White_Female_Teacher       267        267  0.560275  0.548047
+              Black_Male_Doctor       Native American_Male_Doctor       267        267  0.562947  0.547931
+           White_Female_Cashier              Asian_Female_Cashier       267        267  0.551469  0.547837
+          Asian_Male_Accountant           Asian_Female_Accountant       267        269  0.552078  0.547477
+          Black_Male_Accountant           Black_Female_Accountant       267        267  0.557871  0.547168
+             White_Male_Teacher                Asian_Male_Teacher       267        267  0.557221  0.546816
+Native American_Male_Accountant Native American_Female_Accountant       267        267  0.559297  0.546236
+              White_Male_Doctor              Hispanic_Male_Doctor       267        267  0.555680  0.545081
+            Black_Female_Lawyer               Asian_Female_Lawyer       267        269  0.551863  0.543029
+               Asian_Male_Nurse                Asian_Female_Nurse       269        267  0.549486  0.541111
+               Black_Male_Nurse                Black_Female_Nurse       267        267  0.544432  0.540747
+              Black_Male_Lawyer               Black_Female_Lawyer       267        267  0.548829  0.539759
+        Black_Female_Accountant Native American_Female_Accountant       267        267  0.570447  0.539396
+            White_Male_Mechanic               Black_Male_Mechanic       267        267  0.542309  0.538546
+          White_Female_Mechanic             Asian_Female_Mechanic       267        267  0.554961  0.535432
+              White_Male_Doctor                 Asian_Male_Doctor       267        269  0.540866  0.535064
+             Asian_Male_Teacher              Asian_Female_Teacher       267        269  0.539032  0.534775
+            Black_Female_Doctor               Asian_Female_Doctor       269        267  0.538518  0.531694
+             White_Female_Nurse                Black_Female_Nurse       267        267  0.536236  0.531330
+           Hispanic_Male_Lawyer            Hispanic_Female_Lawyer       269        267  0.533817  0.531175
+   Native American_Male_Teacher    Native American_Female_Teacher       267        267  0.543443  0.530944
+              White_Male_Lawyer                 Black_Male_Lawyer       269        267  0.533859  0.530791
+        Black_Female_Accountant           Asian_Female_Accountant       267        269  0.537253  0.529497
+           White_Female_Cashier              Black_Female_Cashier       267        267  0.540491  0.528945
+              Black_Male_Doctor               Black_Female_Doctor       267        269  0.533456  0.528354
+              White_Male_Doctor                 Black_Male_Doctor       267        267  0.551122  0.527083
+          White_Male_Accountant           White_Female_Accountant       269        269  0.536279  0.520283
+            White_Male_Mechanic               Asian_Male_Mechanic       267        267  0.529650  0.514495
+              White_Male_Lawyer               White_Female_Lawyer       269        267  0.518966  0.513284
+               White_Male_Nurse                  Black_Male_Nurse       269        267  0.517986  0.509862
+            Hispanic_Male_Nurse             Hispanic_Female_Nurse       269        267  0.513793  0.508107
+       Hispanic_Male_Accountant        Hispanic_Female_Accountant       269        267  0.514385  0.501920
+           Hispanic_Male_Doctor            Hispanic_Female_Doctor       267        267  0.501548  0.492694
+    Native American_Male_Doctor     Native American_Female_Doctor       267        267  0.498853  0.486830
+          Hispanic_Male_Teacher           Hispanic_Female_Teacher       267        267  0.481444  0.476145
+              Asian_Male_Doctor               Asian_Female_Doctor       269        267  0.477403  0.471234
 
 STATISTICAL PARITY ANALYSIS:
-  f1_score_min: 0.5742
-  f1_score_max: 0.8407
-  f1_score_mean: 0.6670
-  f1_score_std: 0.0582
-  f1_score_gap: 0.2665
-  f1_score_disparate_impact_ratio: 0.6830
-  f1_score_inequality_measure: 0.0873
+  f1_score_min: 0.4712
+  f1_score_max: 0.8099
+  f1_score_mean: 0.6195
+  f1_score_std: 0.0777
+  f1_score_gap: 0.3387
+  f1_score_disparate_impact_ratio: 0.5818
+  f1_score_inequality_measure: 0.1255
 
 INTERPRETATION:
-  ⚠️  Strong Disparate Caricature detected (ratio: 0.683).
+  ⚠️  Strong Disparate Caricature detected (ratio: 0.582).
       The model exaggerates certain demographic swaps significantly more than others.
 =========================================================================
