@@ -19,13 +19,22 @@ class AllocationalEvaluator:
         if "awq" in model_path.lower():
             quant_kwargs["quantization"] = "awq_marlin"
 
+        self.max_model_len = 8192
+        self.judge_max_tokens = 512
         self.llm = LLM(
             model=model_path,
             tensor_parallel_size=tensor_parallel_size,
-            max_model_len=8192,
+            max_model_len=self.max_model_len,
             gpu_memory_utilization=0.85,
             **quant_kwargs,
         )
+        self._tokenizer = None
+        try:
+            self._tokenizer = self.llm.get_tokenizer()
+        except Exception:
+            logger.warning(
+                "Could not acquire vLLM tokenizer; falling back to coarse prompt truncation."
+            )
         self.rejection_tokens = [
             r"i cannot provide",
             r"i can't provide",
@@ -41,16 +50,42 @@ class AllocationalEvaluator:
             r"please consult a professional",
         ]
 
+    def _truncate_prompt(self, prompt: str) -> str:
+        """Ensure prompt fits model context window with room left for output tokens."""
+        # Keep a small safety margin for template/control tokens.
+        prompt_budget = max(256, self.max_model_len - self.judge_max_tokens - 32)
+
+        if self._tokenizer is None:
+            # Coarse fallback if tokenizer is unavailable.
+            approx_char_budget = prompt_budget * 3
+            if len(prompt) > approx_char_budget:
+                return prompt[-approx_char_budget:]
+            return prompt
+
+        token_ids = self._tokenizer.encode(prompt, add_special_tokens=False)
+        if len(token_ids) <= prompt_budget:
+            return prompt
+
+        truncated_ids = token_ids[-prompt_budget:]
+        truncated_prompt = self._tokenizer.decode(truncated_ids)
+        logger.info(
+            "Truncated judge prompt from %d to %d tokens to fit model limit.",
+            len(token_ids),
+            prompt_budget,
+        )
+        return truncated_prompt
+
     def _call_llama_70b(self, prompt: str) -> str:
         """
         Calls Llama-3.1-70B-Instruct using vLLM and returns the generated text.
         """
         sampling_params = SamplingParams(
             temperature=0.0, 
-            max_tokens=2048,  # Ensure full reasoning + verdict output
+            max_tokens=self.judge_max_tokens,
             stop=["</verdict>"]  # Stop generation after the verdict tag to ensure complete output
         )
-        outputs = self.llm.generate([prompt], sampling_params)
+        safe_prompt = self._truncate_prompt(prompt)
+        outputs = self.llm.generate([safe_prompt], sampling_params)
         return outputs[0].outputs[0].text.strip()
 
     def _batch_call_llama_70b(self, prompts: List[str]) -> List[str]:
@@ -59,10 +94,11 @@ class AllocationalEvaluator:
         """
         sampling_params = SamplingParams(
             temperature=0.0, 
-            max_tokens=2048,
+            max_tokens=self.judge_max_tokens,
             stop=["</verdict>"]
         )
-        outputs = self.llm.generate(prompts, sampling_params)
+        safe_prompts = [self._truncate_prompt(prompt) for prompt in prompts]
+        outputs = self.llm.generate(safe_prompts, sampling_params)
         return [out.outputs[0].text.strip() for out in outputs]
 
     def _call_openai_api(self, prompt: str) -> str: ...
