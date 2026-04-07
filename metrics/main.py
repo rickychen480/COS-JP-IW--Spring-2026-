@@ -46,6 +46,70 @@ def get_turn_embeddings(turn_texts, model):
     return turn_embeddings
 
 
+def get_batched_document_embeddings(texts, model, batch_size: int = 128):
+    """Encodes documents as mean sentence embeddings in batched GPU/CPU passes."""
+    sent_lists = [sent_tokenize(text) for text in texts]
+    dim = model.get_sentence_embedding_dimension()
+    out = np.zeros((len(texts), dim), dtype=float)
+
+    flat_sents = []
+    owners = []
+    for i, sents in enumerate(sent_lists):
+        for s in sents:
+            flat_sents.append(s)
+            owners.append(i)
+
+    if not flat_sents:
+        return [out[i] for i in range(len(texts))]
+
+    sent_embs = model.encode(
+        flat_sents,
+        batch_size=batch_size,
+        show_progress_bar=True,
+        convert_to_numpy=True,
+    )
+
+    counts = np.zeros(len(texts), dtype=np.int32)
+    for emb, doc_idx in zip(sent_embs, owners):
+        out[doc_idx] += emb
+        counts[doc_idx] += 1
+
+    nonzero = counts > 0
+    out[nonzero] /= counts[nonzero, None]
+    return [out[i] for i in range(len(texts))]
+
+
+def get_batched_turn_embeddings(turn_lists, model, batch_size: int = 128):
+    """Encodes all target turns in one batched pass and rebuilds per-dialogue arrays."""
+    dim = model.get_sentence_embedding_dimension()
+    flat_turns = []
+    owners = []
+    for i, turns in enumerate(turn_lists):
+        for t in turns:
+            flat_turns.append(t)
+            owners.append(i)
+
+    per_dialogue = [[] for _ in range(len(turn_lists))]
+    if flat_turns:
+        turn_embs = model.encode(
+            flat_turns,
+            batch_size=batch_size,
+            show_progress_bar=True,
+            convert_to_numpy=True,
+        )
+        for emb, doc_idx in zip(turn_embs, owners):
+            per_dialogue[doc_idx].append(emb)
+
+    for i in range(len(per_dialogue)):
+        if per_dialogue[i]:
+            per_dialogue[i] = np.asarray(per_dialogue[i], dtype=float)
+            if per_dialogue[i].ndim == 1:
+                per_dialogue[i] = per_dialogue[i].reshape(1, -1)
+        else:
+            per_dialogue[i] = np.empty((0, dim), dtype=float)
+    return per_dialogue
+
+
 def nanmean(values):
     """Stable mean that ignores NaNs and returns NaN if nothing is valid."""
     arr = np.array(values, dtype=float)
@@ -163,11 +227,24 @@ def main(args):
         df["masked_turn_texts"] = df["target_turn_texts"]
 
     embedder = SentenceTransformer("all-mpnet-base-v2")
-    df["embedding"] = df["masked_text"].apply(
-        lambda x: get_document_embedding(x, embedder)
+
+    print("Encoding document embeddings in batches...")
+    df["embedding"] = get_batched_document_embeddings(
+        df["masked_text"].tolist(),
+        embedder,
+        batch_size=args.embedding_batch_size,
     )
-    df["turn_embeddings"] = df["masked_turn_texts"].apply(
-        lambda x: get_turn_embeddings(x, embedder)
+
+    print("Encoding turn embeddings in batches...")
+    df["turn_embeddings"] = get_batched_turn_embeddings(
+        df["masked_turn_texts"].tolist(),
+        embedder,
+        batch_size=args.embedding_batch_size,
+    )
+
+    print("Initializing allocational evaluator (vLLM judge)...")
+    alloc_eval = AllocationalEvaluator(
+        model_path=args.judge_model, tensor_parallel_size=args.tensor_parallel_size
     )
 
     final_results = []
@@ -536,6 +613,12 @@ if __name__ == "__main__":
         type=str,
         default=None,
         help="Path to the masked simulations file",
+    )
+    parser.add_argument(
+        "--embedding_batch_size",
+        type=int,
+        default=128,
+        help="Batch size for sentence-transformer encoding",
     )
     args = parser.parse_args()
 
