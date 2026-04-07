@@ -42,7 +42,9 @@ CUDA_VISIBLE_DEVICES=0,1 python metrics/main.py \
   --tensor_parallel_size 2 \
   --chunk_index $CHUNK_INDEX \
   --total_chunks 12 \
-  --masked_path data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_masked.json
+  --masked_path data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_masked.json \
+  --embedding_device cuda \
+  --embedding_batch_size 256
 
 wait
 echo "Chunk $CHUNK_INDEX complete!"
