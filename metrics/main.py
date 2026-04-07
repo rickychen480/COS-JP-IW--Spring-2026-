@@ -14,6 +14,10 @@ import json
 import nltk
 import numpy as np
 import pandas as pd
+try:
+    import torch
+except ImportError:
+    torch = None
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -226,7 +230,15 @@ def main(args):
         df["masked_text"] = df["target_text"]
         df["masked_turn_texts"] = df["target_turn_texts"]
 
-    embedder = SentenceTransformer("all-mpnet-base-v2")
+    if args.embedding_device == "auto":
+        embedder_device = (
+            "cuda" if (torch is not None and torch.cuda.is_available()) else "cpu"
+        )
+    else:
+        embedder_device = args.embedding_device
+
+    print(f"Loading embedding model on device={embedder_device}...")
+    embedder = SentenceTransformer("all-mpnet-base-v2", device=embedder_device)
 
     print("Encoding document embeddings in batches...")
     df["embedding"] = get_batched_document_embeddings(
@@ -240,11 +252,6 @@ def main(args):
         df["masked_turn_texts"].tolist(),
         embedder,
         batch_size=args.embedding_batch_size,
-    )
-
-    print("Initializing allocational evaluator (vLLM judge)...")
-    alloc_eval = AllocationalEvaluator(
-        model_path=args.judge_model, tensor_parallel_size=args.tensor_parallel_size
     )
 
     final_results = []
@@ -619,6 +626,13 @@ if __name__ == "__main__":
         type=int,
         default=128,
         help="Batch size for sentence-transformer encoding",
+    )
+    parser.add_argument(
+        "--embedding_device",
+        type=str,
+        default="auto",
+        choices=["auto", "cpu", "cuda"],
+        help="Device for sentence-transformer encoding",
     )
     args = parser.parse_args()
 
