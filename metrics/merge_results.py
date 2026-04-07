@@ -2,9 +2,10 @@ import json
 import pandas as pd
 import glob
 import os
+import argparse
 
 
-def merge_csv_results(results_dir="results/metrics/gpt-4o-mini/"):
+def merge_csv_results(results_dir):
     """Merges all chunked CSV files into a single file."""
     chunk_files = glob.glob(
         os.path.join(results_dir, "dynamic_bias_results_chunk_*.csv")
@@ -44,5 +45,16 @@ def merge_json_cache(cache_dir="."):
 
 
 if __name__ == "__main__":
-    merge_csv_results()
+    parser = argparse.ArgumentParser(
+        description="Evaluate dynamic intersectional bias."
+    )
+    parser.add_argument(
+        "--dir",
+        type=str,
+        default="results/metrics/Llama-3.1-70B-Instruct-AWQ-INT4/",
+        help="Directory containing the result chunks",
+    )
+    args = parser.parse_args()
+
+    merge_csv_results(args.dir)
     merge_json_cache()
