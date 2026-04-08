@@ -10,6 +10,7 @@ except RuntimeError:
     pass
 
 import argparse
+import gc
 import json
 import nltk
 import numpy as np
@@ -300,6 +301,12 @@ def main(args):
     finally:
         if embedding_pool is not None:
             embedder.stop_multi_process_pool(embedding_pool)
+        del embedding_pool
+        del embedder
+        gc.collect()
+        if torch is not None and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
 
     # Load the large vLLM judge only after embeddings complete to avoid GPU memory contention.
     print("Initializing allocational evaluator (vLLM judge)...")
