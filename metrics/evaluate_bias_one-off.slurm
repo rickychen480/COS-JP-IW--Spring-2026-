@@ -36,7 +36,7 @@ fi
 echo "Provisioning complete."
 echo "Running evaluation chunk: Chunk Index = $CHUNK_INDEX"
 
-mkdir -p results/metrics/
+mkdir -p results/metrics/Llama-3.1-70B-Instruct-AWQ-INT4/
 mkdir -p logs
 
 # Clear any orphaned shared memory from previous crashed runs
@@ -46,7 +46,7 @@ export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_70b_${CHUNK_INDEX}_me
 export TRITON_CACHE_DIR=/scratch/rc5898/triton_cache_70b_${CHUNK_INDEX}_metrics_gpu01
 CUDA_VISIBLE_DEVICES=0,1 python metrics/main.py \
   --dir data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/ \
-  --out results/metrics/dynamic_bias_results_chunk_${CHUNK_INDEX}.csv \
+  --out results/metrics/Llama-3.1-70B-Instruct-AWQ-INT4/dynamic_bias_results_chunk_${CHUNK_INDEX}.csv \
   --judge_model $MODEL_ID \
   --tensor_parallel_size 2 \
   --chunk_index $CHUNK_INDEX \
