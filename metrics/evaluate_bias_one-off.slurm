@@ -16,6 +16,10 @@ CHUNK_INDEX=0
 
 export VLLM_DISABLE_COMPILE_CACHE=1
 
+# Ensure new allocator config and unset deprecated one
+unset PYTORCH_CUDA_ALLOC_CONF
+export PYTORCH_ALLOC_CONF=expandable_segments:True
+
 echo "Initializing environment..."
 
 cd ~/COS-JP
@@ -35,9 +39,11 @@ echo "Running evaluation chunk: Chunk Index = $CHUNK_INDEX"
 mkdir -p results/metrics/
 mkdir -p logs
 
+# Clear any orphaned shared memory from previous crashed runs
+rm -rf /dev/shm/* 2>/dev/null || true
+
 export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_70b_${CHUNK_INDEX}_metrics_gpu01
 export TRITON_CACHE_DIR=/scratch/rc5898/triton_cache_70b_${CHUNK_INDEX}_metrics_gpu01
-export PYTORCH_ALLOC_CONF=expandable_segments:True
 CUDA_VISIBLE_DEVICES=0,1 python metrics/main.py \
   --dir data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/ \
   --out results/metrics/dynamic_bias_results_chunk_${CHUNK_INDEX}.csv \

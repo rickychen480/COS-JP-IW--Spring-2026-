@@ -1,6 +1,7 @@
 import os
 import sys
 import multiprocessing as mp
+import time
 
 # Force 'spawn' start method before any other heavy libraries load.
 # This prevents the "CUDA driver initialization failed" fork-context error.
@@ -8,6 +9,9 @@ try:
     mp.set_start_method("spawn", force=True)
 except RuntimeError:
     pass
+
+# Force vLLM to use stable V0 engine (V1 has shared memory deadlock issues in SLURM)
+os.environ["VLLM_USE_V1"] = "0"
 
 import argparse
 import gc
@@ -300,13 +304,39 @@ def main(args):
         run_embeddings_with_backoff(df, embedder, embedding_pool=embedding_pool)
     finally:
         if embedding_pool is not None:
+            print("Stopping embedding pool...")
             embedder.stop_multi_process_pool(embedding_pool)
         del embedding_pool
         del embedder
+        
+        # Aggressive cleanup to prevent IPC resource leaks
+        # Track and terminate any remaining child processes
+        for proc in mp.active_children():
+            print(f"Terminating leftover process: {proc.name} (PID {proc.pid})")
+            if proc.is_alive():
+                proc.terminate()
+        
+        # Wait for processes to terminate gracefully
+        for proc in mp.active_children():
+            proc.join(timeout=2)
+            if proc.is_alive():
+                proc.kill()
+        
         gc.collect()
+        
         if torch is not None and torch.cuda.is_available():
+            # Synchronize all CUDA streams first
+            for i in range(torch.cuda.device_count()):
+                torch.cuda.synchronize(i)
+            
+            # Clear cache and IPC
             torch.cuda.empty_cache()
             torch.cuda.ipc_collect()
+            
+            # Additional synchronization to allow OS to reclaim IPC resources
+            time.sleep(1)
+        
+        print("Cleanup complete. Proceeding to judge initialization...")
 
     # Load the large vLLM judge only after embeddings complete to avoid GPU memory contention.
     print("Initializing allocational evaluator (vLLM judge)...")
