@@ -35,6 +35,7 @@ mkdir -p logs
 
 export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_70b_${CHUNK_INDEX}_metrics_gpu01
 export TRITON_CACHE_DIR=/scratch/rc5898/triton_cache_70b_${CHUNK_INDEX}_metrics_gpu01
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 CUDA_VISIBLE_DEVICES=0,1 python metrics/main.py \
   --dir data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/ \
   --out results/metrics/dynamic_bias_results_chunk_${CHUNK_INDEX}.csv \
@@ -44,7 +45,7 @@ CUDA_VISIBLE_DEVICES=0,1 python metrics/main.py \
   --total_chunks 12 \
   --masked_path data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_masked.json \
   --embedding_device cuda \
-  --embedding_batch_size 256
+  --embedding_batch_size 64
 
 wait
 echo "Chunk $CHUNK_INDEX complete!"

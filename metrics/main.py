@@ -159,6 +159,41 @@ def load_all_transcripts(file_paths):
 def main(args):
     from sentence_transformers import SentenceTransformer
 
+    def run_embeddings_with_backoff(df_local, embedder_model):
+        """Retry embedding passes with smaller batches on CUDA OOM."""
+        candidate_batches = [args.embedding_batch_size, 128, 64, 32, 16]
+        seen = set()
+        candidate_batches = [b for b in candidate_batches if not (b in seen or seen.add(b))]
+
+        last_error = None
+        for batch_size in candidate_batches:
+            try:
+                print(f"Encoding document embeddings in batches (batch_size={batch_size})...")
+                df_local["embedding"] = get_batched_document_embeddings(
+                    df_local["masked_text"].tolist(),
+                    embedder_model,
+                    batch_size=batch_size,
+                )
+
+                print(f"Encoding turn embeddings in batches (batch_size={batch_size})...")
+                df_local["turn_embeddings"] = get_batched_turn_embeddings(
+                    df_local["masked_turn_texts"].tolist(),
+                    embedder_model,
+                    batch_size=batch_size,
+                )
+                return
+            except RuntimeError as e:
+                if "out of memory" not in str(e).lower():
+                    raise
+                last_error = e
+                print(
+                    f"Warning: CUDA OOM during embedding with batch_size={batch_size}. Retrying with a smaller batch..."
+                )
+                if torch is not None and torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+
+        raise last_error
+
     print("Loading data...")
     target_path = os.path.join(args.dir, "target_simulations.json")
     control_path = os.path.join(args.dir, "control_simulations.json")
@@ -167,10 +202,6 @@ def main(args):
     df = load_all_transcripts([target_path, control_path, default_topic_path])
 
     print("Transcripts loaded. Initializing evaluators")
-    # Initialize Evaluators
-    alloc_eval = AllocationalEvaluator(
-        model_path=args.judge_model, tensor_parallel_size=args.tensor_parallel_size
-    )
     rep_eval = RepresentationalEvaluator()
     ie = IntersectionalEvaluator()
 
@@ -240,18 +271,12 @@ def main(args):
     print(f"Loading embedding model on device={embedder_device}...")
     embedder = SentenceTransformer("all-mpnet-base-v2", device=embedder_device)
 
-    print("Encoding document embeddings in batches...")
-    df["embedding"] = get_batched_document_embeddings(
-        df["masked_text"].tolist(),
-        embedder,
-        batch_size=args.embedding_batch_size,
-    )
+    run_embeddings_with_backoff(df, embedder)
 
-    print("Encoding turn embeddings in batches...")
-    df["turn_embeddings"] = get_batched_turn_embeddings(
-        df["masked_turn_texts"].tolist(),
-        embedder,
-        batch_size=args.embedding_batch_size,
+    # Load the large vLLM judge only after embeddings complete to avoid GPU memory contention.
+    print("Initializing allocational evaluator (vLLM judge)...")
+    alloc_eval = AllocationalEvaluator(
+        model_path=args.judge_model, tensor_parallel_size=args.tensor_parallel_size
     )
 
     final_results = []
