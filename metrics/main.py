@@ -50,7 +50,19 @@ def get_turn_embeddings(turn_texts, model):
     return turn_embeddings
 
 
-def get_batched_document_embeddings(texts, model, batch_size: int = 128):
+def _encode_texts(model, texts, batch_size: int, pool=None):
+    if pool is not None and hasattr(model, "encode_multi_process"):
+        return model.encode_multi_process(texts, pool, chunk_size=batch_size)
+
+    return model.encode(
+        texts,
+        batch_size=batch_size,
+        show_progress_bar=True,
+        convert_to_numpy=True,
+    )
+
+
+def get_batched_document_embeddings(texts, model, batch_size: int = 128, pool=None):
     """Encodes documents as mean sentence embeddings in batched GPU/CPU passes."""
     sent_lists = [sent_tokenize(text) for text in texts]
     dim = model.get_sentence_embedding_dimension()
@@ -66,12 +78,7 @@ def get_batched_document_embeddings(texts, model, batch_size: int = 128):
     if not flat_sents:
         return [out[i] for i in range(len(texts))]
 
-    sent_embs = model.encode(
-        flat_sents,
-        batch_size=batch_size,
-        show_progress_bar=True,
-        convert_to_numpy=True,
-    )
+    sent_embs = _encode_texts(model, flat_sents, batch_size=batch_size, pool=pool)
 
     counts = np.zeros(len(texts), dtype=np.int32)
     for emb, doc_idx in zip(sent_embs, owners):
@@ -83,7 +90,7 @@ def get_batched_document_embeddings(texts, model, batch_size: int = 128):
     return [out[i] for i in range(len(texts))]
 
 
-def get_batched_turn_embeddings(turn_lists, model, batch_size: int = 128):
+def get_batched_turn_embeddings(turn_lists, model, batch_size: int = 128, pool=None):
     """Encodes all target turns in one batched pass and rebuilds per-dialogue arrays."""
     dim = model.get_sentence_embedding_dimension()
     flat_turns = []
@@ -95,12 +102,7 @@ def get_batched_turn_embeddings(turn_lists, model, batch_size: int = 128):
 
     per_dialogue = [[] for _ in range(len(turn_lists))]
     if flat_turns:
-        turn_embs = model.encode(
-            flat_turns,
-            batch_size=batch_size,
-            show_progress_bar=True,
-            convert_to_numpy=True,
-        )
+        turn_embs = _encode_texts(model, flat_turns, batch_size=batch_size, pool=pool)
         for emb, doc_idx in zip(turn_embs, owners):
             per_dialogue[doc_idx].append(emb)
 
@@ -159,7 +161,18 @@ def load_all_transcripts(file_paths):
 def main(args):
     from sentence_transformers import SentenceTransformer
 
-    def run_embeddings_with_backoff(df_local, embedder_model):
+    def resolve_embedding_devices():
+        if args.embedding_device != "cuda":
+            return None
+        if torch is None or not torch.cuda.is_available():
+            return None
+
+        device_count = torch.cuda.device_count()
+        if device_count <= 1:
+            return None
+        return [f"cuda:{i}" for i in range(device_count)]
+
+    def run_embeddings_with_backoff(df_local, embedder_model, embedding_pool=None):
         """Retry embedding passes with smaller batches on CUDA OOM."""
         candidate_batches = [args.embedding_batch_size, 128, 64, 32, 16]
         seen = set()
@@ -173,6 +186,7 @@ def main(args):
                     df_local["masked_text"].tolist(),
                     embedder_model,
                     batch_size=batch_size,
+                    pool=embedding_pool,
                 )
 
                 print(f"Encoding turn embeddings in batches (batch_size={batch_size})...")
@@ -180,6 +194,7 @@ def main(args):
                     df_local["masked_turn_texts"].tolist(),
                     embedder_model,
                     batch_size=batch_size,
+                    pool=embedding_pool,
                 )
                 return
             except RuntimeError as e:
@@ -268,10 +283,23 @@ def main(args):
     else:
         embedder_device = args.embedding_device
 
+    embedding_devices = resolve_embedding_devices()
+    embedding_pool = None
+    if embedding_devices:
+        print("Using multi-GPU embedding pool on: " + ", ".join(embedding_devices))
+        embedder_device = "cpu"
+
     print(f"Loading embedding model on device={embedder_device}...")
     embedder = SentenceTransformer("all-mpnet-base-v2", device=embedder_device)
 
-    run_embeddings_with_backoff(df, embedder)
+    if embedding_devices:
+        embedding_pool = embedder.start_multi_process_pool(target_devices=embedding_devices)
+
+    try:
+        run_embeddings_with_backoff(df, embedder, embedding_pool=embedding_pool)
+    finally:
+        if embedding_pool is not None:
+            embedder.stop_multi_process_pool(embedding_pool)
 
     # Load the large vLLM judge only after embeddings complete to avoid GPU memory contention.
     print("Initializing allocational evaluator (vLLM judge)...")

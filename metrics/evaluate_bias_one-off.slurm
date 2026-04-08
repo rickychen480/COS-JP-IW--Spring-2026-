@@ -23,9 +23,11 @@ eval "$(conda shell.bash hook)"
 conda activate ./env
 
 source ~/.hf_token
-hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
-    --local-dir /n/fs/dynamicbias/models/Llama-3.1-70B-Instruct-AWQ-INT4
 MODEL_ID="/n/fs/dynamicbias/models/Llama-3.1-70B-Instruct-AWQ-INT4"
+if [ ! -d "$MODEL_ID" ]; then
+  hf download hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4 \
+    --local-dir "$MODEL_ID"
+fi
 
 echo "Provisioning complete."
 echo "Running evaluation chunk: Chunk Index = $CHUNK_INDEX"
@@ -45,7 +47,7 @@ CUDA_VISIBLE_DEVICES=0,1 python metrics/main.py \
   --total_chunks 12 \
   --masked_path data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_masked.json \
   --embedding_device cuda \
-  --embedding_batch_size 128
+  --embedding_batch_size 256
 
 wait
 echo "Chunk $CHUNK_INDEX complete!"
