@@ -1,3 +1,128 @@
-bash tools/experiments/submit_b1_train_only_gpu4.sh
-bash tools/experiments/submit_b2_train_only_gpu4.sh
-tail -f /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b1_stage3_gpu4_short_trainonly/logs/maptracker_b1_b2_b1_only_b1_stage3_gpu4_short_trainonly-2726295.out
+DEPEND_FLAG="--dependency=afterany:2734756" RESUME=1 SKIP_TRAIN_VALIDATION=1 SKIP_FINAL_EVAL=1 bash tools/experiments/submit_b1_train_only_gpu4.sh
+DEPEND_FLAG="--dependency=afterany:2737011" RESUME=1 SKIP_TRAIN_VALIDATION=1 SKIP_FINAL_EVAL=1 bash tools/experiments/submit_b2_train_only_gpu4.sh
+
+tail -f /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b1_stage3_gpu4_short_trainonly/logs/maptracker_b1_b2_b1_only_b1_stage3_gpu4_short_trainonly-2726480.out
+tail -f /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b2_stage3_gpu4_short_trainonly/logs/maptracker_b1_b2_b2_only_b2_stage3_gpu4_short_trainonly-2726481.out
+
+ls /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b1_stage3_gpu4_short_trainonly/logs/
+ls /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b2_stage3_gpu4_short_trainonly/logs/
+
+
+
+# submit all iter_*.pth + latest
+bash tools/experiments/submit_b2_deferred_eval_all_gpu4.sh
+
+
+/n/fs/dynamicbias/tracker/work_dirs/experiments/b1_b2/b1_stage3_gpu4_short_trainonly/logs/run_b1_b2.log 
+/n/fs/dynamicbias/tracker/work_dirs/experiments/b1_b2/b2_stage3_gpu4_short_trainonly/logs/run_b1_b2.log 
+
+
+
+
+This is the "Black Box" log of every technical hurdle, architectural decision, and command-line fix we implemented to get **MapTracker** running on the Princeton `neuronic` cluster. 
+
+Copy and save this as **`PROJECT_RESTORE_LOG.md`**.
+
+---
+
+# 🛠 MapTracker HPC Implementation & Recovery Log
+
+## 1. Executive Summary
+**Goal:** Train MapTracker (Stage 3) on NuScenes using 8-GPU nodes despite a low FairShare priority score and restricted local storage.
+**Current Status:** Environment is 100% verified. Data is 100% prepared. Submission engine is optimized for "Slurm Tetris" (high-probability scheduling).
+
+---
+
+## 2. Hardware Context (The "Lenovo SR670 V2")
+* **Nodes:** `neu301` through `neu321`.
+* **GPU:** 8x NVIDIA L40 (48GB VRAM each).
+* **Storage:** Fast local NVMe `/scratch/` (Used for training) vs. Slow network `/n/fs/` (Used for code/checkpoints).
+* **Challenge:** Network storage is too slow for 3 million NuScenes `.pkl` files; training must happen on `/scratch/`.
+
+---
+
+## 3. The "Slurm Tetris" Scheduling Strategy
+Because the User FairShare score fell to **~0.09**, requesting a full 8-GPU node for 2 days resulted in a "Priority" hang until April 7th.
+* **The Pivot:** We shifted to **4-GPU chunks** with a **6-hour time limit**.
+* **Why:** It is significantly easier for Slurm to find "holes" in the cluster for 4 GPUs than to find an entirely empty 8-GPU node.
+* **Chain Loading:** We use Slurm `afterany` dependencies to string multiple 6-hour jobs together, effectively creating a multi-day run out of small pieces.
+
+---
+
+## 4. Architectural Breakthroughs
+
+### A. Dynamic Data Staging (The `expect` Script)
+We bypassed Duo 2FA to automate data movement.
+1.  **Job starts** on a random node (e.g., `neu321`).
+2.  **Script checks** if `/scratch/rc5898/tracker` exists.
+3.  **If missing:** It triggers an `rsync` from the login node. An `expect` block handles the "Passcode or option (1-3):" prompt by sending `1\r` (Duo Push).
+4.  **Result:** The 300GB dataset is unzipped to the local SSD in ~35 minutes.
+
+### B. The Symlink "Portal"
+To avoid changing hardcoded paths in the `MapTracker` source code:
+* We create a symlink: `ln -sfn /scratch/rc5898/tracker/datasets /n/fs/dynamicbias/tracker/datasets`.
+* **Effect:** The code thinks it's reading from the project folder, but it's actually hitting the local NVMe SSD.
+
+---
+
+## 5. Critical Debugging History (The "Killers")
+
+### ❌ The SSL Killer
+* **Symptom:** `urllib.error.URLError: [SSL: CERTIFICATE_VERIFY_FAILED]`.
+* **Cause:** Compute nodes lack updated SSL certs to download ResNet50 weights from OpenMMLab.
+* **Fix:** Added `export PYTHONHTTPSVERIFY=0` to the sbatch engine.
+
+### ❌ The OOM (Out of Memory) Killer
+* **Symptom:** `tracking_gts` script stopped silently at `scene-0971`.
+* **Cause:** Stitching 1,000 NuScenes scenes into a single `.pkl` requires massive RAM.
+* **Fix:** Requested `--mem=0` (all available node RAM, ~512GB) for the data prep job.
+
+### ❌ The Missing Matching Files
+* **Symptom:** `AssertionError: assert os.path.isfile(self.matching_file)`.
+* **Cause:** `MapTracker` requires `_gt_tracks.pkl` files. They were trapped on `neu320`'s local scratch drive because the generation script used the symlink hack.
+* **Fix:** Rescued files from `neu320` to `/n/fs/dynamicbias/tracker/tracking_files/`.
+
+---
+
+## 6. The "Golden" Submission Engine
+The file **`submit_b1_b2_sbatch.sh`** is the brain of the operation. It now performs a **Hot-Injection** of tracking files:
+1.  Unzips the base dataset (from the old `.tar`).
+2.  **Force-copies** the latest `_gt_tracks.pkl` from the project folder into the SSD:
+    `cp /n/fs/dynamicbias/tracker/tracking_files/*gt_tracks.pkl /scratch/rc5898/tracker/datasets/nuscenes/`
+
+---
+
+## 7. Immediate Action Plan (How to Start)
+
+### Step 1: Clean the Workspace
+Remove the directory from the failed 8-GPU attempt:
+```bash
+rm -rf /n/fs/dynamicbias/tracker/work_dirs/experiments/b1_b2/b1_stage3_gpu4_short_trainonly
+```
+
+### Step 2: Launch the First 6-Hour Block
+```bash
+bash submit_b1_train_only_gpu4.sh
+```
+*Note the Job ID (e.g., `2730001`)*.
+
+### Step 3: Chain the Successors
+Submit the next 2 blocks to run automatically once the previous one hits the 6-hour limit:
+```bash
+# Block 2
+DEPEND_FLAG="--dependency=afterany:2730001" RESUME=1 bash submit_b1_train_only_gpu4.sh
+# Block 3 (assuming Block 2 got ID 2730002)
+DEPEND_FLAG="--dependency=afterany:2730002" RESUME=1 bash submit_b1_train_only_gpu4.sh
+```
+
+---
+
+## 8. Key File Locations
+* **Project Root:** `/n/fs/dynamicbias/tracker`
+* **Conda Env:** `/n/fs/dynamicbias/tracker/env-maptracker` (or `maptracker` depending on which link is active).
+* **Tracking Files:** `/n/fs/dynamicbias/tracker/tracking_files/`
+* **Logs:** `/n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/<RUN_ID>/logs/`
+
+---
+
+**Final Verification:** When you run `tail -f` on the `.out` log, you are looking for the "ResNet init" to pass, the "NuscDataset" to load 27,968 samples, and then the first **`loss:`** printout. Once you see that, the "Tetris" chain is working.

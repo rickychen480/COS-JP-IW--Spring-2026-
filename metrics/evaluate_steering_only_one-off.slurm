@@ -22,7 +22,7 @@ cd ~/COS-JP
 eval "$(conda shell.bash hook)"
 conda activate ./env
 
-DATASET_NAME="gpt-4o-mini
+DATASET_NAME="gpt-4o-mini"
 CHUNK_INDEX=3
 TOTAL_CHUNKS=12
 TRANSCRIPT_DIR="data/transcripts/${DATASET_NAME}"

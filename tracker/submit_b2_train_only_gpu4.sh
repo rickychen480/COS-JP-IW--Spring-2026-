@@ -9,7 +9,7 @@ PROJECT_ROOT="/n/fs/dynamicbias/tracker"
 # ==========================================
 RUN_ID="${RUN_ID-b2_stage3_gpu4_short_trainonly}"
 PARTITION="${PARTITION-}"
-TIME_LIMIT="${TIME_LIMIT-04:00:00}"
+TIME_LIMIT="${TIME_LIMIT-08:00:00}"
 MAIL_USER="${MAIL_USER-rc5898@princeton.edu}"
 MAIL_TYPE="${MAIL_TYPE-BEGIN,END,FAIL}"
 
@@ -21,7 +21,7 @@ GPUS_PER_NODE="${GPUS_PER_NODE-4}"          # Force all 4 GPUs onto ONE node
 CPUS_PER_TASK="${CPUS_PER_TASK-6}"          # 4 GPUs * 6 CPUs = 24 Cores
 
 # Learning Rate & Batch Size Scaling for 4 GPUs
-CFG_COMMON="num_gpus=4 data.samples_per_gpu=2 optimizer.lr=2.5e-4 lr_config.warmup_iters=1000 checkpoint_config.interval=3496 evaluation.interval=20976 runner.max_iters=167808"
+CFG_COMMON="fp16.loss_scale=512.0 num_gpus=4 data.samples_per_gpu=4 optimizer.lr=5.0e-4 lr_config.warmup_iters=500 checkpoint_config.interval=1748 evaluation.interval=10488 runner.max_iters=83904 model.mvp_temporal_gate_cfg.corruption_trained_no_gate_baseline=False"
 
 # ==========================================
 # BUILD THE COMMAND ARRAY
