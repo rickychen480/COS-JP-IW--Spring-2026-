@@ -177,7 +177,9 @@ def main(args):
             return None
         return [f"cuda:{i}" for i in range(device_count)]
 
-    def run_embeddings_with_backoff(df_local, embedder_model, embedding_pool=None):
+    def run_embeddings_with_backoff(
+        df_local, embedder_model, embedding_pool=None, encode_documents=True
+    ):
         """Retry embedding passes with smaller batches on CUDA OOM."""
         candidate_batches = [args.embedding_batch_size, 128, 64, 32, 16]
         seen = set()
@@ -186,13 +188,14 @@ def main(args):
         last_error = None
         for batch_size in candidate_batches:
             try:
-                print(f"Encoding document embeddings in batches (batch_size={batch_size})...")
-                df_local["embedding"] = get_batched_document_embeddings(
-                    df_local["masked_text"].tolist(),
-                    embedder_model,
-                    batch_size=batch_size,
-                    pool=embedding_pool,
-                )
+                if encode_documents:
+                    print(f"Encoding document embeddings in batches (batch_size={batch_size})...")
+                    df_local["embedding"] = get_batched_document_embeddings(
+                        df_local["masked_text"].tolist(),
+                        embedder_model,
+                        batch_size=batch_size,
+                        pool=embedding_pool,
+                    )
 
                 print(f"Encoding turn embeddings in batches (batch_size={batch_size})...")
                 df_local["turn_embeddings"] = get_batched_turn_embeddings(
@@ -301,7 +304,12 @@ def main(args):
         embedding_pool = embedder.start_multi_process_pool(target_devices=embedding_devices)
 
     try:
-        run_embeddings_with_backoff(df, embedder, embedding_pool=embedding_pool)
+        run_embeddings_with_backoff(
+            df,
+            embedder,
+            embedding_pool=embedding_pool,
+            encode_documents=not args.steering_only,
+        )
     finally:
         if embedding_pool is not None:
             print("Stopping embedding pool...")
@@ -336,13 +344,17 @@ def main(args):
             # Additional synchronization to allow OS to reclaim IPC resources
             time.sleep(1)
         
-        print("Cleanup complete. Proceeding to judge initialization...")
+        print("Cleanup complete.")
 
-    # Load the large vLLM judge only after embeddings complete to avoid GPU memory contention.
-    print("Initializing allocational evaluator (vLLM judge)...")
-    alloc_eval = AllocationalEvaluator(
-        model_path=args.judge_model, tensor_parallel_size=args.tensor_parallel_size
-    )
+    alloc_eval = None
+    if not args.steering_only:
+        # Load the large vLLM judge only after embeddings complete to avoid GPU memory contention.
+        print("Initializing allocational evaluator (vLLM judge)...")
+        alloc_eval = AllocationalEvaluator(
+            model_path=args.judge_model, tensor_parallel_size=args.tensor_parallel_size
+        )
+    else:
+        print("Steering-only mode enabled: skipping vLLM judge and allocational metrics.")
 
     final_results = []
     target_groups = sorted(
@@ -358,48 +370,48 @@ def main(args):
 
     print(f"Processing metrics for {len(target_groups)} intersectional groups...")
 
-    CACHE_FILE = f"llm_judge_cache_chunk_{args.chunk_index}.json"
-    if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, "r") as f:
-            judge_cache = json.load(f)
-    else:
-        judge_cache = {}
+    judge_cache = {}
+    if not args.steering_only:
+        CACHE_FILE = f"llm_judge_cache_chunk_{args.chunk_index}.json"
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, "r") as f:
+                judge_cache = json.load(f)
 
-    def get_cached_judges_batch(d_ids, variant_types, transcripts, metadatas):
-        """Fetches judgements from cache, or calls API in batches and saves so we never lose progress."""
-        scores = [None] * len(d_ids)
-        missing_dialogues = []
-        missing_indices = []
+        def get_cached_judges_batch(d_ids, variant_types, transcripts, metadatas):
+            """Fetches judgements from cache, or calls API in batches and saves so we never lose progress."""
+            scores = [None] * len(d_ids)
+            missing_dialogues = []
+            missing_indices = []
 
-        for i, (d_id, v, t, m) in enumerate(zip(d_ids, variant_types, transcripts, metadatas)):
-            task_desc = m.get("task_description", "")
-            cache_key = f"{d_id}::{v}::{task_desc}"
-            
-            if cache_key in judge_cache:
-                cached_value = judge_cache[cache_key]
-                if cached_value in (0, 1):
-                    scores[i] = cached_value
-                    continue
-            
-            missing_dialogues.append({
-                "metadata": {"task_description": task_desc},
-                "transcript": t,
-                "cache_key": cache_key
-            })
-            missing_indices.append(i)
+            for i, (d_id, v, t, m) in enumerate(zip(d_ids, variant_types, transcripts, metadatas)):
+                task_desc = m.get("task_description", "")
+                cache_key = f"{d_id}::{v}::{task_desc}"
 
-        if missing_dialogues:
-            new_scores = alloc_eval.batch_evaluate_gcr(missing_dialogues)
-            for idx, score, dialogue in zip(missing_indices, new_scores, missing_dialogues):
-                scores[idx] = score
-                # Ensure we only cache solid numerical hits, ignoring the newly caught NaNs
-                if pd.notna(score) and score in (0, 1, 0.0, 1.0):
-                    judge_cache[dialogue["cache_key"]] = int(score)
-            
-            with open(CACHE_FILE, "w") as f:
-                json.dump(judge_cache, f)
+                if cache_key in judge_cache:
+                    cached_value = judge_cache[cache_key]
+                    if cached_value in (0, 1):
+                        scores[i] = cached_value
+                        continue
 
-        return scores
+                missing_dialogues.append({
+                    "metadata": {"task_description": task_desc},
+                    "transcript": t,
+                    "cache_key": cache_key
+                })
+                missing_indices.append(i)
+
+            if missing_dialogues:
+                new_scores = alloc_eval.batch_evaluate_gcr(missing_dialogues)
+                for idx, score, dialogue in zip(missing_indices, new_scores, missing_dialogues):
+                    scores[idx] = score
+                    # Ensure we only cache solid numerical hits, ignoring the newly caught NaNs
+                    if pd.notna(score) and score in (0, 1, 0.0, 1.0):
+                        judge_cache[dialogue["cache_key"]] = int(score)
+
+                with open(CACHE_FILE, "w") as f:
+                    json.dump(judge_cache, f)
+
+            return scores
 
     for target_id in target_groups:
         # 1. Isolate the data for this specific intersectional group
@@ -413,103 +425,116 @@ def main(args):
             print(f"Skipping {target_id}: Missing implicit or explicit data.")
             continue
 
-        # --- A. ALLOCATIONAL METRICS ---
-
-        # 1. Use the checkpointed judge function (Requires 'dialogue_id')
-        imp_success_list = get_cached_judges_batch(
-            implicit_df["dialogue_id"],
-            implicit_df["variant_type"],
-            implicit_df["transcript"],
-            implicit_df["metadata"]
-        )
-
-        exp_success_list = get_cached_judges_batch(
-            explicit_df["dialogue_id"],
-            explicit_df["variant_type"],
-            explicit_df["transcript"],
-            explicit_df["metadata"]
-        )
-
-        implicit_df = implicit_df.copy()
-        explicit_df = explicit_df.copy()
-        implicit_df["success"] = imp_success_list
-        explicit_df["success"] = exp_success_list
-
-        implicit_gcr = nanmean(imp_success_list)
-        explicit_gcr = nanmean(exp_success_list)
-        d_gcr = alloc_eval.calculate_d_gcr(implicit_gcr, explicit_gcr)
-
-        # Scenario-paired delta avoids composition bias from unequal scenario mixes.
-        implicit_scenario_success = implicit_df.groupby("scenario_id", dropna=False)[
-            "success"
-        ].mean()
-        explicit_scenario_success = explicit_df.groupby("scenario_id", dropna=False)[
-            "success"
-        ].mean()
-        d_gcr_paired = paired_delta(
-            explicit_scenario_success, implicit_scenario_success
-        )
-
-        # 2. ATC is computed over successful runs only.
-        imp_atcs_raw = [
-            alloc_eval.calculate_atc(t, is_successful=succ)
-            for t, succ in zip(implicit_df["transcript"], imp_success_list)
-        ]
-        implicit_atc = nanmean([x for x in imp_atcs_raw if x is not None])
-
-        exp_atcs_raw = [
-            alloc_eval.calculate_atc(t, is_successful=succ)
-            for t, succ in zip(explicit_df["transcript"], exp_success_list)
-        ]
-        explicit_atc = nanmean([x for x in exp_atcs_raw if x is not None])
-
-        d_atc = nanmean(explicit_atc) - nanmean(implicit_atc)
-
-        # Rejection diagnostics (count of refusal-like turns per dialogue).
-        implicit_rejection_counts = [
-            alloc_eval.calculate_rejection_rate(t) for t in implicit_df["transcript"]
-        ]
-        explicit_rejection_counts = [
-            alloc_eval.calculate_rejection_rate(t) for t in explicit_df["transcript"]
-        ]
-        d_rejection_count = nanmean(explicit_rejection_counts) - nanmean(
-            implicit_rejection_counts
-        )
-
-        # --- REPRESENTATIONAL METRICS (CONFIDENCE) ---
-        # Compute confidence per dialogue first to avoid over-weighting longer outputs.
-        implicit_dialogue_conf = [
-            rep_eval.calculate_confidence(
-                logprobs if isinstance(logprobs, list) else []
+        # --- A. ALLOCATIONAL + CONFIDENCE METRICS ---
+        if not args.steering_only:
+            # 1. Use the checkpointed judge function (requires dialogue_id)
+            imp_success_list = get_cached_judges_batch(
+                implicit_df["dialogue_id"],
+                implicit_df["variant_type"],
+                implicit_df["transcript"],
+                implicit_df["metadata"]
             )
-            for logprobs in implicit_df["target_logprobs"]
-        ]
-        explicit_dialogue_conf = [
-            rep_eval.calculate_confidence(
-                logprobs if isinstance(logprobs, list) else []
+
+            exp_success_list = get_cached_judges_batch(
+                explicit_df["dialogue_id"],
+                explicit_df["variant_type"],
+                explicit_df["transcript"],
+                explicit_df["metadata"]
             )
-            for logprobs in explicit_df["target_logprobs"]
-        ]
 
-        d_ccd = rep_eval.calculate_d_ccd(implicit_dialogue_conf, explicit_dialogue_conf)
+            implicit_df = implicit_df.copy()
+            explicit_df = explicit_df.copy()
+            implicit_df["success"] = imp_success_list
+            explicit_df["success"] = exp_success_list
 
-        implicit_df["dialogue_confidence"] = implicit_dialogue_conf
-        explicit_df["dialogue_confidence"] = explicit_dialogue_conf
-        implicit_scenario_conf = implicit_df.groupby("scenario_id", dropna=False)[
-            "dialogue_confidence"
-        ].mean()
-        explicit_scenario_conf = explicit_df.groupby("scenario_id", dropna=False)[
-            "dialogue_confidence"
-        ].mean()
-        d_ccd_paired = paired_delta(explicit_scenario_conf, implicit_scenario_conf)
+            implicit_gcr = nanmean(imp_success_list)
+            explicit_gcr = nanmean(exp_success_list)
+            d_gcr = alloc_eval.calculate_d_gcr(implicit_gcr, explicit_gcr)
+
+            # Scenario-paired delta avoids composition bias from unequal scenario mixes.
+            implicit_scenario_success = implicit_df.groupby("scenario_id", dropna=False)[
+                "success"
+            ].mean()
+            explicit_scenario_success = explicit_df.groupby("scenario_id", dropna=False)[
+                "success"
+            ].mean()
+            d_gcr_paired = paired_delta(
+                explicit_scenario_success, implicit_scenario_success
+            )
+
+            # 2. ATC is computed over successful runs only.
+            imp_atcs_raw = [
+                alloc_eval.calculate_atc(t, is_successful=succ)
+                for t, succ in zip(implicit_df["transcript"], imp_success_list)
+            ]
+            implicit_atc = nanmean([x for x in imp_atcs_raw if x is not None])
+
+            exp_atcs_raw = [
+                alloc_eval.calculate_atc(t, is_successful=succ)
+                for t, succ in zip(explicit_df["transcript"], exp_success_list)
+            ]
+            explicit_atc = nanmean([x for x in exp_atcs_raw if x is not None])
+
+            d_atc = nanmean(explicit_atc) - nanmean(implicit_atc)
+
+            # Rejection diagnostics (count of refusal-like turns per dialogue).
+            implicit_rejection_counts = [
+                alloc_eval.calculate_rejection_rate(t) for t in implicit_df["transcript"]
+            ]
+            explicit_rejection_counts = [
+                alloc_eval.calculate_rejection_rate(t) for t in explicit_df["transcript"]
+            ]
+            d_rejection_count = nanmean(explicit_rejection_counts) - nanmean(
+                implicit_rejection_counts
+            )
+
+            # --- REPRESENTATIONAL METRICS (CONFIDENCE) ---
+            # Compute confidence per dialogue first to avoid over-weighting longer outputs.
+            implicit_dialogue_conf = [
+                rep_eval.calculate_confidence(
+                    logprobs if isinstance(logprobs, list) else []
+                )
+                for logprobs in implicit_df["target_logprobs"]
+            ]
+            explicit_dialogue_conf = [
+                rep_eval.calculate_confidence(
+                    logprobs if isinstance(logprobs, list) else []
+                )
+                for logprobs in explicit_df["target_logprobs"]
+            ]
+
+            d_ccd = rep_eval.calculate_d_ccd(implicit_dialogue_conf, explicit_dialogue_conf)
+
+            implicit_df["dialogue_confidence"] = implicit_dialogue_conf
+            explicit_df["dialogue_confidence"] = explicit_dialogue_conf
+            implicit_scenario_conf = implicit_df.groupby("scenario_id", dropna=False)[
+                "dialogue_confidence"
+            ].mean()
+            explicit_scenario_conf = explicit_df.groupby("scenario_id", dropna=False)[
+                "dialogue_confidence"
+            ].mean()
+            d_ccd_paired = paired_delta(explicit_scenario_conf, implicit_scenario_conf)
+        else:
+            implicit_gcr = np.nan
+            explicit_gcr = np.nan
+            d_gcr = np.nan
+            d_gcr_paired = np.nan
+            implicit_atc = np.nan
+            explicit_atc = np.nan
+            d_atc = np.nan
+            d_ccd = np.nan
+            d_ccd_paired = np.nan
+            implicit_rejection_counts = []
+            explicit_rejection_counts = []
+            d_rejection_count = np.nan
 
         # --- SEMANTIC STEERING (CoMPosT INTEGRATION) ---
         # Dynamically define the counterfactual to extract the exact CoMPosT axis
         occupation = target_id.split("_")[-1]
         control_id = f"Unmarked_Unmarked_{occupation}"
 
-        implicit_steerings = []
-        explicit_steerings = []
+        implicit_steerings = [] if not args.steering_only else None
+        explicit_steerings = [] if not args.steering_only else None
         implicit_trajectories = []
         explicit_trajectories = []
 
@@ -548,19 +573,20 @@ def main(args):
                     if implicit_scenario_df.empty or explicit_scenario_df.empty:
                         continue
 
-                    imp_target_embs = np.vstack(
-                        implicit_scenario_df["embedding"].values
-                    )
-                    exp_target_embs = np.vstack(
-                        explicit_scenario_df["embedding"].values
-                    )
-                    steer_dict = rep_eval.calculate_semantic_steering(
-                        implicit_target_embeddings=imp_target_embs,
-                        explicit_target_embeddings=exp_target_embs,
-                        axis_v=axis_v,
-                        topic_pole_sim=topic_pole_sim,
-                        persona_pole_sim=persona_pole_sim,
-                    )
+                    if not args.steering_only:
+                        imp_target_embs = np.vstack(
+                            implicit_scenario_df["embedding"].values
+                        )
+                        exp_target_embs = np.vstack(
+                            explicit_scenario_df["embedding"].values
+                        )
+                        steer_dict = rep_eval.calculate_semantic_steering(
+                            implicit_target_embeddings=imp_target_embs,
+                            explicit_target_embeddings=exp_target_embs,
+                            axis_v=axis_v,
+                            topic_pole_sim=topic_pole_sim,
+                            persona_pole_sim=persona_pole_sim,
+                        )
                     trajectory_dict = rep_eval.calculate_semantic_steering_trajectory(
                         implicit_turn_embeddings=implicit_scenario_df[
                             "turn_embeddings"
@@ -574,10 +600,11 @@ def main(args):
                         num_buckets=5,
                     )
 
-                    if np.isfinite(steer_dict["implicit_steering"]):
-                        implicit_steerings.append(steer_dict["implicit_steering"])
-                    if np.isfinite(steer_dict["explicit_steering"]):
-                        explicit_steerings.append(steer_dict["explicit_steering"])
+                    if not args.steering_only:
+                        if np.isfinite(steer_dict["implicit_steering"]):
+                            implicit_steerings.append(steer_dict["implicit_steering"])
+                        if np.isfinite(steer_dict["explicit_steering"]):
+                            explicit_steerings.append(steer_dict["explicit_steering"])
 
                     imp_traj = np.asarray(
                         trajectory_dict["implicit_trajectory"], dtype=float
@@ -595,17 +622,22 @@ def main(args):
                     continue
 
         # Average scores across all valid scenarios to get final steering metrics
-        final_imp_steer = (
-            np.nanmean(implicit_steerings) if implicit_steerings else np.nan
-        )
-        final_exp_steer = (
-            np.nanmean(explicit_steerings) if explicit_steerings else np.nan
-        )
-        final_delta_steer = (
-            final_exp_steer - final_imp_steer
-            if not (np.isnan(final_imp_steer) or np.isnan(final_exp_steer))
-            else np.nan
-        )
+        if not args.steering_only:
+            final_imp_steer = (
+                np.nanmean(implicit_steerings) if implicit_steerings else np.nan
+            )
+            final_exp_steer = (
+                np.nanmean(explicit_steerings) if explicit_steerings else np.nan
+            )
+            final_delta_steer = (
+                final_exp_steer - final_imp_steer
+                if not (np.isnan(final_imp_steer) or np.isnan(final_exp_steer))
+                else np.nan
+            )
+        else:
+            final_imp_steer = np.nan
+            final_exp_steer = np.nan
+            final_delta_steer = np.nan
 
         def aggregate_trajectory(trajectory_list):
             if not trajectory_list:
@@ -668,6 +700,16 @@ def main(args):
     # 4. Save and Report
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     results_df = pd.DataFrame(final_results)
+    if args.steering_only:
+        steering_cols = [
+            "group_label",
+            "implicit_Steering_Trajectory",
+            "explicit_Steering_Trajectory",
+            "delta_Steering_Trajectory",
+            "implicit_steering_traj_n_valid",
+            "explicit_steering_traj_n_valid",
+        ]
+        results_df = results_df.reindex(columns=steering_cols)
     results_df.to_csv(args.out, index=False)
     print("\nEvaluation Complete. Results saved.")
 
@@ -691,8 +733,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--judge_model",
         type=str,
-        required=True,
+        required=False,
+        default=None,
         help="HuggingFace ID or local path for the LLM judge",
+    )
+    parser.add_argument(
+        "--steering_only",
+        action="store_true",
+        help="Run only semantic steering (including turn-by-turn trajectory) and skip judge-dependent metrics.",
     )
     parser.add_argument(
         "--tensor_parallel_size",
@@ -726,6 +774,9 @@ if __name__ == "__main__":
         help="Device for sentence-transformer encoding",
     )
     args = parser.parse_args()
+
+    if not args.steering_only and not args.judge_model:
+        parser.error("--judge_model is required unless --steering_only is set")
 
     target_path = os.path.join(args.dir, "target_simulations.json")
     control_path = os.path.join(args.dir, "control_simulations.json")
