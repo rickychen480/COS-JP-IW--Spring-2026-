@@ -529,8 +529,8 @@ def main(args):
         occupation = target_id.split("_")[-1]
         control_id = f"Unmarked_Unmarked_{occupation}"
 
-        implicit_steerings = [] if not args.steering_only else None
-        explicit_steerings = [] if not args.steering_only else None
+        implicit_steerings = []
+        explicit_steerings = []
         implicit_trajectories = []
         explicit_trajectories = []
 
