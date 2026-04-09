@@ -571,6 +571,7 @@ def main(args):
                         axis_v=axis_v,
                         topic_pole_sim=topic_pole_sim,
                         persona_pole_sim=persona_pole_sim,
+                        num_buckets=5,
                     )
 
                     if np.isfinite(steer_dict["implicit_steering"]):

@@ -58,18 +58,37 @@ class RepresentationalEvaluator:
         axis_v: np.ndarray,
         topic_pole_sim: float,
         persona_pole_sim: float,
+        num_buckets: int = 5,
     ) -> Dict[str, List[float]]:
         """
         Computes turn-indexed semantic steering trajectories.
 
         Each item in implicit_turn_embeddings / explicit_turn_embeddings corresponds
-        to one dialogue with shape [num_target_turns, emb_dim]. For each turn index,
-        similarities are averaged across dialogues that have that turn.
+        to one dialogue with shape [num_target_turns, emb_dim]. Turns within each
+        dialogue are averaged into num_buckets ordered buckets; bucket scores are
+        then averaged across dialogues.
         """
 
+        if num_buckets <= 0:
+            raise ValueError("num_buckets must be positive")
+
+        def bucket_means(values: np.ndarray, buckets: int) -> np.ndarray:
+            out = np.full(buckets, np.nan, dtype=float)
+            if values.size == 0:
+                return out
+
+            splits = np.array_split(np.arange(values.shape[0]), buckets)
+            for i, idx in enumerate(splits):
+                if idx.size == 0:
+                    continue
+                bucket_vals = values[idx]
+                finite_vals = bucket_vals[np.isfinite(bucket_vals)]
+                if finite_vals.size:
+                    out[i] = float(np.mean(finite_vals))
+            return out
+
         def aggregate_turn_sims(dialogue_turn_embs: List[np.ndarray]) -> np.ndarray:
-            per_dialogue_sims = []
-            max_turns = 0
+            per_dialogue_bucketed_sims = []
 
             for emb in dialogue_turn_embs:
                 arr = np.asarray(emb, dtype=float)
@@ -81,15 +100,14 @@ class RepresentationalEvaluator:
                     raise ValueError("each dialogue turn embedding must be a 2D array")
 
                 sims = self._cosine_similarities(arr, axis_v)
-                per_dialogue_sims.append(sims)
-                max_turns = max(max_turns, sims.shape[0])
+                per_dialogue_bucketed_sims.append(bucket_means(sims, num_buckets))
 
-            if max_turns == 0:
+            if not per_dialogue_bucketed_sims:
                 return np.array([], dtype=float)
 
-            turn_means = np.full(max_turns, np.nan, dtype=float)
-            for i in range(max_turns):
-                vals = [s[i] for s in per_dialogue_sims if i < len(s) and np.isfinite(s[i])]
+            turn_means = np.full(num_buckets, np.nan, dtype=float)
+            for i in range(num_buckets):
+                vals = [s[i] for s in per_dialogue_bucketed_sims if np.isfinite(s[i])]
                 if vals:
                     turn_means[i] = float(np.mean(vals))
             return turn_means
