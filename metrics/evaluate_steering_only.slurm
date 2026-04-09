@@ -24,7 +24,7 @@ cd ~/COS-JP
 eval "$(conda shell.bash hook)"
 conda activate ./env
 
-DATASET_NAME="gpt-4o-mini"
+DATASET_NAME="Llama-3.1-70B-Instruct-AWQ-INT4"
 TOTAL_CHUNKS=12
 TRANSCRIPT_DIR="data/transcripts/${DATASET_NAME}"
 OUT_DIR="results/metrics/${DATASET_NAME}/steering_only"
