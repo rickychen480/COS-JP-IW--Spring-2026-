@@ -177,9 +177,7 @@ def main(args):
             return None
         return [f"cuda:{i}" for i in range(device_count)]
 
-    def run_embeddings_with_backoff(
-        df_local, embedder_model, embedding_pool=None, encode_documents=True
-    ):
+    def run_embeddings_with_backoff(df_local, embedder_model, embedding_pool=None):
         """Retry embedding passes with smaller batches on CUDA OOM."""
         candidate_batches = [args.embedding_batch_size, 128, 64, 32, 16]
         seen = set()
@@ -188,14 +186,13 @@ def main(args):
         last_error = None
         for batch_size in candidate_batches:
             try:
-                if encode_documents:
-                    print(f"Encoding document embeddings in batches (batch_size={batch_size})...")
-                    df_local["embedding"] = get_batched_document_embeddings(
-                        df_local["masked_text"].tolist(),
-                        embedder_model,
-                        batch_size=batch_size,
-                        pool=embedding_pool,
-                    )
+                print(f"Encoding document embeddings in batches (batch_size={batch_size})...")
+                df_local["embedding"] = get_batched_document_embeddings(
+                    df_local["masked_text"].tolist(),
+                    embedder_model,
+                    batch_size=batch_size,
+                    pool=embedding_pool,
+                )
 
                 print(f"Encoding turn embeddings in batches (batch_size={batch_size})...")
                 df_local["turn_embeddings"] = get_batched_turn_embeddings(
@@ -308,7 +305,6 @@ def main(args):
             df,
             embedder,
             embedding_pool=embedding_pool,
-            encode_documents=not args.steering_only,
         )
     finally:
         if embedding_pool is not None:
