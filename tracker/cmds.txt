@@ -1,5 +1,5 @@
-DEPEND_FLAG="--dependency=afterany:2734756" RESUME=1 SKIP_TRAIN_VALIDATION=1 SKIP_FINAL_EVAL=1 bash tools/experiments/submit_b1_train_only_gpu4.sh
-DEPEND_FLAG="--dependency=afterany:2737011" RESUME=1 SKIP_TRAIN_VALIDATION=1 SKIP_FINAL_EVAL=1 bash tools/experiments/submit_b2_train_only_gpu4.sh
+DEPEND_FLAG="--dependency=afterany:2787526" RESUME=1 SKIP_TRAIN_VALIDATION=1 SKIP_FINAL_EVAL=1 bash tools/experiments/submit_b1_train_only_gpu4.sh
+DEPEND_FLAG="--dependency=afterany:2787527" RESUME=1 SKIP_TRAIN_VALIDATION=1 SKIP_FINAL_EVAL=1 bash tools/experiments/submit_b2_train_only_gpu4.sh
 
 tail -f /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b1_stage3_gpu4_short_trainonly/logs/maptracker_b1_b2_b1_only_b1_stage3_gpu4_short_trainonly-2726480.out
 tail -f /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b2_stage3_gpu4_short_trainonly/logs/maptracker_b1_b2_b2_only_b2_stage3_gpu4_short_trainonly-2726481.out
@@ -7,7 +7,11 @@ tail -f /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b2_stage3_gpu4_short_tr
 ls /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b1_stage3_gpu4_short_trainonly/logs/
 ls /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b2_stage3_gpu4_short_trainonly/logs/
 
+# Submit final evals (for 78860)
+bash tools/experiments/submit_final_eval_b1_b2_iter78660_sbatch.sh --mail-user ricky.chen@princeton.edu
 
+# Submit contradiction suite (for 78860)
+bash tools/experiments/submit_contradiction_suite_b1_b2_iter59432_sbatch.sh --mail-user ricky.chen@princeton.edu --onset 0
 
 # submit all iter_*.pth + latest
 bash tools/experiments/submit_b2_deferred_eval_all_gpu4.sh
