@@ -23,11 +23,11 @@ MODEL_ID="/n/fs/dynamicbias/models/Llama-3.1-8B-Instruct"
 
 echo "Provisioning complete. Starting vLLM Semantic Masking..."
 
-export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_masking-2
-export TRITON_CACHE_DIR=/scratch/rc5898/triton_cache_masking-2
+export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_masking
+export TRITON_CACHE_DIR=/scratch/rc5898/triton_cache_masking
 CUDA_VISIBLE_DEVICES=0,1 python data_generation/semantic_masking/semantic_masking.py \
-  --input data/transcripts/Llama-3.1-8B-Instruct/default_topics.json \
-  --output data/transcripts/Llama-3.1-8B-Instruct/default_topics_masked.json \
+  --input data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
+  --output data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics_masked.json \
   --model $MODEL_ID
 
 echo "Semantic Masking complete!"

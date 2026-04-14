@@ -64,11 +64,10 @@ def process_file(input_path: str, output_path: str, model_name: str):
 
     for d in data:
         for turn in d.get("transcript", []):
-            if turn.get("speaker") == "User":
-                original_text = turn.get("content", "")
-                if original_text.strip():
-                    turns_to_process.append(turn)
-                    prompts.append(build_prompt(tokenizer, original_text))
+            original_text = turn.get("content", "")
+            if original_text.strip():
+                turns_to_process.append(turn)
+                prompts.append(build_prompt(tokenizer, original_text))
 
     # 3. Run Batch Inference
     logger.info(f"Running batch inference on {len(prompts)} texts.")
