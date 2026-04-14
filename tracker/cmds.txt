@@ -1,5 +1,5 @@
-DEPEND_FLAG="--dependency=afterany:2787526" RESUME=1 SKIP_TRAIN_VALIDATION=1 SKIP_FINAL_EVAL=1 bash tools/experiments/submit_b1_train_only_gpu4.sh
-DEPEND_FLAG="--dependency=afterany:2787527" RESUME=1 SKIP_TRAIN_VALIDATION=1 SKIP_FINAL_EVAL=1 bash tools/experiments/submit_b2_train_only_gpu4.sh
+DEPEND_FLAG="--dependency=afterany:2814006" RESUME=1 SKIP_TRAIN_VALIDATION=1 SKIP_FINAL_EVAL=1 bash tools/experiments/submit_b1_train_only_gpu4.sh
+DEPEND_FLAG="--dependency=afterany:2814007" RESUME=1 SKIP_TRAIN_VALIDATION=1 SKIP_FINAL_EVAL=1 bash tools/experiments/submit_b2_train_only_gpu4.sh
 
 tail -f /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b1_stage3_gpu4_short_trainonly/logs/maptracker_b1_b2_b1_only_b1_stage3_gpu4_short_trainonly-2726480.out
 tail -f /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b2_stage3_gpu4_short_trainonly/logs/maptracker_b1_b2_b2_only_b2_stage3_gpu4_short_trainonly-2726481.out
@@ -7,11 +7,33 @@ tail -f /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b2_stage3_gpu4_short_tr
 ls /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b1_stage3_gpu4_short_trainonly/logs/
 ls /n/fs/dynamicbias/tracker/work_dirs/sbatch/b1_b2/b2_stage3_gpu4_short_trainonly/logs/
 
+
+# List all jobs with the full names
+squeue --format="%.18i %.50j %.8u %.8T %.10M %R" -u rc5898
+
+
 # Submit final evals (for 78860)
 bash tools/experiments/submit_final_eval_b1_b2_iter78660_sbatch.sh --mail-user ricky.chen@princeton.edu
 
+/n/fs/dynamicbias/tracker/work_dirs/experiments/b1_b2/b1_stage3_gpu4_short_trainonly/b1/eval_deferred/iter_78660/clean/
+/n/fs/dynamicbias/tracker/work_dirs/experiments/b1_b2/b2_stage3_gpu4_short_trainonly/b2/eval_deferred/iter_78660/clean/
+
+/n/fs/dynamicbias/tracker/work_dirs/experiments/b1_b2/b1_stage3_gpu4_short_trainonly/b1/contradiction_suite/iter_78660_onset0_run_20260412_084038/ 
+cp -r /n/fs/dynamicbias/tracker/work_dirs/experiments/b1_b2/b2_stage3_gpu4_short_trainonly/b2/contradiction_suite/iter_78660_onset0_run_20260412_084038/ b2_contra_78660
+
+
+tar -cvf contra_78660.tar b1_contra_78660 b2_contra_78660
+scp rc5898@neuronic.cs.princeton.edu:/n/fs/dynamicbias/tracker/results/contra_78660.tar [PATH_ON_YOUR_COMPUTER]
+
+
 # Submit contradiction suite (for 78860)
-bash tools/experiments/submit_contradiction_suite_b1_b2_iter59432_sbatch.sh --mail-user ricky.chen@princeton.edu --onset 0
+bash tools/experiments/submit_contradiction_suite_b1_b2_iter59432_sbatch.sh \
+    --mail-user ricky.chen@princeton.edu \
+    --onset 0 \
+    --b1-checkpoint /n/fs/dynamicbias/tracker/work_dirs/experiments/b1_b2/b1_stage3_gpu4_short_trainonly/b1/train/iter_78660.pth \
+    --b2-checkpoint /n/fs/dynamicbias/tracker/work_dirs/experiments/b1_b2/b2_stage3_gpu4_short_trainonly/b2/train/iter_78660.pth \
+    --suite-tag "run_$(date -u +%Y%m%d_%H%M%S)"
+
 
 # submit all iter_*.pth + latest
 bash tools/experiments/submit_b2_deferred_eval_all_gpu4.sh
