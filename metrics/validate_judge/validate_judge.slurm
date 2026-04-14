@@ -2,7 +2,7 @@
 #
 #SBATCH --job-name=validate_judge_1000
 #SBATCH -N 1
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:2
 #SBATCH -c 8
 #SBATCH --mem=48G
 #SBATCH -t 4:00:00
@@ -42,7 +42,7 @@ python metrics/validate_judge/validate_judge.py \
   --num-samples 1000 \
   --seed 42 \
   --batch-size 64 \
-  --tensor-parallel-size 1 \
+  --tensor-parallel-size 2 \
   --max-model-len 8192 \
   --judge-max-tokens 512
 
