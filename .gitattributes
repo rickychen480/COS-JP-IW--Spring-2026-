@@ -9,3 +9,5 @@ data/transcripts/Llama-3.1-8B-Instruct/target_simulations_masked.json filter=lfs
 data/transcripts/Llama-3.1-8B-Instruct/control_simulations_masked.json filter=lfs diff=lfs merge=lfs -text
 data/transcripts/Llama-3.1-8B-Instruct/default_topics.json filter=lfs diff=lfs merge=lfs -text
 data/transcripts/Llama-3.1-8B-Instruct/default_topics_masked.json filter=lfs diff=lfs merge=lfs -text
+data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics_masked.json filter=lfs diff=lfs merge=lfs -text
+data/transcripts/gpt-4o-mini/default_topics_masked.json filter=lfs diff=lfs merge=lfs -text
