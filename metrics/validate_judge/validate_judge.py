@@ -5,7 +5,6 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 import orjson
-from tqdm import tqdm
 from vllm import LLM, SamplingParams
 
 
@@ -112,7 +111,6 @@ def main() -> None:
     parser.add_argument("--model", type=str, required=True, help="Judge model path or HF ID")
     parser.add_argument("--num-samples", type=int, default=1000, help="Number of random transcripts")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--batch-size", type=int, default=64, help="Batch size for vLLM generate")
     parser.add_argument("--tensor-parallel-size", type=int, default=1, help="vLLM tensor parallel size")
     parser.add_argument("--max-model-len", type=int, default=8192)
     parser.add_argument("--judge-max-tokens", type=int, default=512)
@@ -172,11 +170,8 @@ def main() -> None:
     ]
 
     logger.info("Running judge inference for %d samples...", n)
-    raw_outputs: List[str] = []
-    for i in tqdm(range(0, n, args.batch_size), desc="Judge batches"):
-        batch_prompts = prompts[i : i + args.batch_size]
-        outputs = llm.generate(batch_prompts, sampling_params)
-        raw_outputs.extend([o.outputs[0].text.strip() for o in outputs])
+    outputs = llm.generate(prompts, sampling_params)
+    raw_outputs = [o.outputs[0].text.strip() for o in outputs]
 
     records: List[Dict[str, Any]] = []
     for local_idx, (src_idx, dialogue, raw_response) in enumerate(
