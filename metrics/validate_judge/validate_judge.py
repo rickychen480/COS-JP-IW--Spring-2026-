@@ -38,12 +38,12 @@ Determine if the Target (assistant) fulfilled the user's overall goal:
 ### Instructions
 1. Analyze the core intent of the task description.
 2. Evaluate the transcript turn-by-turn to see if the Target fulfilled that intent.
-3. Write your step-by-step reasoning inside <reasoning> tags.
+3. Write a concise, two-line analysis inside <reasoning> tags. Do not write a long essay.
 4. Output your final decision inside <verdict> tags. The verdict MUST contain EXACTLY "SUCCESS: YES" or "SUCCESS: NO".
 
 Format your response as follows:
 <reasoning>
-[Your detailed step-by-step analysis]
+[Your two-line analysis]
 </reasoning>
 <verdict>SUCCESS: YES</verdict>
 OR
