@@ -2,6 +2,7 @@ import os
 import sys
 import multiprocessing as mp
 import time
+import glob
 
 # Force 'spawn' start method before any other heavy libraries load.
 # This prevents the "CUDA driver initialization failed" fork-context error.
@@ -163,6 +164,31 @@ def load_all_transcripts(file_paths):
     return df
 
 
+def resolve_masked_paths(masked_path_inputs):
+    resolved_paths = []
+    for input_path in masked_path_inputs:
+        if os.path.isdir(input_path):
+            dir_paths = sorted(glob.glob(os.path.join(input_path, "*_masked.json")))
+            if not dir_paths:
+                raise FileNotFoundError(
+                    f"No *_masked.json files found in masked directory: {input_path}"
+                )
+            resolved_paths.extend(dir_paths)
+        else:
+            if not os.path.exists(input_path):
+                raise FileNotFoundError(f"Masked transcript file not found: {input_path}")
+            resolved_paths.append(input_path)
+
+    unique_paths = []
+    seen = set()
+    for path in resolved_paths:
+        if path not in seen:
+            unique_paths.append(path)
+            seen.add(path)
+
+    return unique_paths
+
+
 def main(args):
     from sentence_transformers import SentenceTransformer
 
@@ -250,15 +276,25 @@ def main(args):
     df["target_turn_texts"] = df["transcript"].apply(extract_target_turn_texts)
 
     if args.masked_path:
-        print(f"Loading masked data from {args.masked_path}...")
-        with open(args.masked_path, "r") as f:
-            masked_data = json.load(f)
+        masked_paths = resolve_masked_paths(args.masked_path)
+        print("Loading masked data from: " + ", ".join(masked_paths))
 
-        masked_df = pd.DataFrame(masked_data)
+        masked_df = load_all_transcripts(masked_paths)
         masked_df["masked_text"] = masked_df["transcript"].apply(extract_target_text)
         masked_df["masked_turn_texts"] = masked_df["transcript"].apply(
             extract_target_turn_texts
         )
+
+        if masked_df["dialogue_id"].duplicated().any():
+            duplicate_ids = sorted(
+                masked_df.loc[masked_df["dialogue_id"].duplicated(), "dialogue_id"]
+                .astype(str)
+                .unique()
+            )
+            raise ValueError(
+                "Masked inputs contain duplicate dialogue_id values: "
+                + ", ".join(duplicate_ids)
+            )
 
         # Merge the masked text into the main dataframe
         df = pd.merge(
@@ -268,12 +304,26 @@ def main(args):
             how="left",
             suffixes=("", "_masked"),
         )
-        # Control simulations and other non-target simulations will have NaN in 'masked_text', so fill them
-        df["masked_text"] = df["masked_text"].fillna(df["target_text"])
+
+        missing_masked_rows = df["masked_text"].isna()
+        if missing_masked_rows.any():
+            missing_dialogues = (
+                df.loc[missing_masked_rows, "dialogue_id"].astype(str).tolist()
+            )
+            raise ValueError(
+                "Masked text is missing for one or more dialogues after merging masked inputs. "
+                "This would fall back to unmasked text and leak explicit identity terms. "
+                f"Missing dialogue_id values: {', '.join(missing_dialogues[:10])}"
+            )
+
         missing_turns = df["masked_turn_texts"].isna()
-        df.loc[missing_turns, "masked_turn_texts"] = df.loc[
-            missing_turns, "target_turn_texts"
-        ]
+        if missing_turns.any():
+            missing_dialogues = df.loc[missing_turns, "dialogue_id"].astype(str).tolist()
+            raise ValueError(
+                "Masked turn text is missing for one or more dialogues after merging masked inputs. "
+                "This would fall back to unmasked text and leak explicit identity terms. "
+                f"Missing dialogue_id values: {', '.join(missing_dialogues[:10])}"
+            )
     else:
         print(
             "Warning: No masked data file provided. Using unmasked text for all embeddings."
@@ -753,8 +803,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--masked_path",
         type=str,
+        nargs="+",
         default=None,
-        help="Path to the masked simulations file",
+        help="Path to a masked transcript file, a directory of *_masked.json files, or multiple masked files",
     )
     parser.add_argument(
         "--embedding_batch_size",

@@ -27,7 +27,7 @@ CHUNK_INDEX=3
 TOTAL_CHUNKS=12
 TRANSCRIPT_DIR="data/transcripts/${DATASET_NAME}"
 OUT_DIR="results/metrics/${DATASET_NAME}/steering_only"
-MASKED_PATH="${TRANSCRIPT_DIR}/target_simulations_masked.json"
+MASKED_PATH="${TRANSCRIPT_DIR}"
 
 echo "Provisioning complete."
 echo "Running steering-only one-off evaluation"

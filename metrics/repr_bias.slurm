@@ -27,6 +27,8 @@ MODEL_ID="/n/fs/dynamicbias/models/Llama-3.1-70B-Instruct-AWQ-INT4"
 echo "Provisioning complete."
 echo "Running representational metrics (single chunk)."
 
+TRANSCRIPT_DIR="data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4"
+
 mkdir -p results/metrics/
 mkdir -p logs
 
@@ -34,13 +36,13 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
 export TOKENIZERS_PARALLELISM=false
 
 CUDA_VISIBLE_DEVICES=0 python metrics/main.py \
-  --dir data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/ \
+  --dir "${TRANSCRIPT_DIR}/" \
   --out results/metrics/test-repr-bias.csv \
   --judge_model "${MODEL_ID}" \
   --tensor_parallel_size 1 \
   --chunk_index 0 \
   --total_chunks 1 \
-  --masked_path data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/target_simulations_masked.json
+  --masked_path "${TRANSCRIPT_DIR}"
 
 wait
 echo "Representational run complete!"

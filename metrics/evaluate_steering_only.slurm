@@ -28,7 +28,7 @@ DATASET_NAME="Llama-3.1-70B-Instruct-AWQ-INT4"
 TOTAL_CHUNKS=12
 TRANSCRIPT_DIR="data/transcripts/${DATASET_NAME}"
 OUT_DIR="results/metrics/${DATASET_NAME}/steering_only"
-MASKED_PATH="${TRANSCRIPT_DIR}/target_simulations_masked.json"
+MASKED_PATH="${TRANSCRIPT_DIR}"
 
 echo "Provisioning complete."
 echo "Running steering-only chunk: Array Task ID = $SLURM_ARRAY_TASK_ID"
