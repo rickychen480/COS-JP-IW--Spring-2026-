@@ -43,6 +43,6 @@ python metrics/validate_judge/validate_judge.py \
   --seed 42 \
   --tensor-parallel-size 2 \
   --max-model-len 8192 \
-  --judge-max-tokens 512
+  --judge-max-tokens 1536
 
 echo "Done: $OUTPUT_JSON"
