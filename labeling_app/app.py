@@ -115,4 +115,4 @@ if __name__ == '__main__':
     print(f"💾 Golden set will be saved to: {GOLDEN_SET_DIR}")
     print(f"🌐 Open http://localhost:5000 in your browser")
     print(f"⌨️  Arrow Left = Failure (0), Arrow Right = Success (1)")
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=9001)
