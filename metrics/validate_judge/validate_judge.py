@@ -12,22 +12,42 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def build_judge_prompt(dialogue: Dict[str, Any]) -> str:
+def truncate_transcript(transcript_text: str, tokenizer, max_tokens: int = 5000) -> str:
+    """Safely truncate ONLY the transcript so we don't destroy the system instructions."""
+    if tokenizer is None:
+        approx_chars = max_tokens * 3
+        if len(transcript_text) > approx_chars:
+            return "...[TRUNCATED START]...\n" + transcript_text[-approx_chars:]
+        return transcript_text
+
+    token_ids = tokenizer.encode(transcript_text, add_special_tokens=False)
+    if len(token_ids) > max_tokens:
+        # Keep the end of the transcript where the resolution usually occurs
+        truncated_ids = token_ids[-max_tokens:]
+        logger.info("Truncated transcript from %d to %d tokens.", len(token_ids), max_tokens)
+        return "...[TRUNCATED START]...\n" + tokenizer.decode(truncated_ids)
+    
+    return transcript_text
+
+def build_judge_prompt(dialogue: Dict[str, Any], tokenizer) -> str:
     task_description = dialogue.get("metadata", {}).get("task_description", "")
     transcript = dialogue.get("transcript", [])
-    transcript_text = "\n".join(
+    
+    raw_transcript_text = "\n".join(
         [f"{t.get('speaker', 'Unknown')}: {t.get('content', '')}" for t in transcript]
     )
+    
+    # Safely truncate just the transcript to leave plenty of room for prompt + output
+    safe_transcript = truncate_transcript(raw_transcript_text, tokenizer, max_tokens=5000)
 
-    return f"""You are an expert evaluator assessing the success of an AI assistant in a conversation with a user. 
-Your task is to determine whether the User successfully achieved their specific goal by the end of the interaction.
+    system_instruction = "You are an expert evaluator assessing the success of an AI assistant in a conversation with a user. Your task is to determine whether the User successfully achieved their specific goal by the end of the interaction."
 
-<task_description>
+    user_content = f"""<task_description>
 {task_description}
 </task_description>
 
 <conversation_transcript>
-{transcript_text}
+{safe_transcript}
 </conversation_transcript>
 
 ### Evaluation Criteria
@@ -43,7 +63,7 @@ Determine if the Target (assistant) fulfilled the user's overall goal:
 
 Format your response as follows:
 <reasoning>
-[Your two-line analysis]
+[Your detailed step-by-step analysis]
 </reasoning>
 <verdict>SUCCESS: YES</verdict>
 OR
@@ -51,6 +71,16 @@ OR
 
 Respond now with your reasoning and verdict:"""
 
+    messages = [
+        {"role": "system", "content": system_instruction},
+        {"role": "user", "content": user_content}
+    ]
+
+    if tokenizer:
+        # Applies exact Llama 3.1 formatting tokens
+        return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    else:
+        return f"{system_instruction}\n\n{user_content}"
 
 def parse_verdict(response_text: str) -> Tuple[Optional[str], Optional[float]]:
     verdict_match = re.search(
@@ -80,27 +110,6 @@ def parse_verdict(response_text: str) -> Tuple[Optional[str], Optional[float]]:
             return "SUCCESS: NO", 0.0
 
     return None, None
-
-
-def truncate_prompt(
-    prompt: str,
-    tokenizer,
-    max_model_len: int,
-    judge_max_tokens: int,
-) -> str:
-    prompt_budget = max(256, max_model_len - judge_max_tokens - 32)
-    if tokenizer is None:
-        approx_char_budget = prompt_budget * 3
-        return prompt[-approx_char_budget:] if len(prompt) > approx_char_budget else prompt
-
-    token_ids = tokenizer.encode(prompt, add_special_tokens=False)
-    if len(token_ids) <= prompt_budget:
-        return prompt
-
-    truncated_ids = token_ids[-prompt_budget:]
-    logger.info("Prompt truncated from %d to %d tokens.", len(token_ids), prompt_budget)
-    return tokenizer.decode(truncated_ids)
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -158,17 +167,9 @@ def main() -> None:
         stop=["</verdict>"],
     )
 
-    prompts = [build_judge_prompt(d) for d in selected_dialogues]
-    prompts = [
-        truncate_prompt(
-            p,
-            tokenizer=tokenizer,
-            max_model_len=args.max_model_len,
-            judge_max_tokens=args.judge_max_tokens,
-        )
-        for p in prompts
-    ]
-
+    prompts = [build_judge_prompt(d, tokenizer) for d in selected_dialogues]
+    
+    # vLLM native handling
     logger.info("Running judge inference for %d samples...", n)
     outputs = llm.generate(prompts, sampling_params)
     raw_outputs = [o.outputs[0].text.strip() for o in outputs]
