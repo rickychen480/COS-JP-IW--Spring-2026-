@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcript Labeling - Golden Set</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: #10b981;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin-top: 15px;
+        }
+
+        .content {
+            padding: 40px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .done-screen {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .done-screen h2 {
+            font-size: 32px;
+            color: #10b981;
+            margin-bottom: 20px;
+        }
+
+        .done-screen p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .task-section {
+            margin-bottom: 25px;
+        }
+
+        .task-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .task-description {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+
+        .persona-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .persona-item {
+            background: #f0f4ff;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .persona-item-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #667eea;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .persona-item-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .transcript-section {
+            flex: 1;
+            margin-bottom: 25px;
+        }
+
+        .transcript {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .transcript-turn {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .transcript-turn:last-child {
+            margin-bottom: 0;
+        }
+
+        .speaker {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 70px;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .speaker.user {
+            color: #764ba2;
+        }
+
+        .speaker.target {
+            color: #667eea;
+        }
+
+        .content-text {
+            color: #333;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-failure {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-failure:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-save {
+            background: #3b82f6;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .btn-save:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+
+        .progress-display {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .hint-box {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 20px;
+            color: #92400e;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Transcript Labeling</h1>
+            <div class="progress-bar">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+            <div class="stats">
+                <div>Labeled: <span id="labeled">0</span></div>
+                <div>Total: <span id="total">0</span></div>
+            </div>
+        </div>
+
+        <div class="content" id="mainContent">
+            <div class="loading">Loading first record...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentRecord = null;
+
+        async function loadRecord() {
+            try {
+                const response = await fetch('/api/get-record');
+                const data = await response.json();
+
+                if (data.done) {
+                    showDoneScreen(data);
+                    return;
+                }
+
+                currentRecord = data;
+                renderRecord(data);
+                updateProgress(data);
+            } catch (error) {
+                console.error('Error loading record:', error);
+            }
+        }
+
+        function renderRecord(record) {
+            const persona = record.persona;
+            
+            let transcriptHTML = '';
+            record.transcript.forEach(turn => {
+                const speakerClass = turn.speaker.toLowerCase();
+                transcriptHTML += `
+                    <div class="transcript-turn">
+                        <div class="speaker ${speakerClass}">${turn.speaker}</div>
+                        <div class="content-text">${turn.content}</div>
+                    </div>
+                `;
+            });
+
+            const html = `
+                <div class="progress-display">
+                    Record <strong>${record.index + 1}</strong> of <strong>${record.total}</strong>
+                </div>
+
+                <div class="hint-box">
+                    ⌨️ Use <strong>← Left Arrow</strong> for Failure | <strong>Right Arrow →</strong> for Success
+                </div>
+
+                <div class="task-section">
+                    <div class="task-label">Task</div>
+                    <div class="task-description">${record.task_description}</div>
+                </div>
+
+                <div>
+                    <div class="task-label">Persona</div>
+                    <div class="persona-info">
+                        <div class="persona-item">
+                            <div class="persona-item-label">Name</div>
+                            <div class="persona-item-value">${persona.name}</div>
+                        </div>
+                        <div class="persona-item">
+                            <div class="persona-item-label">Occupation</div>
+                            <div class="persona-item-value">${persona.occupation}</div>
+                        </div>
+                        <div class="persona-item">
+                            <div class="persona-item-label">Gender</div>
+                            <div class="persona-item-value">${persona.gender}</div>
+                        </div>
+                        <div class="persona-item">
+                            <div class="persona-item-label">Demographic</div>
+                            <div class="persona-item-value">${persona.demographic}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transcript-section">
+                    <div class="task-label">Transcript</div>
+                    <div class="transcript">
+                        ${transcriptHTML}
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-failure" onclick="labelRecord(0)">❌ Failure (←)</button>
+                    <button class="btn btn-success" onclick="labelRecord(1)">✅ Success (→)</button>
+                </div>
+                <div class="keyboard-hint">Press arrow keys to label | Ctrl+S to save</div>
+            `;
+
+            document.getElementById('mainContent').innerHTML = html;
+        }
+
+        function showDoneScreen(data) {
+            const html = `
+                <div class="done-screen">
+                    <h2>✅ All records labeled!</h2>
+                    <p>You've labeled all ${data.total_records} transcripts</p>
+                    <button class="btn btn-save" onclick="saveGoldenSet()">💾 Save to Golden Set</button>
+                </div>
+            `;
+            document.getElementById('mainContent').innerHTML = html;
+        }
+
+        async function labelRecord(label) {
+            try {
+                const response = await fetch('/api/label', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ label: label })
+                });
+
+                if (response.ok) {
+                    loadRecord();
+                }
+            } catch (error) {
+                console.error('Error labeling record:', error);
+            }
+        }
+
+        async function saveGoldenSet() {
+            try {
+                const response = await fetch('/api/save-golden-set', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                alert(`✅ Golden set saved!\n\nFile: ${data.file}\nLabels: ${data.count}`);
+            } catch (error) {
+                console.error('Error saving golden set:', error);
+                alert('Error saving golden set');
+            }
+        }
+
+        function updateProgress(record) {
+            const progress = (record.total_labeled / record.total) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('labeled').textContent = record.total_labeled;
+            document.getElementById('total').textContent = record.total;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                labelRecord(0);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                labelRecord(1);
+            } else if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveGoldenSet();
+            }
+        });
+
+        // Load first record on page load
+        loadRecord();
+    </script>
+</body>
+</html>

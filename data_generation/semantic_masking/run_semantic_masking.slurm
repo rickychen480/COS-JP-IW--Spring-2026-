@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:1                  ## Request 1 GPU
 #SBATCH -c 4                          ## Request 4 CPUs
 #SBATCH --mem=32G                     ## Request 32GB RAM
-#SBATCH -t 04:00:00                   ## Request 4 hours of walltime
+#SBATCH -t 10:00:00                   ## Request 4 hours of walltime
 #SBATCH --output=logs/masking_%j.out
 #SBATCH --error=logs/masking_%j.err
 #SBATCH --mail-type=end
@@ -26,8 +26,8 @@ echo "Provisioning complete. Starting vLLM Semantic Masking..."
 export TORCHINDUCTOR_CACHE_DIR=/scratch/rc5898/torch_cache_masking
 export TRITON_CACHE_DIR=/scratch/rc5898/triton_cache_masking
 CUDA_VISIBLE_DEVICES=0,1 python data_generation/semantic_masking/semantic_masking.py \
-  --input data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics.json \
-  --output data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/default_topics_masked.json \
+  --input data/transcripts/gpt-4o-mini/control_simulations.json \
+  --output data/transcripts/gpt-4o-mini/control_simulations_masked.json \
   --model $MODEL_ID
 
 echo "Semantic Masking complete!"
