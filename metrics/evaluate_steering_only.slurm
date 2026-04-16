@@ -47,10 +47,10 @@ CUDA_VISIBLE_DEVICES=0 python metrics/main.py \
   --out "${OUT_DIR}/steering_only_chunk_${SLURM_ARRAY_TASK_ID}.csv" \
   --chunk_index "$SLURM_ARRAY_TASK_ID" \
   --total_chunks "$TOTAL_CHUNKS" \
-  --masked_path "$MASKED_PATH" \
   --embedding_device cuda \
   --embedding_batch_size 256 \
   --steering_only
+  # --masked_path "$MASKED_PATH" \
 
 wait
 echo "Chunk $SLURM_ARRAY_TASK_ID complete!"

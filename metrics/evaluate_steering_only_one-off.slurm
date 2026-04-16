@@ -45,10 +45,10 @@ CUDA_VISIBLE_DEVICES=0 python metrics/main.py \
   --out "${OUT_DIR}/steering_only_chunk_${CHUNK_INDEX}.csv" \
   --chunk_index "$CHUNK_INDEX" \
   --total_chunks "$TOTAL_CHUNKS" \
-  --masked_path "$MASKED_PATH" \
   --embedding_device cuda \
   --embedding_batch_size 256 \
   --steering_only
+  # --masked_path "$MASKED_PATH" \
 
 wait
 echo "Steering-only one-off complete!"

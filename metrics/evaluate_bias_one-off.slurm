@@ -53,9 +53,9 @@ CUDA_VISIBLE_DEVICES=0,1 python metrics/main.py \
   --tensor_parallel_size 2 \
   --chunk_index $CHUNK_INDEX \
   --total_chunks 12 \
-  --masked_path "${TRANSCRIPT_DIR}" \
   --embedding_device cuda \
   --embedding_batch_size 256
+  # --masked_path "${TRANSCRIPT_DIR}" \
 
 wait
 echo "Chunk $CHUNK_INDEX complete!"

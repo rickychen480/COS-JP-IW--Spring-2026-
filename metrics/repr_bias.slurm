@@ -41,8 +41,8 @@ CUDA_VISIBLE_DEVICES=0 python metrics/main.py \
   --judge_model "${MODEL_ID}" \
   --tensor_parallel_size 1 \
   --chunk_index 0 \
-  --total_chunks 1 \
-  --masked_path "${TRANSCRIPT_DIR}"
+  --total_chunks 1
+  # --masked_path "${TRANSCRIPT_DIR}"
 
 wait
 echo "Representational run complete!"

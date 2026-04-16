@@ -276,6 +276,11 @@ def main(args):
         control_path = os.path.join(args.dir, "control_simulations.json")
         default_topic_path = os.path.join(args.dir, "default_topics.json")
         
+        num_before = len(df)
+        df = df.drop_duplicates(subset=["dialogue_id"]).reset_index(drop=True)
+        if len(df) < num_before:
+            print(f"Notice: Dropped {num_before - len(df)} duplicate dialogue_IDs from unmasked files.")
+
         df = load_all_transcripts([target_path, control_path, default_topic_path])
         df["target_text"] = df["transcript"].apply(extract_target_text)
         df["target_turn_texts"] = df["transcript"].apply(extract_target_turn_texts)
