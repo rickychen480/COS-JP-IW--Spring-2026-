@@ -16,18 +16,115 @@ app = Flask(__name__, template_folder=os.path.join(BASE_DIR, 'templates'))
 
 # Configuration
 INPUT_FILE = os.path.join(BASE_DIR, "../data/transcripts/Llama-3.1-70B-Instruct-AWQ-INT4/judge_validation_sample_1000.json")
-GOLDEN_SET_DIR = os.path.join(BASE_DIR, "../results/golden_set")
-LABELS_FILE = os.path.join(GOLDEN_SET_DIR, f"labels_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+RESULTS_DIR = os.path.join(BASE_DIR, "../results")
+LABELS_FILE = os.path.join(RESULTS_DIR, "labeled-transcripts.json")
 
-os.makedirs(GOLDEN_SET_DIR, exist_ok=True)
+os.makedirs(RESULTS_DIR, exist_ok=True)
 
 # Load data
 with open(INPUT_FILE) as f:
     data = json.load(f)
     records = data['records']
 
+SOURCE_TO_SAMPLE_INDEX = {
+    str(record.get('source_index')): int(record.get('sample_index'))
+    for record in records
+    if record.get('source_index') is not None and record.get('sample_index') is not None
+}
+
 labeled_data = {}
 current_index = 0
+
+
+def get_record_key(record):
+    """Use sample_index as the canonical transcript identifier for progress."""
+    return str(record.get('sample_index'))
+
+
+def extract_persona(meta_data):
+    """Return only persona data from either full metadata or persona-shaped input."""
+    if not isinstance(meta_data, dict):
+        return None
+    if 'persona' in meta_data and isinstance(meta_data.get('persona'), dict):
+        return meta_data.get('persona')
+    return meta_data
+
+
+def persist_labels():
+    """Persist labels to disk with the golden-set schema."""
+    transcripts = sorted(
+        labeled_data.values(),
+        key=lambda item: item['sample_index']
+    )
+
+    with open(LABELS_FILE, 'w') as f:
+        json.dump({'transcripts': transcripts}, f, indent=2)
+
+
+def advance_to_next_unlabeled():
+    """Move current_index to the next unlabeled record."""
+    global current_index
+
+    while current_index < len(records):
+        record_id = get_record_key(records[current_index])
+        if record_id not in labeled_data:
+            break
+        current_index += 1
+
+
+def load_existing_labels():
+    """Load saved labels from disk and restore progress."""
+    global labeled_data, current_index
+
+    if not os.path.exists(LABELS_FILE):
+        return
+
+    try:
+        with open(LABELS_FILE) as f:
+            saved = json.load(f)
+
+        # Backward compatibility: accept older {'labels': {...}} files and migrate in-memory.
+        if isinstance(saved, dict) and 'transcripts' in saved:
+            saved_transcripts = saved.get('transcripts', [])
+        elif isinstance(saved, dict) and 'labels' in saved:
+            saved_transcripts = []
+            for key, value in saved.get('labels', {}).items():
+                sample_index = value.get('sample_index', key)
+                saved_transcripts.append({
+                    'sample_index': int(sample_index),
+                    'judge_prediction_score': value.get('judge_prediction_score'),
+                    'human_label': value.get('human_label', value.get('label')),
+                    'task_description': value.get('task_description'),
+                    'meta_data': extract_persona(value.get('meta_data', value.get('metadata')))
+                })
+        else:
+            saved_transcripts = []
+
+        normalized_labels = {}
+        for item in saved_transcripts:
+            sample_index = item.get('sample_index')
+            if sample_index is None and item.get('source_index') is not None:
+                sample_index = SOURCE_TO_SAMPLE_INDEX.get(str(item.get('source_index')))
+            if sample_index is None:
+                continue
+            normalized_labels[str(sample_index)] = {
+                'sample_index': int(sample_index),
+                'judge_prediction_score': item.get('judge_prediction_score'),
+                'human_label': item.get('human_label'),
+                'task_description': item.get('task_description'),
+                'meta_data': extract_persona(item.get('meta_data', item.get('metadata')))
+            }
+
+        labeled_data = normalized_labels
+        current_index = 0
+        advance_to_next_unlabeled()
+    except (json.JSONDecodeError, OSError, TypeError):
+        # Start fresh if the saved file is malformed or unreadable.
+        labeled_data = {}
+        current_index = 0
+
+
+load_existing_labels()
 
 
 @app.route('/')
@@ -39,6 +136,8 @@ def index():
 def get_record():
     """Get current record without labels"""
     global current_index
+
+    advance_to_next_unlabeled()
     
     if current_index >= len(records):
         return jsonify({
@@ -68,33 +167,30 @@ def label():
     label_value = data.get('label')  # 0 = failure (left), 1 = success (right)
     
     if current_index < len(records):
-        record_id = records[current_index]['sample_index']
+        current_record = records[current_index]
+        record_id = get_record_key(current_record)
         labeled_data[record_id] = {
-            'label': label_value,
-            'task_description': records[current_index]['task_description'],
-            'persona': records[current_index]['metadata']['persona'],
-            'timestamp': datetime.now().isoformat()
+            'sample_index': current_record['sample_index'],
+            'judge_prediction_score': current_record.get('judge_prediction_score'),
+            'human_label': label_value,
+            'task_description': current_record.get('task_description'),
+            'meta_data': extract_persona(current_record.get('metadata'))
         }
         current_index += 1
+        advance_to_next_unlabeled()
+        persist_labels()
     
     return jsonify({'success': True, 'total_labeled': len(labeled_data)})
 
 
 @app.route('/api/save-golden-set', methods=['POST'])
 def save_golden_set():
-    """Save current labels to golden set file"""
-    output_file = LABELS_FILE
-    with open(output_file, 'w') as f:
-        json.dump({
-            'total_labeled': len(labeled_data),
-            'total_records': len(records),
-            'timestamp': datetime.now().isoformat(),
-            'labels': labeled_data
-        }, f, indent=2)
+    """Force-save current labels to the fixed results file."""
+    persist_labels()
     
     return jsonify({
         'success': True,
-        'file': output_file,
+        'file': LABELS_FILE,
         'count': len(labeled_data)
     })
 
@@ -112,7 +208,8 @@ def stats():
 if __name__ == '__main__':
     print(f"📝 Labeling App Started!")
     print(f"📊 Total records to label: {len(records)}")
-    print(f"💾 Golden set will be saved to: {GOLDEN_SET_DIR}")
+    print(f"💾 Auto-save file: {LABELS_FILE}")
+    print(f"♻️  Restored labels: {len(labeled_data)}")
     print(f"🌐 Open http://localhost:5000 in your browser")
     print(f"⌨️  Arrow Left = Failure (0), Arrow Right = Success (1)")
     app.run(debug=True, port=9001)

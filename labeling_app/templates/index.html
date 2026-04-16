@@ -394,7 +394,7 @@
                     <button class="btn btn-failure" onclick="labelRecord(0)">❌ Failure (←)</button>
                     <button class="btn btn-success" onclick="labelRecord(1)">✅ Success (→)</button>
                 </div>
-                <div class="keyboard-hint">Press arrow keys to label | Ctrl+S to save</div>
+                <div class="keyboard-hint">Press arrow keys to label | Auto-saves to results/labeled-transcripts.json</div>
             `;
 
             document.getElementById('mainContent').innerHTML = html;
@@ -405,7 +405,7 @@
                 <div class="done-screen">
                     <h2>✅ All records labeled!</h2>
                     <p>You've labeled all ${data.total_records} transcripts</p>
-                    <button class="btn btn-save" onclick="saveGoldenSet()">💾 Save to Golden Set</button>
+                    <button class="btn btn-save" onclick="saveGoldenSet()">💾 Save Progress</button>
                 </div>
             `;
             document.getElementById('mainContent').innerHTML = html;
@@ -435,10 +435,10 @@
                     method: 'POST'
                 });
                 const data = await response.json();
-                alert(`✅ Golden set saved!\n\nFile: ${data.file}\nLabels: ${data.count}`);
+                alert(`✅ Progress saved!\n\nFile: ${data.file}\nLabels: ${data.count}`);
             } catch (error) {
-                console.error('Error saving golden set:', error);
-                alert('Error saving golden set');
+                console.error('Error saving progress:', error);
+                alert('Error saving progress');
             }
         }
 
