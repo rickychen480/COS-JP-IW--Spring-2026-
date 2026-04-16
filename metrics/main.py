@@ -286,6 +286,8 @@ def main(args):
     rep_eval = RepresentationalEvaluator()
     ie = IntersectionalEvaluator()
 
+    df = ie.add_intersectional_column(df)
+
     if args.embedding_device == "auto":
         embedder_device = (
             "cuda" if (torch is not None and torch.cuda.is_available()) else "cpu"
