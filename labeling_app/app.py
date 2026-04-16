@@ -61,6 +61,36 @@ def persist_labels():
         json.dump({'transcripts': transcripts}, f, indent=2)
 
 
+def get_judge_accuracy_stats():
+    """Compute agreement between human labels and judge_prediction_score."""
+    compared = 0
+    matched = 0
+
+    for item in labeled_data.values():
+        human_label = item.get('human_label')
+        judge_score = item.get('judge_prediction_score')
+
+        if human_label is None or judge_score is None:
+            continue
+
+        try:
+            judge_label = int(float(judge_score))
+            human_label_int = int(human_label)
+        except (TypeError, ValueError):
+            continue
+
+        compared += 1
+        if judge_label == human_label_int:
+            matched += 1
+
+    accuracy = (matched / compared) if compared else None
+    return {
+        'judge_matches': matched,
+        'judge_compared': compared,
+        'judge_accuracy': accuracy
+    }
+
+
 def advance_to_next_unlabeled():
     """Move current_index to the next unlabeled record."""
     global current_index
@@ -138,12 +168,14 @@ def get_record():
     global current_index
 
     advance_to_next_unlabeled()
+    judge_stats = get_judge_accuracy_stats()
     
     if current_index >= len(records):
         return jsonify({
             'done': True,
             'total_labeled': len(labeled_data),
-            'total_records': len(records)
+            'total_records': len(records),
+            **judge_stats
         })
     
     record = records[current_index]
@@ -154,7 +186,8 @@ def get_record():
         'task_description': record['task_description'],
         'persona': record['metadata']['persona'],
         'transcript': record['transcript'],
-        'total_labeled': len(labeled_data)
+        'total_labeled': len(labeled_data),
+        **judge_stats
     })
 
 
@@ -180,7 +213,11 @@ def label():
         advance_to_next_unlabeled()
         persist_labels()
     
-    return jsonify({'success': True, 'total_labeled': len(labeled_data)})
+    return jsonify({
+        'success': True,
+        'total_labeled': len(labeled_data),
+        **get_judge_accuracy_stats()
+    })
 
 
 @app.route('/api/save-golden-set', methods=['POST'])
@@ -198,10 +235,12 @@ def save_golden_set():
 @app.route('/api/stats')
 def stats():
     """Get labeling statistics"""
+    judge_stats = get_judge_accuracy_stats()
     return jsonify({
         'total_labeled': len(labeled_data),
         'total_records': len(records),
-        'progress': f"{len(labeled_data)}/{len(records)}"
+        'progress': f"{len(labeled_data)}/{len(records)}",
+        **judge_stats
     })
 
 

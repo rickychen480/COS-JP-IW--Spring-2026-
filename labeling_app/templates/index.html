@@ -251,6 +251,13 @@
             margin-top: 15px;
         }
 
+        .judge-accuracy {
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
         .progress-display {
             text-align: center;
             color: #666;
@@ -310,6 +317,7 @@
         <div class="content" id="mainContent">
             <div class="loading">Loading first record...</div>
         </div>
+        <div class="judge-accuracy" id="judgeAccuracy">Judge agreement: --</div>
     </div>
 
     <script>
@@ -409,6 +417,7 @@
                 </div>
             `;
             document.getElementById('mainContent').innerHTML = html;
+            updateJudgeAccuracy(data);
         }
 
         async function labelRecord(label) {
@@ -447,6 +456,21 @@
             document.getElementById('progressBar').style.width = progress + '%';
             document.getElementById('labeled').textContent = record.total_labeled;
             document.getElementById('total').textContent = record.total;
+            updateJudgeAccuracy(record);
+        }
+
+        function updateJudgeAccuracy(data) {
+            const accuracyEl = document.getElementById('judgeAccuracy');
+            const compared = data?.judge_compared ?? 0;
+            const matches = data?.judge_matches ?? 0;
+
+            if (!compared) {
+                accuracyEl.textContent = 'Judge agreement: -- (0 compared)';
+                return;
+            }
+
+            const accuracyPct = ((data.judge_accuracy ?? 0) * 100).toFixed(1);
+            accuracyEl.textContent = `Judge agreement: ${accuracyPct}% (${matches}/${compared})`;
         }
 
         // Keyboard shortcuts

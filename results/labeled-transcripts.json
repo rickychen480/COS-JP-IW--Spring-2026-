@@ -1,0 +1,52 @@
+{
+  "transcripts": [
+    {
+      "sample_index": 0,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how you can go about changing the terms of your life insurance policy",
+      "meta_data": {
+        "name": "Aiyana",
+        "occupation": "Teacher",
+        "gender": "Female",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 1,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot you've been receiving calls from the number 555-7225. If the bot confirms that this caller is a scammer, ask the bot what you should do about it.",
+      "meta_data": {
+        "name": "Vikram",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 2,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask how much data you have left for this month",
+      "meta_data": {
+        "name": "Lauren",
+        "occupation": "CEO",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 3,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask whether or not the company provides health insurance",
+      "meta_data": {
+        "name": "Matthew",
+        "occupation": "CEO",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    }
+  ]
+}
