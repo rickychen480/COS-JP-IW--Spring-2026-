@@ -2,7 +2,6 @@ import os
 import sys
 import multiprocessing as mp
 import time
-import glob
 
 # Force 'spawn' start method before any other heavy libraries load.
 # This prevents the "CUDA driver initialization failed" fork-context error.
@@ -164,31 +163,6 @@ def load_all_transcripts(file_paths):
     return df
 
 
-def resolve_masked_paths(masked_path_inputs):
-    resolved_paths = []
-    for input_path in masked_path_inputs:
-        if os.path.isdir(input_path):
-            dir_paths = sorted(glob.glob(os.path.join(input_path, "*_masked.json")))
-            if not dir_paths:
-                raise FileNotFoundError(
-                    f"No *_masked.json files found in masked directory: {input_path}"
-                )
-            resolved_paths.extend(dir_paths)
-        else:
-            if not os.path.exists(input_path):
-                raise FileNotFoundError(f"Masked transcript file not found: {input_path}")
-            resolved_paths.append(input_path)
-
-    unique_paths = []
-    seen = set()
-    for path in resolved_paths:
-        if path not in seen:
-            unique_paths.append(path)
-            seen.add(path)
-
-    return unique_paths
-
-
 def main(args):
     from sentence_transformers import SentenceTransformer
 
@@ -241,58 +215,71 @@ def main(args):
         raise last_error
 
     print("Loading data...")
+    target_path = os.path.join(args.dir, "target_simulations.json")
+    control_path = os.path.join(args.dir, "control_simulations.json")
+    default_topic_path = os.path.join(args.dir, "default_topics.json")
 
-    def extract_target_text(transcript):
-        return " ".join([turn["content"] for turn in transcript if turn["speaker"] == "Target"])
-
-    def extract_target_turn_texts(transcript):
-        return [turn["content"] for turn in transcript if turn["speaker"] == "Target"]
-
-    if args.masked_path:
-        masked_paths = resolve_masked_paths(args.masked_path)
-        print("Loading STRICTLY masked data from: " + ", ".join(masked_paths))
-        
-        # 1. Load ONLY the masked JSONs as the primary dataframe
-        df = load_all_transcripts(masked_paths)
-
-        # 2. Fix the ValueError by dropping any duplicate dialogue_ids 
-        # (It is safe to drop duplicates because the masked text for the same ID is identical)
-        num_before = len(df)
-        df = df.drop_duplicates(subset=["dialogue_id"]).reset_index(drop=True)
-        if len(df) < num_before:
-            print(f"Notice: Dropped {num_before - len(df)} duplicate dialogue_IDs from masked files.")
-
-        # 3. Extract the text directly from the masked transcripts
-        df["masked_text"] = df["transcript"].apply(extract_target_text)
-        df["masked_turn_texts"] = df["transcript"].apply(extract_target_turn_texts)
-        
-        # Set standard columns to masked text to ensure no downstream functions fail
-        df["target_text"] = df["masked_text"]
-        df["target_turn_texts"] = df["masked_turn_texts"]
-        
-    else:
-        print("Warning: No masked data file provided. Using unmasked text for all embeddings.")
-        target_path = os.path.join(args.dir, "target_simulations.json")
-        control_path = os.path.join(args.dir, "control_simulations.json")
-        default_topic_path = os.path.join(args.dir, "default_topics.json")
-        
-        df = load_all_transcripts([target_path, control_path, default_topic_path])
-
-        num_before = len(df)
-        df = df.drop_duplicates(subset=["dialogue_id"]).reset_index(drop=True)
-        if len(df) < num_before:
-            print(f"Notice: Dropped {num_before - len(df)} duplicate dialogue_IDs from unmasked files.")
-
-        df["target_text"] = df["transcript"].apply(extract_target_text)
-        df["target_turn_texts"] = df["transcript"].apply(extract_target_turn_texts)
-        df["masked_text"] = df["target_text"]
-        df["masked_turn_texts"] = df["target_turn_texts"]
+    df = load_all_transcripts([target_path, control_path, default_topic_path])
 
     print("Transcripts loaded. Initializing evaluators")
     rep_eval = RepresentationalEvaluator()
     ie = IntersectionalEvaluator()
 
-    df = ie.add_intersectional_column(df)
+    print("Creating intersectional IDs")
+    # Create intersectional IDs
+    df["intersectional_id"] = df.apply(
+        lambda row: ie.create_intersectional_tuple(
+            row.get("demographic", "Unmarked"),
+            row.get("gender", "Unmarked"),
+            row.get("occupation", "Unmarked"),
+        ),
+        axis=1,
+    )
+
+    print("Generating embeddings from masked data...")
+
+    def extract_target_text(transcript):
+        return " ".join(
+            [turn["content"] for turn in transcript if turn["speaker"] == "Target"]
+        )
+
+    def extract_target_turn_texts(transcript):
+        return [turn["content"] for turn in transcript if turn["speaker"] == "Target"]
+
+    df["target_text"] = df["transcript"].apply(extract_target_text)
+    df["target_turn_texts"] = df["transcript"].apply(extract_target_turn_texts)
+
+    if args.masked_path:
+        print(f"Loading masked data from {args.masked_path}...")
+        with open(args.masked_path, "r") as f:
+            masked_data = json.load(f)
+
+        masked_df = pd.DataFrame(masked_data)
+        masked_df["masked_text"] = masked_df["transcript"].apply(extract_target_text)
+        masked_df["masked_turn_texts"] = masked_df["transcript"].apply(
+            extract_target_turn_texts
+        )
+
+        # Merge the masked text into the main dataframe
+        df = pd.merge(
+            df,
+            masked_df[["dialogue_id", "masked_text", "masked_turn_texts"]],
+            on="dialogue_id",
+            how="left",
+            suffixes=("", "_masked"),
+        )
+        # Control simulations and other non-target simulations will have NaN in 'masked_text', so fill them
+        df["masked_text"] = df["masked_text"].fillna(df["target_text"])
+        missing_turns = df["masked_turn_texts"].isna()
+        df.loc[missing_turns, "masked_turn_texts"] = df.loc[
+            missing_turns, "target_turn_texts"
+        ]
+    else:
+        print(
+            "Warning: No masked data file provided. Using unmasked text for all embeddings."
+        )
+        df["masked_text"] = df["target_text"]
+        df["masked_turn_texts"] = df["target_turn_texts"]
 
     if args.embedding_device == "auto":
         embedder_device = (
@@ -766,9 +753,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--masked_path",
         type=str,
-        nargs="+",
         default=None,
-        help="Path to a masked transcript file, a directory of *_masked.json files, or multiple masked files",
+        help="Path to the masked simulations file",
     )
     parser.add_argument(
         "--embedding_batch_size",

@@ -54,8 +54,8 @@ CUDA_VISIBLE_DEVICES=0,1 python metrics/main.py \
   --chunk_index $CHUNK_INDEX \
   --total_chunks 12 \
   --embedding_device cuda \
-  --embedding_batch_size 256
-  # --masked_path "${TRANSCRIPT_DIR}" \
+  --embedding_batch_size 256 \
+  --masked_path "${TRANSCRIPT_DIR}/target_simulations_masked.json"
 
 wait
 echo "Chunk $CHUNK_INDEX complete!"

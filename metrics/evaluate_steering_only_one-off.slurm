@@ -27,7 +27,6 @@ CHUNK_INDEX=3
 TOTAL_CHUNKS=12
 TRANSCRIPT_DIR="data/transcripts/${DATASET_NAME}"
 OUT_DIR="results/metrics/${DATASET_NAME}/steering_only"
-MASKED_PATH="${TRANSCRIPT_DIR}"
 
 echo "Provisioning complete."
 echo "Running steering-only one-off evaluation"
@@ -47,8 +46,8 @@ CUDA_VISIBLE_DEVICES=0 python metrics/main.py \
   --total_chunks "$TOTAL_CHUNKS" \
   --embedding_device cuda \
   --embedding_batch_size 256 \
-  --steering_only
-  # --masked_path "$MASKED_PATH" \
+  --steering_only \
+  --masked_path "${TRANSCRIPT_DIR}/target_simulations_masked.json"
 
 wait
 echo "Steering-only one-off complete!"

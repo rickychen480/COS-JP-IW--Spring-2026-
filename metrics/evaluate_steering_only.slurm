@@ -49,8 +49,8 @@ CUDA_VISIBLE_DEVICES=0 python metrics/main.py \
   --total_chunks "$TOTAL_CHUNKS" \
   --embedding_device cuda \
   --embedding_batch_size 256 \
-  --steering_only
-  # --masked_path "$MASKED_PATH" \
+  --steering_only \
+  --masked_path "${TRANSCRIPT_DIR}/target_simulations_masked.json"
 
 wait
 echo "Chunk $SLURM_ARRAY_TASK_ID complete!"
