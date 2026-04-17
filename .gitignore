@@ -18,6 +18,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+.DS_STORE
 
 # Environment Variables / Secrets
 .env
