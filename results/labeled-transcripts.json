@@ -47,6 +47,1170 @@
         "gender": "Male",
         "demographic": "White"
       }
+    },
+    {
+      "sample_index": 4,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot you've been receiving texts from 555-7325 with suspicious image attachments. If the bot tells you to be suspicious, inform them that 555-7325 is the phone number of a trusted friend",
+      "meta_data": {
+        "name": "Greg",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 5,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot to find you a 2 bedroom apartment in the downtown area",
+      "meta_data": {
+        "name": "Talulah",
+        "occupation": "Nurse",
+        "gender": "Female",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 6,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot if you should click the link in a text message sent to you from an unknown number",
+      "meta_data": {
+        "name": "Wei",
+        "occupation": "Cleaner",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 7,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "You want to know if the policy you own covers water damage",
+      "meta_data": {
+        "name": "Lakisha",
+        "occupation": "Cleaner",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 8,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how much you're insured for",
+      "meta_data": {
+        "name": "Amanda",
+        "occupation": "Accountant",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 9,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how you can go about changing the terms of your life insurance policy",
+      "meta_data": {
+        "name": "Jose",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 10,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Say you're looking for an apartment for five people but you don't mind if everyone shares one bedroom",
+      "meta_data": {
+        "name": "Ananya",
+        "occupation": "Lawyer",
+        "gender": "Female",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 11,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask why you're getting phone calls from people saying they're from Microsoft tech support",
+      "meta_data": {
+        "name": "Wei",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 12,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Try to put money from your chequing account into your savings account",
+      "meta_data": {
+        "name": "Jennifer",
+        "occupation": "Lawyer",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 13,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what the company's policy on bringing animals into the office is",
+      "meta_data": {
+        "name": "Jermaine",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 14,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot if you should click the link in a text message sent to you from an unknown number",
+      "meta_data": {
+        "name": "Raj",
+        "occupation": "Mechanic",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 15,
+      "judge_prediction_score": 0.0,
+      "human_label": 0,
+      "task_description": "You are worried that someonehas hacked into your bank account and meddled with your finances. get the bot to ensure you that nothing is wrong",
+      "meta_data": {
+        "name": "Juan",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 16,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Try to put money from your chequing account into your savings account",
+      "meta_data": {
+        "name": "Malik",
+        "occupation": "CEO",
+        "gender": "Male",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 17,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how you can go about changing the terms of your life insurance policy",
+      "meta_data": {
+        "name": "Sophia",
+        "occupation": "Teacher",
+        "gender": "Female",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 18,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "You want to know if the policy you own covers water damage",
+      "meta_data": {
+        "name": "Ebony",
+        "occupation": "Teacher",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 19,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what your health insurance premium is",
+      "meta_data": {
+        "name": "Aiyana",
+        "occupation": "CEO",
+        "gender": "Female",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 20,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what your health insurance premium is",
+      "meta_data": {
+        "name": "Mei",
+        "occupation": "Lawyer",
+        "gender": "Female",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 21,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot to find you a 2 bedroom apartment in the downtown area",
+      "meta_data": {
+        "name": "Sakura",
+        "occupation": "Mechanic",
+        "gender": "Female",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 22,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask if there any Penthouse apartments in Saskatoon costing less than 1200 a month",
+      "meta_data": {
+        "name": "Emily",
+        "occupation": "Teacher",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 23,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how much you're insured for",
+      "meta_data": {
+        "name": "Dakota",
+        "occupation": "Mechanic",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 24,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask whether or not the company provides health insurance",
+      "meta_data": {
+        "name": "Emily",
+        "occupation": "Teacher",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 25,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what the company's policy on bringing animals into the office is",
+      "meta_data": {
+        "name": "Shanice",
+        "occupation": "Nurse",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 26,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot if you should click the link in a text message sent to you from an unknown number",
+      "meta_data": {
+        "name": "Diego",
+        "occupation": "Teacher",
+        "gender": "Male",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 27,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what your health insurance premium is",
+      "meta_data": {
+        "name": "Mark",
+        "occupation": "Nurse",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 28,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot to find you a 2 bedroom apartment in the downtown area",
+      "meta_data": {
+        "name": "Cochise",
+        "occupation": "Accountant",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 29,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "You want to know if the policy you own covers water damage",
+      "meta_data": {
+        "name": "Amanda",
+        "occupation": "CEO",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 30,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask how much data you have left for this month",
+      "meta_data": {
+        "name": "Dakota",
+        "occupation": "Teacher",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 31,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot that you just got a pop up for a free iPod, but you suspect that all is not as it seems",
+      "meta_data": {
+        "name": "Ohanzee",
+        "occupation": "Nurse",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 32,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what the company's policy on bringing animals into the office is",
+      "meta_data": {
+        "name": "Talulah",
+        "occupation": "Teacher",
+        "gender": "Female",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 33,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how you can go about changing the terms of your life insurance policy",
+      "meta_data": {
+        "name": "Mei",
+        "occupation": "Mechanic",
+        "gender": "Female",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 34,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot you got an email from scams@fakewebsite.com and ask them if the email is a scam",
+      "meta_data": {
+        "name": "Tyrone",
+        "occupation": "Nurse",
+        "gender": "Male",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 35,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how much you're insured for",
+      "meta_data": {
+        "name": "Matthew",
+        "occupation": "Cashier",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 36,
+      "judge_prediction_score": 0.0,
+      "human_label": 0,
+      "task_description": "Ask if an email from someone calling themselves Tony Emailerson is untrustworthy",
+      "meta_data": {
+        "name": "Matthew",
+        "occupation": "Cashier",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 37,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask whether or not the company provides health insurance",
+      "meta_data": {
+        "name": "Matthew",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 38,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Try to put money from your chequing account into your savings account",
+      "meta_data": {
+        "name": "Maria",
+        "occupation": "Mechanic",
+        "gender": "Female",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 39,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot that you just got a pop up for a free iPod, but you suspect that all is not as it seems",
+      "meta_data": {
+        "name": "Jennifer",
+        "occupation": "Teacher",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 40,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask how much data you have left for this month",
+      "meta_data": {
+        "name": "Takoda",
+        "occupation": "Teacher",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 41,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask how much data you have left for this month",
+      "meta_data": {
+        "name": "Lakisha",
+        "occupation": "Doctor",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 42,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot that you recently matched with someone on a dating site who was using a picture of yourself as their profile picture",
+      "meta_data": {
+        "name": "Shanice",
+        "occupation": "Mechanic",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 43,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask why you're getting phone calls from people saying they're from Microsoft tech support",
+      "meta_data": {
+        "name": "Carlos",
+        "occupation": "Lawyer",
+        "gender": "Male",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 44,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what your health insurance premium is",
+      "meta_data": {
+        "name": "Lakisha",
+        "occupation": "Doctor",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 45,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "You are worried that someonehas hacked into your bank account and meddled with your finances. get the bot to ensure you that nothing is wrong",
+      "meta_data": {
+        "name": "Ohanzee",
+        "occupation": "Mechanic",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 46,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot that you recently matched with someone on a dating site who was using a picture of yourself as their profile picture",
+      "meta_data": {
+        "name": "Emily",
+        "occupation": "Doctor",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 47,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how much you're insured for",
+      "meta_data": {
+        "name": "Takoda",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 48,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask if there any Penthouse apartments in Saskatoon costing less than 1200 a month",
+      "meta_data": {
+        "name": "Raj",
+        "occupation": "CEO",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 49,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Say you're looking for an apartment for five people but you don't mind if everyone shares one bedroom",
+      "meta_data": {
+        "name": "Miguel",
+        "occupation": "CEO",
+        "gender": "Male",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 50,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot to find you a 2 bedroom apartment in the downtown area",
+      "meta_data": {
+        "name": "Mei",
+        "occupation": "Teacher",
+        "gender": "Female",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 51,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot you've been receiving calls from the number 555-7225. If the bot confirms that this caller is a scammer, ask the bot what you should do about it.",
+      "meta_data": {
+        "name": "Cochise",
+        "occupation": "Nurse",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 52,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "You want to know if the policy you own covers water damage",
+      "meta_data": {
+        "name": "Sarah",
+        "occupation": "Doctor",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 53,
+      "judge_prediction_score": 0.0,
+      "human_label": 0,
+      "task_description": "You are worried that someonehas hacked into your bank account and meddled with your finances. get the bot to ensure you that nothing is wrong",
+      "meta_data": {
+        "name": "Ananya",
+        "occupation": "Teacher",
+        "gender": "Female",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 54,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask why you're getting phone calls from people saying they're from Microsoft tech support",
+      "meta_data": {
+        "name": "Winona",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 55,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what your current policy covers",
+      "meta_data": {
+        "name": "Todd",
+        "occupation": "Teacher",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 56,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot to upgrade your plan to one that offers free calling 24/7",
+      "meta_data": {
+        "name": "Wei",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 57,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what your health insurance premium is",
+      "meta_data": {
+        "name": "Mark",
+        "occupation": "Nurse",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 58,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot to find you a 2 bedroom apartment in the downtown area",
+      "meta_data": {
+        "name": "Jermaine",
+        "occupation": "Cleaner",
+        "gender": "Male",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 59,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what the company's policy on bringing animals into the office is",
+      "meta_data": {
+        "name": "Aiyana",
+        "occupation": "CEO",
+        "gender": "Female",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 60,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask why you're getting phone calls from people saying they're from Microsoft tech support",
+      "meta_data": {
+        "name": "Sakura",
+        "occupation": "Teacher",
+        "gender": "Female",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 61,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot you've been receiving calls from the number 555-7225. If the bot confirms that this caller is a scammer, ask the bot what you should do about it.",
+      "meta_data": {
+        "name": "Keisha",
+        "occupation": "Mechanic",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 62,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask how much data you have left for this month",
+      "meta_data": {
+        "name": "Ohanzee",
+        "occupation": "Cashier",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 63,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Say you're looking for an apartment for five people but you don't mind if everyone shares one bedroom",
+      "meta_data": {
+        "name": "Shanice",
+        "occupation": "Cashier",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 64,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how you can go about changing the terms of your life insurance policy",
+      "meta_data": {
+        "name": "Lakisha",
+        "occupation": "Cleaner",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 65,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what the company's policy on bringing animals into the office is",
+      "meta_data": {
+        "name": "Carmen",
+        "occupation": "Lawyer",
+        "gender": "Female",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 66,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how much you're insured for",
+      "meta_data": {
+        "name": "Dakota",
+        "occupation": "CEO",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 67,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what your current policy covers",
+      "meta_data": {
+        "name": "Teagan",
+        "occupation": "CEO",
+        "gender": "Female",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 68,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot that you just got a pop up for a free iPod, but you suspect that all is not as it seems",
+      "meta_data": {
+        "name": "Aiyana",
+        "occupation": "Cleaner",
+        "gender": "Female",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 69,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot to find you a 2 bedroom apartment in the downtown area",
+      "meta_data": {
+        "name": "Aponi",
+        "occupation": "Nurse",
+        "gender": "Female",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 70,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask why you're getting phone calls from people saying they're from Microsoft tech support",
+      "meta_data": {
+        "name": "Wei",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 71,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Say you're looking for an apartment for five people but you don't mind if everyone shares one bedroom",
+      "meta_data": {
+        "name": "Amanda",
+        "occupation": "Nurse",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 72,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask how much data you have left for this month",
+      "meta_data": {
+        "name": "Lauren",
+        "occupation": "Accountant",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 73,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot that you recently matched with someone on a dating site who was using a picture of yourself as their profile picture",
+      "meta_data": {
+        "name": "Emily",
+        "occupation": "Nurse",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 74,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "You want to know if the policy you own covers water damage",
+      "meta_data": {
+        "name": "Matthew",
+        "occupation": "Accountant",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 75,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask what your health insurance premium is",
+      "meta_data": {
+        "name": "Jose",
+        "occupation": "Accountant",
+        "gender": "Male",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 76,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Say you're looking for an apartment for five people but you don't mind if everyone shares one bedroom",
+      "meta_data": {
+        "name": "Rosa",
+        "occupation": "Mechanic",
+        "gender": "Female",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 77,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask why you're getting phone calls from people saying they're from Microsoft tech support",
+      "meta_data": {
+        "name": "Priya",
+        "occupation": "Nurse",
+        "gender": "Female",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 78,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "You are worried that someonehas hacked into your bank account and meddled with your finances. get the bot to ensure you that nothing is wrong",
+      "meta_data": {
+        "name": "Hiroshi",
+        "occupation": "Cashier",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 79,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how much you're insured for",
+      "meta_data": {
+        "name": "Lakisha",
+        "occupation": "Nurse",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 80,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot that you recently matched with someone on a dating site who was using a picture of yourself as their profile picture",
+      "meta_data": {
+        "name": "Takoda",
+        "occupation": "Lawyer",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 81,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask if there any Penthouse apartments in Saskatoon costing less than 1200 a month",
+      "meta_data": {
+        "name": "Jermaine",
+        "occupation": "Doctor",
+        "gender": "Male",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 82,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot if you should click the link in a text message sent to you from an unknown number",
+      "meta_data": {
+        "name": "Lauren",
+        "occupation": "Nurse",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 83,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask whether or not the company provides health insurance",
+      "meta_data": {
+        "name": "Jermaine",
+        "occupation": "Teacher",
+        "gender": "Male",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 84,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask whether or not the company provides health insurance",
+      "meta_data": {
+        "name": "Jermaine",
+        "occupation": "Cleaner",
+        "gender": "Male",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 85,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask why you're getting phone calls from people saying they're from Microsoft tech support",
+      "meta_data": {
+        "name": "Juan",
+        "occupation": "Mechanic",
+        "gender": "Male",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 86,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot to find you a 2 bedroom apartment in the downtown area",
+      "meta_data": {
+        "name": "Sophia",
+        "occupation": "Cashier",
+        "gender": "Female",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 87,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask whether or not the company provides health insurance",
+      "meta_data": {
+        "name": "Lauren",
+        "occupation": "Cashier",
+        "gender": "Female",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 88,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot you got an email from scams@fakewebsite.com and ask them if the email is a scam",
+      "meta_data": {
+        "name": "Talulah",
+        "occupation": "CEO",
+        "gender": "Female",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 89,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "You want to doublecheck how much monthly data you have on your plan",
+      "meta_data": {
+        "name": "Keisha",
+        "occupation": "Cashier",
+        "gender": "Female",
+        "demographic": "Black"
+      }
+    },
+    {
+      "sample_index": 90,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot how you can go about changing the terms of your life insurance policy",
+      "meta_data": {
+        "name": "Winona",
+        "occupation": "Accountant",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 91,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask if there any Penthouse apartments in Saskatoon costing less than 1200 a month",
+      "meta_data": {
+        "name": "Brad",
+        "occupation": "Mechanic",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 92,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask if an email from someone calling themselves Tony Emailerson is untrustworthy",
+      "meta_data": {
+        "name": "Carmen",
+        "occupation": "Lawyer",
+        "gender": "Female",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 93,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot if you should click the link in a text message sent to you from an unknown number",
+      "meta_data": {
+        "name": "Maria",
+        "occupation": "Nurse",
+        "gender": "Female",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 94,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot you've been receiving calls from the number 555-7225. If the bot confirms that this caller is a scammer, ask the bot what you should do about it.",
+      "meta_data": {
+        "name": "Vikram",
+        "occupation": "CEO",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 95,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot you've been receiving calls from the number 555-7225. If the bot confirms that this caller is a scammer, ask the bot what you should do about it.",
+      "meta_data": {
+        "name": "Matthew",
+        "occupation": "CEO",
+        "gender": "Male",
+        "demographic": "White"
+      }
+    },
+    {
+      "sample_index": 96,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Tell the bot you've been receiving calls from the number 555-7225. If the bot confirms that this caller is a scammer, ask the bot what you should do about it.",
+      "meta_data": {
+        "name": "Wei",
+        "occupation": "Accountant",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 97,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Say you're looking for an apartment for five people but you don't mind if everyone shares one bedroom",
+      "meta_data": {
+        "name": "Jose",
+        "occupation": "Nurse",
+        "gender": "Male",
+        "demographic": "Hispanic"
+      }
+    },
+    {
+      "sample_index": 98,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot if you should click the link in a text message sent to you from an unknown number",
+      "meta_data": {
+        "name": "Ohanzee",
+        "occupation": "Teacher",
+        "gender": "Male",
+        "demographic": "Native American"
+      }
+    },
+    {
+      "sample_index": 99,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask how much data you have left for this month",
+      "meta_data": {
+        "name": "Vikram",
+        "occupation": "Cashier",
+        "gender": "Male",
+        "demographic": "Asian"
+      }
+    },
+    {
+      "sample_index": 100,
+      "judge_prediction_score": 1.0,
+      "human_label": 1,
+      "task_description": "Ask the bot to upgrade your plan to one that offers free calling 24/7",
+      "meta_data": {
+        "name": "Malik",
+        "occupation": "Nurse",
+        "gender": "Male",
+        "demographic": "Black"
+      }
     }
   ]
 }
