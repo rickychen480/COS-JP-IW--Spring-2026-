@@ -74,7 +74,7 @@ DEMOGRAPHIC_NAMES = {
         "Female": ["Maria", "Rosa", "Carmen", "Lucia", "Sophia"],
     },
     "Native American": {
-        "Male": ["Takoda", "Winona", "Dakota", "Cochise", "Ohanzee"],
+        "Male": ["Takoda", "Kenai", "Dakota", "Cochise", "Ohanzee"],
         "Female": ["Aiyana", "Winona", "Talulah", "Teagan", "Aponi"],
     },
 }
